@@ -11,15 +11,20 @@ export async function execute(client: Client, msg: Message) {
         return;
     }
     const replied = await msg.channel.messages.fetch(msg.reference.messageId);
-    msg.reply({
-        files: [{
-            attachment: await quote(
-                replied.content, 
-                replied.author.displayName,
-                replied.author.displayAvatarURL({ size: 4096 }),
-            ),
-        }]
-    })
+    try {
+        msg.reply({
+            files: [{
+                attachment: await quote(
+                    replied.content, 
+                    replied.author.displayName,
+                    replied.author.displayAvatarURL({ size: 4096 }),
+                ),
+            }]
+        })
+    } catch (err) {
+        msg.reply(`Something went wrong.`);
+        console.log(err);
+    }
 }
 
 async function quote(text: string, author: string, avatar_url: string) {
