@@ -17,7 +17,7 @@ export async function execute(client: Client, msg: Message) {
                 attachment: await quote(
                     replied.content, 
                     replied.author.displayName,
-                    replied.author.displayAvatarURL({ size: 4096 }),
+                    replied.author.displayAvatarURL({ size: 1024 }),
                 ),
             }]
         })
