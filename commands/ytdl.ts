@@ -1,10 +1,11 @@
 import fetch from "node-fetch";
-import humanize from "humanize-duration";
 import { Client, Message } from "discord.js";
 
 export const name = "ytdl";
 export const cooldown = 30;
 export async function execute(client: Client, msg: Message, args: string[]) {
+    msg.reply(`My developer is working on a user data system. I'm sorry but this feature is temporarily closed!`);
+    /*
     if (!args[0]) {
         msg.reply(`You did not give me anything, ${msg.author.displayName}!`);
         return;
@@ -41,6 +42,7 @@ export async function execute(client: Client, msg: Message, args: string[]) {
         return;
     }
     msg.reply(`The video you requested \`${up.name}\` has been served at ${up.view}`);
+    */
 }
 
 type DownloadResponse = {
@@ -101,7 +103,7 @@ function formatCheckResults(check: CheckResult): string {
     return str;
 }
 
-/*
+
 await fetch("http://localhost:3000/enableAutoDeletion", {
     method: "POST",
     body: JSON.stringify({
@@ -112,7 +114,6 @@ await fetch("http://localhost:3000/enableAutoDeletion", {
         "Accept": "application/json",
     },
 });
-*/
 
 async function checkLink(link: string) {
     const check = await fetch("http://localhost:3000/checklink", {
