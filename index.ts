@@ -1,4 +1,4 @@
-import { Client, Collection, ChannelType, Message, time } from "discord.js";
+import { Client, Collection, ChannelType, Message } from "discord.js";
 import { readdirSync } from "fs"
 import config from "./config.json" assert { type: "json" };
 
