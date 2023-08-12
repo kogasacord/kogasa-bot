@@ -1,11 +1,10 @@
 import fetch from "node-fetch";
 import { Client, Message } from "discord.js";
+import humanize from "humanize-duration";
 
 export const name = "ytdl";
 export const cooldown = 30;
 export async function execute(client: Client, msg: Message, args: string[]) {
-    msg.reply(`My developer is working on a better cooldown system. I'm sorry but this feature is temporarily closed!`);
-    /*
     if (!args[0]) {
         msg.reply(`You did not give me anything, ${msg.author.displayName}!`);
         return;
@@ -42,11 +41,23 @@ export async function execute(client: Client, msg: Message, args: string[]) {
         return;
     }
     msg.reply(`The video you requested \`${up.name}\` has been served at ${up.view}`);
-    */
 }
 
-export async function dyn_cooldown(author_id: string, ...args: string[]) {
-    
+export async function dyn_cooldown(author_id: string, args: string[]): Promise<number> {
+    if (!args[0]) {
+        return 0;
+    }
+    const checks = await checkLink(args[0]);
+    if (checks.reasons !== undefined && checks.reasons.length > 0) {
+        return 0;
+    }
+    const status = await getStatus();
+    if (status && status.hasReachedLimit) {
+        return 0;
+    }
+    const info = await getInfo(args[0]);
+    // https://www.desmos.com/calculator/cxw8pneayf
+    return (info.duration * info.duration) / 3500;
 }
 
 type DownloadResponse = {
