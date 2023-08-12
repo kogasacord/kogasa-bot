@@ -8,13 +8,16 @@ type CommandModule = {
     name: string,
     execute: (client: Client, msg: Message, args: string[]) => void,
     cooldown: number,
+    cooldown_command: (author_id: string, args: string[]) => { cooldown: number }
 };
 
 const client = new Client({
     intents: ["Guilds", "GuildMessages", "MessageContent"],
 });
 const commands = new Collection<string, CommandModule>();
+
 const cooldowns = new Collection<string, Collection<string, number>>();
+
 const commandFiles = readdirSync('./commands/')
     .filter(file => 
         file.endsWith('.ts'));

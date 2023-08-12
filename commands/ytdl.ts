@@ -4,7 +4,7 @@ import { Client, Message } from "discord.js";
 export const name = "ytdl";
 export const cooldown = 30;
 export async function execute(client: Client, msg: Message, args: string[]) {
-    msg.reply(`My developer is working on a user data system. I'm sorry but this feature is temporarily closed!`);
+    msg.reply(`My developer is working on a better cooldown system. I'm sorry but this feature is temporarily closed!`);
     /*
     if (!args[0]) {
         msg.reply(`You did not give me anything, ${msg.author.displayName}!`);
