@@ -103,7 +103,7 @@ function formatCheckResults(check: CheckResult): string {
     return str;
 }
 
-
+/*
 await fetch("http://localhost:3000/enableAutoDeletion", {
     method: "POST",
     body: JSON.stringify({
@@ -114,6 +114,7 @@ await fetch("http://localhost:3000/enableAutoDeletion", {
         "Accept": "application/json",
     },
 });
+*/
 
 async function checkLink(link: string) {
     const check = await fetch("http://localhost:3000/checklink", {
