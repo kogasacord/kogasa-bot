@@ -8,7 +8,7 @@ type CommandModule = {
     name: string,
     execute: (client: Client, msg: Message, args: string[]) => void,
     cooldown: number,
-    cooldown_command: (author_id: string, args: string[]) => { cooldown: number }
+    dyn_cooldown?: (author_id: string, args: string[]) => { cooldown: number }
 };
 
 const client = new Client({

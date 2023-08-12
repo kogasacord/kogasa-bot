@@ -45,6 +45,10 @@ export async function execute(client: Client, msg: Message, args: string[]) {
     */
 }
 
+export async function dyn_cooldown(author_id: string, ...args: string[]) {
+    
+}
+
 type DownloadResponse = {
     filename: string,
     name: string,
