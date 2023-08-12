@@ -1,7 +1,7 @@
 import { ChannelType, Client, Message, MessageType } from "discord.js";
 
 export const name = "quote";
-export const cooldown = 30;
+export const cooldown = 90;
 export async function execute(client: Client, msg: Message) {
     if (msg.channel.type !== ChannelType.GuildText)
         return;
