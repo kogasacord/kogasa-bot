@@ -2,10 +2,22 @@ import fetch from "node-fetch";
 import { Client, Message } from "discord.js";
 import humanize from "humanize-duration";
 
+const processing_users: string[] = []
+
 export const name = "ytdl";
 export const cooldown = 30;
 export async function execute(client: Client, msg: Message, args: string[]) {
+    msg.reply(`In the works. Please no respond.`)
+    /*
+    const index_of_processing_user = processing_users.findIndex(v => v === msg.author.id);
+    if (index_of_processing_user === -1) {
+        processing_users.push(msg.author.id)
+    } else {
+        msg.reply("Your video is already being processed. Please wait for your video to finish.");
+        return;
+    }
     msg.reply(`Securing the ytdlp system...`);
+    */
     /*
     if (!args[0]) {
         msg.reply(`You did not give me anything, ${msg.author.displayName}!`);
@@ -44,6 +56,7 @@ export async function execute(client: Client, msg: Message, args: string[]) {
     }
     msg.reply(`The video you requested \`${up.name}\` has been served at ${up.view}`);
     */
+    // processing_users.splice(index_of_processing_user, 1);
 }
 
 export async function dyn_cooldown(author_id: string, args: string[]): Promise<number> {
