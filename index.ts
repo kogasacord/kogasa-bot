@@ -26,6 +26,8 @@ for (const file of commandFiles) {
     commands.set(command.name, command);
 }
 
+await startup();
+
 client.on("messageCreate", async (msg) => {
     if (msg.channel.type !== ChannelType.GuildText)
         return;

@@ -1,7 +1,8 @@
 import fetch from "node-fetch";
 
-await enableAutoDelete();
-
+export default async function startup() {
+    await enableAutoDelete();
+}
 
 // scripts to run on startup
 export async function enableAutoDelete() {
@@ -17,5 +18,3 @@ export async function enableAutoDelete() {
     });
     console.log(`Enabled autoDelete for googledrive.`);
 }
-
-export default {};
