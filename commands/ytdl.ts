@@ -3,6 +3,7 @@ import { Client, Message } from "discord.js";
 import humanize from "humanize-duration";
 
 const processing_users: string[] = []
+// await enableAutoDelete();
 
 export const name = "ytdl";
 export const cooldown = 30;
@@ -134,18 +135,19 @@ function formatCheckResults(check: CheckResult): string {
     return str;
 }
 
-/*
-await fetch("http://localhost:3000/enableAutoDeletion", {
-    method: "POST",
-    body: JSON.stringify({
-        minutes: 15,
-    }),
-    headers: {
-        "Content-Type": "application/json",
-        "Accept": "application/json",
-    },
-});
-*/
+async function enableAutoDelete() {
+    await fetch("http://localhost:3000/enableAutoDeletion", {
+        method: "POST",
+        body: JSON.stringify({
+            minutes: 15,
+        }),
+        headers: {
+            "Content-Type": "application/json",
+            "Accept": "application/json",
+        },
+    });
+}
+
 
 async function checkLink(link: string) {
     const check = await fetch("http://localhost:3000/checklink", {
