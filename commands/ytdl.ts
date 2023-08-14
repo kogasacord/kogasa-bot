@@ -64,6 +64,7 @@ export async function dyn_cooldown(author_id: string, args: string[]): Promise<n
     if (!args[0]) {
         return 0;
     }
+    /*
     const checks = await checkLink(args[0]);
     if (checks.reasons !== undefined && checks.reasons.length > 0) {
         return 0;
@@ -75,6 +76,8 @@ export async function dyn_cooldown(author_id: string, args: string[]): Promise<n
     const info = await getInfo(args[0]);
     // https://www.desmos.com/calculator/cxw8pneayf
     return (info.duration * info.duration) / 3500;
+    */
+   return 0;
 }
 
 type DownloadResponse = {
