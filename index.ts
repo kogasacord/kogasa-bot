@@ -81,4 +81,4 @@ client.on("messageCreate", async (msg) => {
 });
 
 client.on("ready", () => console.log("Done!"));
-client.login(config.test_token)
+client.login(config.token)
