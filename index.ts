@@ -1,6 +1,8 @@
 import startup from "./src/startup.js";
 import { Client, Collection, ChannelType, Message } from "discord.js";
 import { readdirSync } from "fs"
+
+import settings from "./settings.json" assert { type: "json" };
 import config from "./config.json" assert { type: "json" };
 
 const prefix = "??";
@@ -26,7 +28,8 @@ for (const file of commandFiles) {
     commands.set(command.name, command);
 }
 
-await startup();
+if (!settings.test)
+    await startup();
 
 client.on("messageCreate", async (msg) => {
     if (msg.channel.type !== ChannelType.GuildText)
@@ -80,5 +83,7 @@ client.on("messageCreate", async (msg) => {
     }
 });
 
-client.on("ready", () => console.log("Done!"));
-client.login(config.token)
+client.on("ready", () => {
+    console.log(`Done! [Test mode: ${settings.test}]`)
+});
+client.login(config.test_token)
