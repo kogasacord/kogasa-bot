@@ -67,7 +67,7 @@ client.on("messageCreate", async (msg) => {
                 const expiredTimestamp = Math.round(expirationTime / 1000);
                 msg.reply(
                     `Please wait, you are on a cooldown for \`${command.name}\`.`
-                    + ` You can use it again at <t:${expiredTimestamp}:R>.`);
+                    + ` You can use it again <t:${expiredTimestamp}:R>.`);
             }
             return;
         }
