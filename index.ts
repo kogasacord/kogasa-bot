@@ -86,4 +86,4 @@ client.on("messageCreate", async (msg) => {
 client.on("ready", () => {
     console.log(`Done! [Test mode: ${settings.test}]`)
 });
-client.login(config.test_token)
+client.login(settings.test ? config.test_token : config.token)
