@@ -18,8 +18,18 @@ export type InfoResponse = {
     duration: number,
     download_length_seconds: number,
 }
-export type CheckResult = { 
-    reasons?: ("NO_LINK" | "NO_PATH_NAME" | "NOT_YOUTUBE" | "NOT_VIDEO" | "TOO_LONG")[]
+export type FormatResponse = {
+    formats: {
+        format: string,
+        format_id: string,
+        format_note?: string,
+        video_codec: string,
+        audio_codec: string,
+        container: string,
+    }[]
+}
+export type CheckResult = {
+    reasons?: ("NO_LINK" | "NO_PATH_NAME" | "NOT_YOUTUBE" | "NOT_VIDEO" | "TOO_LONG" | "INVALID_FORMAT_ID")[]
 };
 export type StatusResult = {
     hasReachedLimit: boolean,

@@ -1,12 +1,15 @@
 import fetch from "node-fetch";
 import { DownloadResponse } from "./types";
 
-export async function downloadVideo(request: string) {
+export async function downloadVideo(
+    request: string,
+    format_id?: string,
+) {
     const download = await fetch("http://localhost:3000/download", {
         method: "POST",
         body: JSON.stringify({
             link: request,
-            best: 1,
+            format_id: format_id,
         }),
         headers: {
             "Content-Type": "application/json",
