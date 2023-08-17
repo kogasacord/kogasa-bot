@@ -48,7 +48,7 @@ export async function execute(client: Client, msg: Message, args: string[]) {
     const info = await getInfo(requested_link);
     if (info.size_mbytes === undefined) {
         msg.reply(`An internal error has occured with getting info.`);
-        console.groupCollapsed(info);
+        console.log(info);
         return;
     }
     msg.reply(`Downloading \`${info.file}\` from \`${info.uploader}\` with an estimate of \`${humanize(info.duration * 1000)}\``)

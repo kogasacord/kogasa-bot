@@ -62,7 +62,6 @@ client.on("messageCreate", async (msg) => {
 
         if (timestamps.has(author_id)) {
             const expirationTime = timestamps.get(author_id)!;
-            console.log(`expirationTime: ${expirationTime} | ${now}`);
             if (now < expirationTime) {
                 const expiredTimestamp = Math.round(expirationTime / 1000);
                 msg.reply(
