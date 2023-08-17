@@ -5,13 +5,13 @@ import { readdirSync } from "fs"
 import settings from "./settings.json" assert { type: "json" };
 import config from "./config.json" assert { type: "json" };
 
-const prefix = "??";
+const prefix = settings.test ? "!!" : "??";
 
 type CommandModule = { 
     name: string,
-    execute: (client: Client, msg: Message, args: string[]) => void,
     cooldown: number,
-    dyn_cooldown?: (args: string[]) => Promise<number>
+    execute: (client: Client, msg: Message, args: string[]) => void,
+    dyn_cooldown?: (args: string[]) => Promise<number>,
 };
 
 const client = new Client({
