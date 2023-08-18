@@ -1,30 +1,35 @@
 import startup from "./src/startup.js";
-import { Client, Collection, ChannelType, Message } from "discord.js";
+import { Client, Collection, ChannelType, Message, ActivityType } from "discord.js";
 import { readdirSync } from "fs"
 
 import settings from "./settings.json" assert { type: "json" };
 import config from "./config.json" assert { type: "json" };
 
-const prefix = settings.test ? "!!" : "??";
+import { CommandModule } from "./src/helpers/types.js";
 
-type CommandModule = { 
-    name: string,
-    cooldown: number,
-    execute: (client: Client, msg: Message, args: string[]) => void,
-    dyn_cooldown?: (args: string[]) => Promise<number>,
-};
+
+const prefix = settings.test ? "!!" : "??";
 
 const client = new Client({
     intents: ["Guilds", "GuildMessages", "MessageContent"],
 });
 const commands = new Collection<string, CommandModule>();
 const cooldowns = new Collection<string, Collection<string, number>>();
+
+// refractor this: 
 const commandFiles = readdirSync('./src/commands/')
     .filter(file => 
-        file.endsWith('.ts'));
+        file.endsWith(".ts"));
+const specialCommandFiles = readdirSync("./src/commands/specials/")
+    .filter(file => 
+        file.endsWith(".ts"));
 
 for (const file of commandFiles) {
     const command: CommandModule = await import(`./src/commands/${file}`);
+    commands.set(command.name, command);
+}
+for (const file of specialCommandFiles) {
+    const command: CommandModule = await import(`./src/commands/specials/${file}`);
     commands.set(command.name, command);
 }
 
@@ -70,19 +75,32 @@ client.on("messageCreate", async (msg) => {
             }
             return;
         }
+
         const cooldownAdditional = command.dyn_cooldown 
             ? await command.dyn_cooldown(args) * 1000
             : 0;
         
         timestamps?.set(author_id, now + cooldownAdditional + cooldownAmount);
         setTimeout(() => timestamps.delete(author_id), cooldownAmount + cooldownAdditional);
-        command.execute(client, msg, args);
+        
+        if (command.special) {
+            command.execute(client, msg, args, commands, prefix);
+        } else {
+            command.execute(client, msg, args);
+        }
     } catch (err) {
         console.error(err);
     }
 });
 
-client.on("ready", () => {
-    console.log(`Done! [Test mode: ${settings.test}]`)
+client.on("ready", (client) => {
+    console.log(`Done! [Test mode: ${settings.test}]`);
+    client.user.setPresence({
+        activities: [{
+            name: "the Human Village",
+            type: ActivityType.Watching,
+        }],
+        status: "online",
+    })
 });
 client.login(settings.test ? config.test_token : config.token)

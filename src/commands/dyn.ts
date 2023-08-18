@@ -2,6 +2,7 @@ import { Client, Message } from "discord.js";
 
 export const name = "dyn";
 export const cooldown = 5;
+export const description = "Test method to check dynamic cooldowns."
 export async function execute(client: Client, msg: Message, args: string[]) {
     if (!args[0]) {
         msg.reply("No found duration to calculate.")

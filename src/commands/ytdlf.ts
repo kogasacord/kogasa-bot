@@ -3,6 +3,7 @@ import { getFormats } from "../helpers/ytdl/get_formats.js";
 
 export const name = "ytdlf";
 export const cooldown = 20;
+export const description = "Find formats for a specific YouTube video."
 export async function execute(client: Client, msg: Message, args: string[]) {
     const requested_link = args[0];
     if (!requested_link) {

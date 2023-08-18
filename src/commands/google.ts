@@ -3,6 +3,7 @@ import google from "googlethis";
 
 export const name = "google";
 export const cooldown = 15;
+export const description = "Google."
 export async function execute(client: Client, msg: Message, args: string[]) {
     if (msg.channel.type !== ChannelType.GuildText) 
         return;

@@ -1,8 +1,11 @@
 import mime from "mime-types";
 import { ChannelType, Client, Message } from "discord.js";
+import { quoteAttachment } from "../helpers/quote/attachment.js";
+import { quoteDefault } from "../helpers/quote/default.js";
 
 export const name = "quote";
 export const cooldown = 90;
+export const description = "Reply to someone and capture a.. suspicious message."
 export async function execute(client: Client, msg: Message) {
     if (msg.channel.type !== ChannelType.GuildText)
         return;
@@ -46,37 +49,4 @@ async function quote(
         }
     }
     return quoteDefault(text, author, avatar_url);
-}
-
-async function quoteDefault(text: string, author: string, avatar_url: string) {
-    const check = await fetch("http://localhost:4000/quote", {
-        method: "POST",
-        body: JSON.stringify({
-            text: text,
-            author: author,
-            avatar_url: avatar_url,
-        }),
-        headers: {
-            "Content-Type": "application/json",
-            "Accept": "application/json",
-        },
-    });
-    return Buffer.from(await check.arrayBuffer());
-}
-
-async function quoteAttachment(text: string, author: string, avatar_url: string, attachment_url: string) {
-    const check = await fetch("http://localhost:4000/quote/img", {
-        method: "POST",
-        body: JSON.stringify({
-            text: text,
-            author: author,
-            avatar_url: avatar_url,
-            attachment_url: attachment_url,
-        }),
-        headers: {
-            "Content-Type": "application/json",
-            "Accept": "application/json",
-        },
-    });
-    return Buffer.from(await check.arrayBuffer());
 }

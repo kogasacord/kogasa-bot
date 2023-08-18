@@ -11,6 +11,7 @@ const processing_users: string[] = [];
 
 export const name = "ytdl";
 export const cooldown = 30;
+export const description = "Download videos from YouTube. Might be illegal."
 export async function execute(client: Client, msg: Message, args: string[]) {
     const index_of_processing_user = processing_users.findIndex(v => v === msg.author.id);
     const requested_link = args[0];
