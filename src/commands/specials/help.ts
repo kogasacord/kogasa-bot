@@ -1,4 +1,4 @@
-import { Client, Collection, Message } from "discord.js";
+import { Client, Collection, Message, EmbedBuilder } from "discord.js";
 import { CommandModule } from "../../helpers/types";
 
 export const name = "help";
@@ -12,9 +12,15 @@ export async function execute(
     commands: Collection<string, CommandModule>,
     prefix: string,
 ) {
-    let reply = "## HELP! Bad Apple!\n\n";
+    const embed = new EmbedBuilder()
+        .setTitle("Help! Bad Apple!")
+        .setDescription("~~~~~");
     for (const command of commands) {
-        reply += `\`${prefix}${command[0]}\` => \`${command[1].description ?? "No description provided."}\`\n`
+        embed.addFields({
+            name:  `${prefix}${command[0]}`,
+            value: `${command[1].description ?? "No description provided."}`,
+            inline: true,
+        });
     }
-    msg.reply(reply);
+    msg.reply({ embeds: [embed] });
 }
