@@ -1,7 +1,7 @@
 import fetch from "node-fetch";
 import { CheckResult } from "./types";
 
-export async function checkLink(link: string, format_id: string) {
+export async function checkLink(link: string, format_id?: string) {
     const check = await fetch("http://localhost:3000/checklink", {
         method: "POST",
         body: JSON.stringify({ link: link, format_id: format_id }),
