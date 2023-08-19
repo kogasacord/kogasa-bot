@@ -1,5 +1,6 @@
 import { Client, Collection, Message } from "discord.js";
 import { CommandModule } from "../../helpers/types";
+import { checkLink } from "../../helpers/ytdl/check_link";
 
 export const name = "doctor";
 export const cooldown = 20;
@@ -11,6 +12,6 @@ export async function execute(
     args: string[],
     commands: Collection<string, CommandModule>,
 ) {
-    msg.reply("Currently in the works.")
+    msg.reply(`I need to call Eirin...`);
 }
 // check the different HTTPS and commands
