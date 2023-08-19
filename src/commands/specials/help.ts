@@ -1,5 +1,5 @@
 import { Client, Collection, Message, EmbedBuilder } from "discord.js";
-import { CommandModule } from "../../helpers/types";
+import { CommandModule } from "../../helpers/types.js";
 
 export const name = "help";
 export const cooldown = 20;
