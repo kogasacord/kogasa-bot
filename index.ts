@@ -1,37 +1,29 @@
+import chalk from "chalk";
+import * as url from 'url';
+
 import startup from "./src/startup.js";
 import { Client, Collection, ChannelType, Message, ActivityType } from "discord.js";
-import { readdirSync } from "fs"
 
 import settings from "./settings.json" assert { type: "json" };
 import config from "./config.json" assert { type: "json" };
 
 import { CommandModule } from "./src/helpers/types.js";
+import { importDirectories } from "./src/helpers/misc/import.js";
 
-
+const __dirname = url.fileURLToPath(new URL('.', import.meta.url));
 const prefix = settings.test ? "!!" : "??";
 
 const client = new Client({
     intents: ["Guilds", "GuildMessages", "MessageContent"],
 });
-const commands = new Collection<string, CommandModule>();
+const commands = new Collection<string, CommandModule>()
+    .concat(
+        (await importDirectories(__dirname, "/src/commands/")),
+        (await importDirectories(__dirname, "/src/commands/specials/")),
+    );
 const cooldowns = new Collection<string, Collection<string, number>>();
 
-// refractor this: 
-const commandFiles = readdirSync('./src/commands/')
-    .filter(file => 
-        file.endsWith(".ts"));
-const specialCommandFiles = readdirSync("./src/commands/specials/")
-    .filter(file => 
-        file.endsWith(".ts"));
-
-for (const file of commandFiles) {
-    const command: CommandModule = await import(`./src/commands/${file}`);
-    commands.set(command.name, command);
-}
-for (const file of specialCommandFiles) {
-    const command: CommandModule = await import(`./src/commands/specials/${file}`);
-    commands.set(command.name, command);
-}
+console.log(`Imported ${chalk.bgGreen(`${commands.size} commands`)}.`)
 
 if (!settings.test)
     await startup();
@@ -74,6 +66,13 @@ client.on("messageCreate", async (msg) => {
                     + ` You can use it again <t:${expiredTimestamp}:R>.`);
             }
             return;
+        }
+
+        if (command.checker) {
+            const pass = await command.checker(msg, args);
+            if (!pass) {
+                return;
+            }
         }
 
         const cooldownAdditional = command.dyn_cooldown 
