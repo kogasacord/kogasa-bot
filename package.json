@@ -14,11 +14,13 @@
     "typescript": "^5.1.6"
   },
   "dependencies": {
+    "chalk": "^5.3.0",
     "discord.js": "^14.12.1",
     "googlethis": "^1.7.1",
     "humanize-duration": "^3.29.0",
     "mime-types": "^2.1.35",
-    "node-fetch": "^3.3.2"
+    "node-fetch": "^3.3.2",
+    "sagiri": "^3.4.0"
   },
   "type": "module"
 }
