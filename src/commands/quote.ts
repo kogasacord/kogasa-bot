@@ -10,11 +10,7 @@ export async function execute(client: Client, msg: Message) {
     if (msg.channel.type !== ChannelType.GuildText)
         return;
 
-    if (!(msg.reference && msg.reference.messageId)) {
-        msg.reply(`You need to reply to a message in-order to quote it.`)
-        return;
-    }
-    const replied = await msg.channel.messages.fetch(msg.reference.messageId);
+    const replied = await msg.channel.messages.fetch(msg.reference!.messageId!);
     const mimetype = mime.lookup(replied.attachments.at(0) 
         ? replied.attachments.at(0)!.url
         : "")
@@ -34,6 +30,14 @@ export async function execute(client: Client, msg: Message) {
         msg.reply(`Something went wrong.`);
         console.log(err);
     }
+}
+
+export async function checker(msg: Message, args: string[]): Promise<boolean> {
+    if (!(msg.reference && msg.reference.messageId)) {
+        msg.reply(`You need to reply to a message in-order to quote it.`)
+        return false;
+    }
+    return true;
 }
 
 async function quote(

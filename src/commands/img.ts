@@ -7,8 +7,6 @@ export const description = "Google Images."
 export async function execute(client: Client, msg: Message, args: string[]) {
     if (msg.channel.type !== ChannelType.GuildText) 
         return;
-    if (!["1122567341071409212", "1133972960122769438"].includes(msg.channelId))
-        return;
 
     try {
         const buffered: string[] = [];
@@ -29,4 +27,10 @@ export async function execute(client: Client, msg: Message, args: string[]) {
     } catch (err) {
         msg.reply(`Dear ${msg.author.displayName}. Your images could not be found.`)
     }
+}
+
+export async function checker(msg: Message, args: string[]): Promise<boolean> {
+    if (!["1122567341071409212", "1133972960122769438"].includes(msg.channelId))
+        return false;
+    return true;
 }
