@@ -1,5 +1,5 @@
-import { Client, Collection, Message } from "discord.js";
-import { CommandModule } from "../../helpers/types.js";
+import { Client, Message } from "discord.js";
+import { ExternalDependencies } from "../../helpers/types.js";
 import { getInfo } from "../../helpers/ytdl/info.js";
 import { quoteDefault } from "../../helpers/quote/default.js";
 
@@ -11,7 +11,7 @@ export async function execute(
     client: Client,
     msg: Message,
     args: string[],
-    commands: Collection<string, CommandModule>,
+    ext: ExternalDependencies,
 ) {
     const doctor_results = {
         ytdl_server_on:   false,
