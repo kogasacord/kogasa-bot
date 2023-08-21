@@ -10,9 +10,9 @@ import config from "./config.json" assert { type: "json" };
 
 import { CommandModule, ExternalDependencies } from "./src/helpers/types.js";
 import { importDirectories } from "./src/helpers/misc/import.js";
+import { ServerSettings, ServerSettingsResult } from "./src/helpers/pb/pb.js";
 
 const __dirname = url.fileURLToPath(new URL('.', import.meta.url));
-const prefix = settings.test ? "!!" : "??";
 
 const client = new Client({
     intents: ["Guilds", "GuildMessages", "MessageContent"],
@@ -34,10 +34,26 @@ if (!settings.test)
 client.on("messageCreate", async (msg) => {
     if (msg.channel.type !== ChannelType.GuildText)
         return;
+    
+    // local prefix changing
+    const server_settings = await pb
+        .collection("server_settings")
+        .getList<ServerSettings>(undefined, undefined, {
+            filter: `serverid = "${msg.guildId}"`
+        });
+    let prefix = settings.test ? "!!" : "??";
+    if (server_settings.items.length !== 0) {
+        const server_prefix = server_settings.items[0].prefix;
+        if (server_prefix)
+            prefix = server_prefix;
+    }
+
+
     if (!msg.content.startsWith(prefix))
         return;
     if (msg.author.bot)
         return;
+
     
     const c = msg.content.split(" ");
     const args = msg.content.split(" ");
@@ -96,7 +112,7 @@ client.on("messageCreate", async (msg) => {
     }
 });
 
-client.on("ready", (client) => {
+client.on("ready", async (client) => {
     console.log(`Done! [Test mode: ${settings.test}]`);
     client.user.setPresence({
         activities: [{
@@ -106,4 +122,4 @@ client.on("ready", (client) => {
         status: "online",
     })
 });
-// client.login(settings.test ? config.test_token : config.token)
+client.login(settings.test ? config.test_token : config.token)
