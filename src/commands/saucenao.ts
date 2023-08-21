@@ -8,7 +8,7 @@ import { checkIfLink } from "../helpers/misc/link.js";
 const sauce = sagiri(config.saucenao_token, { results: 2 });
 
 export const name = "sauce";
-export const cooldown = 15;
+export const cooldown = 60;
 export const description = "Find the sauce. Reply or send a link/attachment to me."
 export async function execute(client: Client, msg: Message, args: string[]) {
     let response = "## Sources found?:\n\n"
