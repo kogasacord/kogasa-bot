@@ -10,7 +10,9 @@ export async function execute(client: Client, msg: Message) {
     if (msg.channel.type !== ChannelType.GuildText)
         return;
 
-    const replied = await msg.channel.messages.fetch(msg.reference!.messageId!);
+    const replied = msg.channel.messages.cache.get(msg.reference!.messageId!) 
+        ?? await msg.channel.messages.fetch(msg.reference!.messageId!);
+    
     const mimetype = mime.lookup(replied.attachments.at(0) 
         ? replied.attachments.at(0)!.url
         : "")
