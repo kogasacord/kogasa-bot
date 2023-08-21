@@ -14,23 +14,20 @@ export async function execute(client: Client, msg: Message, args: string[]) {
     let response = "## Sources found?:\n\n"
     
     if (args.at(0)) {
-        const mimetype = mime.lookup(args[0]);
         const isLink = checkIfLink(args[0]);
-
-        if (!(mimetype && mimetype.includes("image/"))) {
-            msg.reply("You did not let me scan an image.");
-            return;
-        }
         if (!isLink) {
             msg.reply("You did not give me a link.")
             return;
         }
-
-        const sources = await sauce(args[0]);
-        for (const source of sources)
+        try {
+            const sources = await sauce(args[0]);
+            for (const source of sources)
             response += `- \`${source.authorName}\` posted to \`${source.site}\` [<${source.url}>] with a \`${source.similarity}\`pt.\n`;
-        msg.reply(response);
-        return;
+            msg.reply(response);
+            return;
+        } catch (err) {
+            msg.reply("An error has occurred with parsing your link.");
+        }
     }
     
     if (msg.reference?.messageId !== undefined) {
