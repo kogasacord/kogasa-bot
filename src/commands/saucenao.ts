@@ -24,10 +24,10 @@ export async function execute(client: Client, msg: Message, args: string[]) {
             for (const source of sources)
             response += `- \`${source.authorName}\` posted to \`${source.site}\` [<${source.url}>] with a \`${source.similarity}\`pt.\n`;
             msg.reply(response);
-            return;
         } catch (err) {
             msg.reply("An error has occurred with parsing your link.");
         }
+        return;
     }
     
     if (msg.reference?.messageId !== undefined) {
