@@ -20,6 +20,7 @@
     "humanize-duration": "^3.29.0",
     "mime-types": "^2.1.35",
     "node-fetch": "^3.3.2",
+    "pocketbase": "^0.16.0",
     "sagiri": "^3.4.0"
   },
   "type": "module"

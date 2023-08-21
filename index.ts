@@ -1,5 +1,6 @@
 import chalk from "chalk";
 import * as url from 'url';
+import Pocketbase from "pocketbase";
 
 import startup from "./src/startup.js";
 import { Client, Collection, ChannelType, Message, ActivityType } from "discord.js";
@@ -7,7 +8,7 @@ import { Client, Collection, ChannelType, Message, ActivityType } from "discord.
 import settings from "./settings.json" assert { type: "json" };
 import config from "./config.json" assert { type: "json" };
 
-import { CommandModule } from "./src/helpers/types.js";
+import { CommandModule, ExternalDependencies } from "./src/helpers/types.js";
 import { importDirectories } from "./src/helpers/misc/import.js";
 
 const __dirname = url.fileURLToPath(new URL('.', import.meta.url));
@@ -16,6 +17,8 @@ const prefix = settings.test ? "!!" : "??";
 const client = new Client({
     intents: ["Guilds", "GuildMessages", "MessageContent"],
 });
+const pb = new Pocketbase("http://127.0.0.1:8090");
+
 const commands = new Collection<string, CommandModule>()
     .concat(
         (await importDirectories(__dirname, "/src/commands/")),
@@ -82,11 +85,12 @@ client.on("messageCreate", async (msg) => {
         timestamps?.set(author_id, now + cooldownAdditional + cooldownAmount);
         setTimeout(() => timestamps.delete(author_id), cooldownAmount + cooldownAdditional);
         
-        if (command.special) {
-            command.execute(client, msg, args, commands, prefix);
-        } else {
-            command.execute(client, msg, args);
+        const ext: ExternalDependencies = {
+            pb: pb,
+            commands: commands,
+            prefix: prefix
         }
+        command.execute(client, msg, args, ext);
     } catch (err) {
         console.error(err);
     }
@@ -102,4 +106,4 @@ client.on("ready", (client) => {
         status: "online",
     })
 });
-client.login(settings.test ? config.test_token : config.token)
+// client.login(settings.test ? config.test_token : config.token)
