@@ -1,19 +1,12 @@
-import Pocketbase from "pocketbase";
+import { RecordService } from "pocketbase";
 
-export interface ServerSettingsResult {
-    collectionId: string,
-    collectionName: string,
-    created: string,
+export async function findThroughCollection<T>(
+    collection: RecordService,
+    id_name: string,
     id: string,
-    updated: string,
-    expand: {}
+) {
+    const server_settings = await collection.getList<T>(undefined, undefined, {
+        filter: `${id_name} = "${id}"`
+    })
+    return server_settings.items.at(0);
 }
-
-export interface ServerSettingsParameters {
-    serverid?: string,
-    prefix?: string,
-    nsfw?: boolean,
-    self_quote?: boolean,
-}
-
-export interface ServerSettings extends ServerSettingsResult, ServerSettingsParameters { };

@@ -10,12 +10,13 @@ import config from "./config.json" assert { type: "json" };
 
 import { CommandModule, ExternalDependencies } from "./src/helpers/types.js";
 import { importDirectories } from "./src/helpers/misc/import.js";
-import { ServerSettings, ServerSettingsResult } from "./src/helpers/pb/pb.js";
+import { commandChannelAccess } from "./src/helpers/settings/command_scope.js";
+import { prefixChange } from "./src/helpers/settings/prefix.js";
 
 const __dirname = url.fileURLToPath(new URL('.', import.meta.url));
 
 const client = new Client({
-    intents: ["Guilds", "GuildMessages", "MessageContent"],
+    intents: ["Guilds", "GuildMessages", "MessageContent", "GuildIntegrations"],
 });
 const pb = new Pocketbase("http://127.0.0.1:8090");
 
@@ -23,6 +24,7 @@ const commands = new Collection<string, CommandModule>()
     .concat(
         (await importDirectories(__dirname, "/src/commands/")),
         (await importDirectories(__dirname, "/src/commands/specials/")),
+        (await importDirectories(__dirname, "/src/commands/settings/")),
     );
 const cooldowns = new Collection<string, Collection<string, number>>();
 
@@ -34,27 +36,16 @@ if (!settings.test)
 client.on("messageCreate", async (msg) => {
     if (msg.channel.type !== ChannelType.GuildText)
         return;
-    
-    // local prefix changing
-    const server_settings = await pb
-        .collection("server_settings")
-        .getList<ServerSettings>(undefined, undefined, {
-            filter: `serverid = "${msg.guildId}"`
-        });
-    let prefix = settings.test ? "!!" : "??";
-    if (server_settings.items.length !== 0) {
-        const server_prefix = server_settings.items[0].prefix;
-        if (server_prefix)
-            prefix = server_prefix;
-    }
 
-
-    if (!msg.content.startsWith(prefix))
-        return;
     if (msg.author.bot)
         return;
 
-    
+    // local prefix changing
+    const prefix = await prefixChange(pb, settings.test, msg.channel.guildId);
+
+    if (!msg.content.startsWith(prefix))
+        return;
+
     const c = msg.content.split(" ");
     const args = msg.content.split(" ");
     const name = c[0].replace(prefix, "");
@@ -63,6 +54,14 @@ client.on("messageCreate", async (msg) => {
 
     try {
         if (!command) return;
+        // scoping
+        if (name !== "set") {
+            const response = await commandChannelAccess(pb, name, msg.channel.id, msg.channel.guildId, prefix)
+            if (response)
+                msg.reply(response);
+        }
+
+        // cooldowns
         if (!cooldowns.has(command.name)) {
             cooldowns.set(command.name, new Collection());
         }
@@ -94,13 +93,13 @@ client.on("messageCreate", async (msg) => {
             }
         }
 
-        const cooldownAdditional = command.dyn_cooldown 
+        const cooldownAdditional = command.dyn_cooldown
             ? await command.dyn_cooldown(args) * 1000
             : 0;
-        
+
         timestamps?.set(author_id, now + cooldownAdditional + cooldownAmount);
         setTimeout(() => timestamps.delete(author_id), cooldownAmount + cooldownAdditional);
-        
+
         const ext: ExternalDependencies = {
             pb: pb,
             commands: commands,

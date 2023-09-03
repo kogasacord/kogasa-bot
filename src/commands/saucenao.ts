@@ -2,7 +2,6 @@ import sagiri from "sagiri";
 import { Client, Message } from "discord.js";
 
 import config from "../../config.json" assert { type: "json" };
-import mime from "mime-types";
 import { checkIfLink } from "../helpers/misc/link.js";
 
 const sauce = sagiri(config.saucenao_token, { results: 2 });
