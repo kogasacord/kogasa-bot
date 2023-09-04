@@ -12,8 +12,9 @@ export type CommandModule = {
         deps:      ExternalDependencies,
     ) => void,
     dyn_cooldown?: (args: string[])               => Promise<number>,
-    checker?:      (msg: Message, args: string[]) => Promise<boolean>,
-    special?:      boolean,
+    checker?:      (msg: Message, args: string[]) => Promise<boolean>, 
+    special?:      boolean, // currently does nothing
+    noscope?:      boolean, // avoids the scope check
 };
 
 export type ExternalDependencies = {

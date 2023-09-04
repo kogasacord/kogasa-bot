@@ -1,0 +1,1 @@
+// set a specific command to apply to all channels

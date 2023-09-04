@@ -55,7 +55,7 @@ client.on("messageCreate", async (msg) => {
     try {
         if (!command) return;
         // scoping
-        if (name !== "set") {
+        if (!command.noscope) {
             const response = await commandChannelAccess(pb, name, msg.channel.id, msg.channel.guildId, prefix)
             if (response)
                 msg.reply(response);
