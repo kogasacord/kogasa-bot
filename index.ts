@@ -2,7 +2,7 @@ import chalk from "chalk";
 import * as url from 'url';
 import Pocketbase from "pocketbase";
 
-import startup from "./src/startup.js";
+import { enableAutoDelete } from "./src/startup.js";
 import { Client, Collection, ChannelType, Message, ActivityType } from "discord.js";
 
 import settings from "./settings.json" assert { type: "json" };
@@ -31,7 +31,7 @@ const cooldowns = new Collection<string, Collection<string, number>>();
 console.log(`Imported ${chalk.bgGreen(`${commands.size} commands`)}.`)
 
 if (!settings.test)
-    await startup();
+    await enableAutoDelete();
 
 client.on("messageCreate", async (msg) => {
     if (msg.channel.type !== ChannelType.GuildText)
@@ -57,8 +57,10 @@ client.on("messageCreate", async (msg) => {
         // scoping
         if (!command.noscope) {
             const response = await commandChannelAccess(pb, name, msg.channel.id, msg.channel.guildId, prefix)
-            if (response)
+            if (response) {
                 msg.reply(response);
+                return;
+            }
         }
 
         // cooldowns
