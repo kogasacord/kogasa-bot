@@ -6,7 +6,7 @@ import { findThroughCollection } from "../../helpers/pb/pb.js";
 
 export const name = "set";
 export const cooldown = 5;
-export const description = "Settings for server owners or moderators to set. \`??set [command_name/\"all\"] [channel_id] [true/false]\`"
+export const description = "Settings for server owners or moderators to set. \`??set [command_name/\"all\"] [channel_id/\"all\"] [true/false]\`"
 export const noscope = true;
 export async function execute(
     client: Client,
@@ -29,6 +29,8 @@ export async function execute(
     const command_scopes = ext.pb.collection("command_scopes");
     const channel_ids = ext.pb.collection("channel_ids");
     const server_setting = await findThroughCollection<ServerSettings>(settings, "serverid", msg.channel.guildId);
+    const server_id = msg.channel.guild.id;
+    const guild = client.guilds.cache.get(server_id) ?? await client.guilds.fetch(server_id);
 
     if (!server_setting) { // init
         const re = await msg.reply(`Creating default settings.`);
@@ -38,30 +40,63 @@ export async function execute(
     }
 
     if (!selector) {
-        msg.reply(`Select a selector like so: \`??set ping [channel_id] [true/false]\``);
+        msg.reply(`Select a selector like so: \`??set ping [channel_id/\"all\"] [true/false]\``);
         return;
     }
     if (!(channel_id && isEnabled)) {
-        msg.reply(`\`??set [command_name/\"all\"] [channel_id] [true/false]\``);
+        msg.reply(`\`??set [command_name/\"all\"] [channel_id/\"all\"] [true/false]\``);
         return;
     }
 
+    /////////////// CERTAIN CHANNELS ///////////////
+    // ??set all 509430953 true
+    if (selector === "all") {
+        const isMatching = await checkMatchingServerChannelIDs(client, channel_id, msg.channel.guild.id)
+        if (!isMatching) {
+            msg.reply("Non-matching channelIDs and serverIDs, cheeky ain't ya?");
+            return;
+        }
+        const channel = guild.channels.cache.get(channel_id);
+        if (!channel) {
+            msg.reply("Invalid channel id.");
+            return;
+        }
+        let message = "";
+        for (const command of ext.commands) {
+            const command_name = command[0];
+            const scope = await createCommandScope(command_scopes, channel_ids, settings, command_name, channel_id, isEnabled, server_setting.id);
+            message = formatScope(scope)
+        }
+        msg.reply(message);
+        return;
+    }
+
+    ////////////// CERTAIN COMMANDS /////////////////
+    const command = ext.commands.get(selector);
+    if (!command) {
+        msg.reply("Command not found!");
+        return;
+    }
+
+    // ??set ping all true
+    if (channel_id === "all") {
+        for (const channel of guild.channels.cache) {
+            await createCommandScope(
+                command_scopes, channel_ids, settings,
+                command.name, channel[1].id, isEnabled, server_setting.id
+            )
+        }
+        msg.reply(`Activated \`${command.name}\` to every channel here.`);
+        return;
+    }
+
+    ////////////// DEFAULT //////////////
+    // ??set ping 483750943 true
     const isMatching = await checkMatchingServerChannelIDs(client, channel_id, msg.channel.guild.id)
     if (!isMatching) {
         msg.reply("Non-matching channelIDs and serverIDs, cheeky ain't ya?");
         return;
     }
-
-    if (selector === "all") {
-
-        return;
-    }
-
-    // ??set ping [channel_id] [true/false]
-    const command = ext.commands.get(selector);
-    if (!command)
-        return;
-    // if the channel id already exists in the channel_id collection
     const scope = await createCommandScope(
         command_scopes, channel_ids, settings,
         command.name, channel_id, isEnabled, server_setting.id
