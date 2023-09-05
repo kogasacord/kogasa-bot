@@ -1,8 +1,5 @@
+import Pocketbase from "pocketbase";
 import fetch from "node-fetch";
-
-export default async function startup() {
-    await enableAutoDelete();
-}
 
 // scripts to run on startup
 export async function enableAutoDelete() {
