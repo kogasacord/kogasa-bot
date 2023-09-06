@@ -1,5 +1,5 @@
 import { Client, Message, ChannelType, PermissionsBitField } from "discord.js";
-import { ExternalDependencies } from "../../helpers/types.js";
+import { CommandModule, ExternalDependencies } from "../../helpers/types.js";
 import { ChannelIDsSettings, CommandSettings, ServerSettings, ServerSettingsParameters } from "../../helpers/pb/types.js";
 import { RecordService } from "pocketbase";
 import { findThroughCollection } from "../../helpers/pb/pb.js";
@@ -47,61 +47,44 @@ export async function execute(
         msg.reply(`\`??set [command_name/\"all\"] [channel_id/\"all\"] [true/false]\``);
         return;
     }
-
-    /////////////// CERTAIN CHANNELS ///////////////
-    // ??set all 509430953 true
+    const commands: CommandModule[] = [];
     if (selector === "all") {
-        const isMatching = await checkMatchingServerChannelIDs(client, channel_id, msg.channel.guild.id)
-        if (!isMatching) {
-            msg.reply("Non-matching channelIDs and serverIDs, cheeky ain't ya?");
-            return;
-        }
-        const channel = guild.channels.cache.get(channel_id);
-        if (!channel) {
-            msg.reply("Invalid channel id.");
-            return;
-        }
-        let message = "";
         for (const command of ext.commands) {
-            const command_name = command[0];
-            const scope = await createCommandScope(command_scopes, channel_ids, settings, command_name, channel_id, isEnabled, server_setting.id);
-            message = formatScope(scope)
+            commands.push(command[1]);
         }
-        msg.reply(message);
-        return;
+    } else {
+        const command = ext.commands.get(selector);
+        if (!command) {
+            msg.reply("Command not found!");
+            return;
+        }
+        commands.push(command);
     }
 
-    ////////////// CERTAIN COMMANDS /////////////////
-    const command = ext.commands.get(selector);
-    if (!command) {
-        msg.reply("Command not found!");
-        return;
-    }
-
-    // ??set ping all true
     if (channel_id === "all") {
-        for (const channel of guild.channels.cache) {
-            await createCommandScope(
-                command_scopes, channel_ids, settings,
-                command.name, channel[1].id, isEnabled, server_setting.id
-            )
+        for (const command of commands) {
+            for (const channel of guild.channels.cache) {
+                await createCommandScope(
+                    command_scopes, channel_ids, settings,
+                    command.name, channel[1].id, isEnabled, server_setting.id
+                )
+            }
+            msg.reply(`Activated \`${command.name}\` to every channel here.`);
         }
-        msg.reply(`Activated \`${command.name}\` to every channel here.`);
-        return;
+    } else {
+        const isMatching = await checkMatchingServerChannelIDs(client, channel_id, msg.channel.guild.id);
+        if (!isMatching) {
+            msg.reply("Non-matching serverIDs and channelIDs, cheeky.")
+            return;
+        }
+        for (const command of commands) {
+            const scope = await createCommandScope(
+                command_scopes, channel_ids, settings,
+                command.name, channel_id, isEnabled, server_setting.id
+            );
+            msg.reply(`Aactivated ${formatScope(scope)} into this channel.`)
+        }
     }
-
-    ////////////// DEFAULT //////////////
-    // ??set ping 483750943 true
-    const isMatching = await checkMatchingServerChannelIDs(client, channel_id, msg.channel.guild.id)
-    if (!isMatching) {
-        msg.reply("Non-matching channelIDs and serverIDs, cheeky ain't ya?");
-        return;
-    }
-    const scope = await createCommandScope(
-        command_scopes, channel_ids, settings,
-        command.name, channel_id, isEnabled, server_setting.id
-    );
-    msg.reply(formatScope(scope))
 }
 
 async function createCommandScope(
