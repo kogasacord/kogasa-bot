@@ -71,7 +71,7 @@ export async function execute(
             }
         }
 
-        msg.reply(`Activated \`${commands.join(", ")}\` to every channel here.`);
+        msg.reply(`Activated \`${commands.map(c => c.name).join(", ")}\` to every channel here.`);
     } else {
         const isMatching = await checkMatchingServerChannelIDs(client, channel_id, msg.channel.guild.id);
         if (!isMatching) {
