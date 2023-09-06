@@ -23,7 +23,7 @@ export async function execute(
 
     const selector = args.at(0);
     const channel_id = args.at(1);
-    const isEnabled = args.at(2);
+    const isEnabledStr = args.at(2);
 
     const settings = ext.pb.collection("server_settings");
     const command_scopes = ext.pb.collection("command_scopes");
@@ -43,10 +43,13 @@ export async function execute(
         msg.reply(`Select a selector like so: \`??set ping [channel_id/\"all\"] [true/false]\``);
         return;
     }
-    if (!(channel_id && isEnabled)) {
+    if (!(channel_id && isEnabledStr)) {
         msg.reply(`\`??set [command_name/\"all\"] [channel_id/\"all\"] [true/false]\``);
         return;
     }
+
+    const isEnabled = isEnabledStr.toLowerCase() === "true"
+
     const commands: CommandModule[] = [];
     if (selector === "all") {
         for (const command of ext.commands) {
@@ -71,20 +74,22 @@ export async function execute(
             }
         }
 
-        msg.reply(`Activated \`${commands.map(c => c.name).join(", ")}\` to every channel here.`);
+        msg.reply(`${isEnabled ? "Activated" : "Disabled"} \`${commands.map(c => c.name).join(", ")}\` to every channel here.`);
     } else {
         const isMatching = await checkMatchingServerChannelIDs(client, channel_id, msg.channel.guild.id);
         if (!isMatching) {
             msg.reply("Non-matching serverIDs and channelIDs, cheeky.")
             return;
         }
+        let message = "";
         for (const command of commands) {
             const scope = await createCommandScope(
                 command_scopes, channel_ids, settings,
                 command.name, channel_id, isEnabled, server_setting.id
             );
-            msg.reply(`Aactivated ${formatScope(scope)} into this channel.`)
+            message = `${isEnabled ? "Activated" : "Disabled"} \`${formatScope(scope)}\` into this channel.`;
         }
+        msg.reply(message)
     }
 }
 
@@ -94,19 +99,19 @@ async function createCommandScope(
     settings: RecordService,
     command_name: string,
     channel_id: string,
-    isEnabled: string,
+    isEnabled: boolean,
     server_setting_id: string,
 ) {
     const channel = await findThroughCollection<ChannelIDsSettings>(channel_ids, "channel_id", channel_id)
     if (channel) {
         const channel_record = await channel_ids.getOne<ChannelIDsSettings<CommandSettings>>(channel.id, { expand: "command_scope" });
         const scope = await command_scopes.update(channel_record.expand.command_scope.id, {
-            [command_name]: isEnabled.toLowerCase() === "true"
+            [command_name]: isEnabled
         });
         return scope;
     } else {
         const scope = await command_scopes.create<CommandSettings>({
-            [command_name]: isEnabled.toLowerCase() === "true"
+            [command_name]: isEnabled
         });
         const channel_id_record = await channel_ids.create<ChannelIDsSettings>({
             channel_id: channel_id,
@@ -129,7 +134,7 @@ async function initializeSettings(settings: RecordService, guildID: string) {
 }
 
 function formatScope(scope: CommandSettings) {
-    let beginning = "Activated: ";
+    let beginning = "";
     Object.entries(scope).forEach(v => {
         if (v[1] === true)
             beginning += `${v[0]}, `;
