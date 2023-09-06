@@ -7,8 +7,6 @@ export const description = "Google."
 export async function execute(client: Client, msg: Message, args: string[]) {
     if (msg.channel.type !== ChannelType.GuildText) 
         return;
-    if (!["1122567341071409212", "1133972960122769438"].includes(msg.channelId))
-        return;
 
     const buffered: string[] = [];
 

@@ -29,8 +29,3 @@ export async function execute(client: Client, msg: Message, args: string[]) {
     }
 }
 
-export async function checker(msg: Message, args: string[]): Promise<boolean> {
-    if (!["1122567341071409212", "1133972960122769438"].includes(msg.channelId))
-        return false;
-    return true;
-}
