@@ -1,4 +1,5 @@
 import Pocketbase from "pocketbase";
+import {findThroughCollection} from "../pb/pb.js";
 import { ServerSettings } from "../pb/types.js";
 
 export async function prefixChange(
@@ -7,14 +8,9 @@ export async function prefixChange(
     guildID: string
 ) {
     let prefix = test ? "!!" : "??";
-
-    const server_settings = await pb
-        .collection("server_settings")
-        .getList<ServerSettings>(undefined, undefined, {
-            filter: `serverid = "${guildID}"`
-        });
-    if (server_settings.items.length !== 0) {
-        const server_prefix = server_settings.items[0].prefix;
+    const server_settings = await findThroughCollection<ServerSettings>(pb.collection("server_settings"), "serverid", guildID)
+    if (server_settings) {
+        const server_prefix = server_settings.prefix;
         if (server_prefix)
             prefix = server_prefix;
     }
