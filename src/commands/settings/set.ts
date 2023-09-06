@@ -69,8 +69,9 @@ export async function execute(
                     command.name, channel[1].id, isEnabled, server_setting.id
                 )
             }
-            msg.reply(`Activated \`${command.name}\` to every channel here.`);
         }
+
+        msg.reply(`Activated \`${commands.join(", ")}\` to every channel here.`);
     } else {
         const isMatching = await checkMatchingServerChannelIDs(client, channel_id, msg.channel.guild.id);
         if (!isMatching) {
