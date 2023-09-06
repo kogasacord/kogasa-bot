@@ -5,6 +5,7 @@ export const name = "help";
 export const cooldown = 20;
 export const special = true;
 export const description = "Check what I can do."
+export const noscope = true;
 export async function execute(
     client: Client,
     msg: Message,
