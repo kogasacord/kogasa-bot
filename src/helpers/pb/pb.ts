@@ -6,7 +6,8 @@ export async function findThroughCollection<T>(
     id: string,
 ) {
     const server_settings = await collection.getList<T>(undefined, undefined, {
-        filter: `${id_name} = "${id}"`
+        filter: `${id_name} = "${id}"`,
+        $autoCancel: true,
     })
     return server_settings.items.at(0);
 }
