@@ -2,9 +2,11 @@ import Pocketbase from "pocketbase"
 import { Client, Message, Collection } from "discord.js";
 
 export type CommandModule = { 
-    name:         string,
-    description?: string,
-    cooldown:     number,
+    name:           string,
+    usage?:         string,
+    extended_desc?: string,
+    description?:   string,
+    cooldown:       number,
     execute: (
         client:    Client, 
         msg:       Message, 
