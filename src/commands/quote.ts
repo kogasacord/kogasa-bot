@@ -4,7 +4,7 @@ import { quoteAttachment } from "../helpers/quote/attachment.js";
 import { quoteDefault } from "../helpers/quote/default.js";
 
 export const name = "quote";
-export const cooldown = 90;
+export const cooldown = 5;
 export const description = "Reply to someone and capture a.. suspicious message."
 export async function execute(client: Client, msg: Message) {
     if (msg.channel.type !== ChannelType.GuildText)
