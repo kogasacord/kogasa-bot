@@ -22,6 +22,7 @@ export async function execute(client: Client, msg: Message, args: string[]) {
     const info = await getInfo(requested_link);
     if (info.size_mbytes === undefined) {
         msg.reply(`An internal error has occured with getting info.`);
+        processing_users.splice(index_of_processing_user, 1);
         return;
     }
     msg.reply(`Downloading \`${info.file}\` from \`${info.uploader}\` with an estimate of \`${humanize(info.duration * 1000)}\``)
@@ -29,12 +30,14 @@ export async function execute(client: Client, msg: Message, args: string[]) {
     const dl = await downloadVideo(requested_link, format_id);
     if (dl.filename === undefined) {
         msg.reply(`An internal error has occured with downloading.`);
+        processing_users.splice(index_of_processing_user, 1);
         return; // its an error
     }
 
     const up = await uploadVideo(dl.filename, dl.mimetype);
     if (up.content === undefined) {
         msg.reply(`An internal error has occured with uploading.`);
+        processing_users.splice(index_of_processing_user, 1);
         return;
     }
     msg.reply(`The video you requested \`${up.name}\` has been served at ${up.view}.` + 
