@@ -1,4 +1,5 @@
 import sagiri from "sagiri";
+import mimetype from "mime-types";
 import { Client, Message } from "discord.js";
 
 import config from "../../config.json" assert { type: "json" };
@@ -33,6 +34,11 @@ export async function execute(client: Client, msg: Message, args: string[]) {
         const replied = await msg.channel.messages.fetch(msg.reference.messageId);
         const first_attachment = replied.attachments.at(0);
         if (first_attachment) {
+            const mime_lookup = mimetype.lookup(first_attachment.url)
+            if (mime_lookup) {
+                mime_lookup.match(/image\/.+/)
+            }
+
             const sources = await sauce(first_attachment.url);
             for (const source of sources)
                 response += `- \`${source.authorName}\` posted to \`${source.site}\` [<${source.url}>] with a \`${source.similarity}\`pt.\n`;
