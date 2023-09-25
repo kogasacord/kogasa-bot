@@ -36,7 +36,11 @@ export async function execute(client: Client, msg: Message, args: string[]) {
         if (first_attachment) {
             const mime_lookup = mimetype.lookup(first_attachment.url)
             if (mime_lookup) {
-                mime_lookup.match(/image\/.+/)
+                const match = mime_lookup.match(/image\/.+/);
+                if (!match?.[0]) {
+                    msg.reply("You given me a non-image.")
+                    return;
+                }
             }
 
             const sources = await sauce(first_attachment.url);
