@@ -11,16 +11,17 @@ type Tier = {
 } & JSONObject
 
 const tiers = new Map<string, Tier>([
-    ["C", { chance: 60, name: "Common", emote: ":cd:" }],
-    ["UC", { chance: 90, name: "Uncommon", emote: ":comet:" }],
-    ["R", { chance: 100, name: "Rare", emote: ":sparkles:" }]
+    ["C", { chance: 100, name: "Common", emote: ":cd:" }], // 100 - 54
+    ["UC", { chance: 54, name: "Uncommon", emote: ":comet:" }], // 54 - 25
+    ["R", { chance: 25, name: "Rare", emote: ":sparkles:" }], // 25 - 7
+    ["SR", { chance: 7, name: "Super Rare", emote: ":sparkles::camping:" }] // 7 - 1
 ])
 
 const websites = await grabAllRandomWebsites("./media/randomweb.jsonl") // this is not safe.
 
 export const name = "randomweb";
 export const cooldown = 30;
-export const description = "Sends a random website to you, scaled by rarity."
+export const description = "Sends a random website to you, scaled by rarity. The more rare it is, the more obscure (or goofy) the website is. Goes from Common to Super Rare."
 export async function execute(client: Client, msg: Message, args: string[]) {
     const gacha = gachaSpecificWebsite(websites, tiers);
     if (gacha) {
