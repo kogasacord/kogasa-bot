@@ -18,7 +18,7 @@ const tiers = new Map<string, Tier>([
     ["SR", { chance: 5, name: "Super Rare", emote: ":sparkles::camping:" }]
 ])
 
-const websites = await grabAllRandomWebsites("../../media/randomweb.jsonl") // this is not safe.
+const websites = await grabAllRandomWebsites("./media/randomweb.jsonl") // this is not safe.
 
 export const name = "randomweb";
 export const cooldown = 30;
