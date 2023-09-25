@@ -12,9 +12,9 @@ type Tier = {
 
 const tiers = new Map<string, Tier>([
     ["C", { chance: 100, name: "Common", emote: ":cd:" }], // 100 - 54
-    ["UC", { chance: 54, name: "Uncommon", emote: ":comet:" }], // 54 - 25
-    ["R", { chance: 25, name: "Rare", emote: ":sparkles:" }], // 25 - 7
-    ["SR", { chance: 7, name: "Super Rare", emote: ":sparkles::camping:" }] // 7 - 1
+    ["UC", { chance: 63, name: "Uncommon", emote: ":comet:" }], // 54 - 25
+    ["R", { chance: 32, name: "Rare", emote: ":sparkles:" }], // 25 - 7
+    ["SR", { chance: 10, name: "Super Rare", emote: ":sparkles::camping:" }] // 7 - 1
 ])
 
 const websites = await grabAllRandomWebsites("./media/randomweb.jsonl") // this is not safe.
@@ -33,7 +33,16 @@ export async function execute(client: Client, msg: Message, args: string[]) {
         )
     }
 }
-
+/*
+for (let index = 0; index < 100; index++) {
+    const rannum = getRandomInt(1, 100);
+    for (const rarity of tiers.keys()) {
+        if (rannum <= tiers.get(rarity)!.chance) {
+            process.stdout.write(rarity + " ")
+        }
+    }
+}
+*/
 function gachaSpecificWebsite(
     websites: { rarity: string, site: string }[],
     chances: Map<string, Tier>
