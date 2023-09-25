@@ -10,14 +10,15 @@ type Tier = {
     emote: string
 } & JSONObject
 
+// by percentage to 100%
 const tiers = new Map<string, Tier>([
-    ["C", { chance: 100, name: "Common", emote: ":cd:" }], // 100 - 54
-    ["UC", { chance: 63, name: "Uncommon", emote: ":comet:" }], // 54 - 25
-    ["R", { chance: 32, name: "Rare", emote: ":sparkles:" }], // 25 - 7
-    ["SR", { chance: 10, name: "Super Rare", emote: ":sparkles::camping:" }] // 7 - 1
+    ["C", { chance: 60, name: "Common", emote: ":cd:" }],
+    ["UC", { chance: 40, name: "Uncommon", emote: ":comet:" }],
+    ["R", { chance: 20, name: "Rare", emote: ":sparkles:" }],
+    ["SR", { chance: 5, name: "Super Rare", emote: ":sparkles::camping:" }]
 ])
 
-const websites = await grabAllRandomWebsites("./media/randomweb.jsonl") // this is not safe.
+const websites = await grabAllRandomWebsites("../../media/randomweb.jsonl") // this is not safe.
 
 export const name = "randomweb";
 export const cooldown = 30;
@@ -33,16 +34,7 @@ export async function execute(client: Client, msg: Message, args: string[]) {
         )
     }
 }
-/*
-for (let index = 0; index < 100; index++) {
-    const rannum = getRandomInt(1, 100);
-    for (const rarity of tiers.keys()) {
-        if (rannum <= tiers.get(rarity)!.chance) {
-            process.stdout.write(rarity + " ")
-        }
-    }
-}
-*/
+
 function gachaSpecificWebsite(
     websites: { rarity: string, site: string }[],
     chances: Map<string, Tier>
