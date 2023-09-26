@@ -1,5 +1,6 @@
 import fs from "fs";
 import readline from "readline";
+import chalk from "chalk";
 import { getRandomInt } from "../helpers/misc/random.js";
 import { Client, Message } from "discord.js";
 
@@ -12,10 +13,10 @@ type Tier = {
 
 // by percentage to 100%
 const tiers = new Map<string, Tier>([
-    ["C", { chance: 60, name: "Common", emote: ":cd:" }],
-    ["UC", { chance: 40, name: "Uncommon", emote: ":comet:" }],
-    ["R", { chance: 20, name: "Rare", emote: ":sparkles:" }],
-    ["SR", { chance: 5, name: "Super Rare", emote: ":sparkles::camping:" }]
+    ["C", { chance: 40, name: "Common", emote: ":cd:" }], // implement low_chance and high_chance to compare together
+    ["UC", { chance: 70, name: "Uncommon", emote: ":comet:" }],
+    ["R", { chance: 90, name: "Rare", emote: ":sparkles:" }],
+    ["SR", { chance: 100, name: "Super Rare", emote: ":sparkles::camping:" }]
 ])
 
 const websites = await grabAllRandomWebsites("./media/randomweb.jsonl") // this is not safe.
@@ -40,15 +41,15 @@ function gachaSpecificWebsite(
     chances: Map<string, Tier>
 ) {
     const rannum = getRandomInt(1, 100);
-
-    for (const rarity of chances.keys()) {
-        const rarity_value = chances.get(rarity);
+    
+    for (const rarity_name of chances.keys()) {
+        const rarity_value = chances.get(rarity_name);
 
         if (!rarity_value) {
             throw Error("Something went wrong with grabbing rarity from the \"Tiers\" Hashmap.");
         }
         if (rannum <= rarity_value.chance) {
-            const rarity_websites = websites.filter((v) => v.rarity === rarity);
+            const rarity_websites = websites.filter((v) => v.rarity === rarity_name);
             return {
                 website: rarity_websites[getRandomInt(0, rarity_websites.length - 1)],
                 rarity_name: rarity_value.name,
