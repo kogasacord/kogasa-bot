@@ -18,9 +18,19 @@ export type CommandModule = {
     special?:      boolean, // currently does nothing
     noscope?:      boolean, // avoids the scope check
 };
-
 export type ExternalDependencies = {
     pb: Pocketbase,
     commands: Collection<string, CommandModule>,
     prefix:   string,
+    external_data: any[]
 }
+export type JSONObject = { [a: string]: any }
+export type Tier = {
+    chance: number,
+    name: string,
+    emote: string
+} & JSONObject
+export type Websites = {
+    rarity: string;
+    site: string;
+}[]
