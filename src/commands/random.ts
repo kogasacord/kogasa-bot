@@ -14,7 +14,7 @@ export async function execute(client: Client, msg: Message, args: string[], exte
     const tiers: Map<string, Tier> = external_data.external_data[1];
     const gacha = gachaSpecificWebsite(websites, tiers);
     if (gacha) {
-        msg.reply(`${gacha.rarity_emote} ||<${gacha.website.site}>|| (${gacha.website.rarity} | ${gacha.rarity_name})`)
+        msg.reply(`:package: ||${gacha.rarity_emote} <${gacha.website.site}>|| (${gacha.website.rarity} | ${gacha.rarity_name})`)
     } else {
         msg.reply(
             `I have no idea what happened to the random number generator if this message shows up.` + 
