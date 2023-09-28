@@ -1,33 +1,20 @@
-import fs from "fs";
-import readline from "readline";
 import chalk from "chalk";
 import { getRandomInt } from "../helpers/misc/random.js";
 import { Client, Message } from "discord.js";
-
-type JSONObject = { [a: string]: any }
-type Tier = {
-    chance: number,
-    name: string,
-    emote: string
-} & JSONObject
+import { ExternalDependencies, Tier, Websites } from "../helpers/types.js";
 
 // by percentage to 100%
-const tiers = new Map<string, Tier>([
-    ["C", { chance: 40, name: "Common", emote: ":cd:" }], // implement low_chance and high_chance to compare together
-    ["UC", { chance: 70, name: "Uncommon", emote: ":comet:" }],
-    ["R", { chance: 90, name: "Rare", emote: ":sparkles:" }],
-    ["SR", { chance: 100, name: "Super Rare", emote: ":sparkles::camping:" }]
-])
-
-const websites = await grabAllRandomWebsites("./media/randomweb.jsonl") // this is not safe.
+// https://www.desmos.com/calculator/veqgifgo8z
 
 export const name = "randomweb";
 export const cooldown = 30;
 export const description = "Sends a random website to you, scaled by rarity. The more rare it is, the more obscure (or goofy) the website is. Goes from Common to Super Rare."
-export async function execute(client: Client, msg: Message, args: string[]) {
+export async function execute(client: Client, msg: Message, args: string[], external_data: ExternalDependencies) {
+    const websites: Websites = external_data.external_data[0];
+    const tiers: Map<string, Tier> = external_data.external_data[1];
     const gacha = gachaSpecificWebsite(websites, tiers);
     if (gacha) {
-        msg.reply(`${gacha.rarity_emote} <${gacha.website.site}> (${gacha.website.rarity} | ${gacha.rarity_name})`)
+        msg.reply(`${gacha.rarity_emote} ||<${gacha.website.site}>|| (${gacha.website.rarity} | ${gacha.rarity_name})`)
     } else {
         msg.reply(
             `I have no idea what happened to the random number generator if this message shows up.` + 
@@ -58,17 +45,4 @@ function gachaSpecificWebsite(
             }
         }
     }
-}
-
-function grabAllRandomWebsites(path: string) {
-    return new Promise<{ rarity: string, site: string }[]>((res, rej) => {
-        const sites: { rarity: string, site: string }[] = []
-        const readInterface = readline.createInterface({
-            input: fs.createReadStream(path),
-        });
-        readInterface.on('line', (input) => {
-            sites.push(JSON.parse(input))
-        });
-        readInterface.on('close', () => { res(sites) });
-    })
 }

@@ -1,5 +1,6 @@
 import chalk from "chalk";
 import * as url from 'url';
+import path from "path";
 import Pocketbase from "pocketbase";
 
 import { enableAutoDelete } from "./src/startup.js";
@@ -8,10 +9,11 @@ import { Client, Collection, ChannelType, Message, ActivityType } from "discord.
 import settings from "./settings.json" assert { type: "json" };
 import config from "./config.json" assert { type: "json" };
 
-import { CommandModule, ExternalDependencies } from "./src/helpers/types.js";
+import { CommandModule, ExternalDependencies, Tier } from "./src/helpers/types.js";
 import { importDirectories } from "./src/helpers/misc/import.js";
 import { commandChannelAccess } from "./src/helpers/settings/command_scope.js";
 import { prefixChange } from "./src/helpers/settings/prefix.js";
+import { grabAllRandomWebsites } from "./src/helpers/misc/random.js";
 
 const __dirname = url.fileURLToPath(new URL('.', import.meta.url));
 
@@ -27,8 +29,15 @@ const commands = new Collection<string, CommandModule>()
         (await importDirectories(__dirname, "/src/commands/settings/")),
     );
 const cooldowns = new Collection<string, Collection<string, number>>();
-
 console.log(`Imported ${chalk.bgGreen(`${commands.size} commands`)}.`)
+const websites = await grabAllRandomWebsites(path.join(__dirname, "./media/randomweb.jsonl"))
+console.log(`Imported ${websites.length} websites.`)
+const tiers = new Map<string, Tier>([
+    ["C", { chance: 45, name: "Common", emote: ":cd:" }], // implement low_chance and high_chance to compare together
+    ["UC", { chance: 77, name: "Uncommon", emote: ":comet:" }],
+    ["R", { chance: 94, name: "Rare", emote: ":sparkles:" }],
+    ["SR", { chance: 100, name: "Super Rare", emote: ":sparkles::camping:" }]
+])
 
 if (!settings.test)
     await enableAutoDelete();
@@ -105,7 +114,8 @@ client.on("messageCreate", async (msg) => {
         const ext: ExternalDependencies = {
             pb: pb,
             commands: commands,
-            prefix: prefix
+            prefix: prefix,
+            external_data: [websites, tiers]
         }
         command.execute(client, msg, args, ext);
     } catch (err) {
