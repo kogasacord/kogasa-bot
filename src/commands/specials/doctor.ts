@@ -16,6 +16,7 @@ export async function execute(
     const doctor_results = {
         ytdl_server_on:   false,
         canvas_server_on: false,
+        llama2b_server_on: false,
     }
     try {
         await getInfo("https://www.youtube.com/watch?v=vQHVGXdcqEQ");
@@ -31,10 +32,29 @@ export async function execute(
         doctor_results.canvas_server_on = false;
     }
 
+    try {
+        await pingLlama2B()
+        doctor_results.llama2b_server_on = true;
+    } catch (err) {
+        doctor_results.llama2b_server_on = false;
+    }
+
     msg.reply(
         `## Eirin's Diagnosis:\n`
             + `\`YTDL Server\`: ${doctor_results.ytdl_server_on ? "ON" : "OFF"}\n`
             + `\`Canvas\`: ${doctor_results.canvas_server_on ? "ON" : "OFF"}`
     );
+}
+
+
+export async function pingLlama2B() {
+    const llama = await fetch("http://localhost:5000/ping", {
+        method: "GET",
+        headers: {
+            "Content-Type": "application/json",
+            "Accept": "application/json",
+        },
+    });
+    return await llama.json() as { response: string };
 }
 // check the different HTTPS and commands
