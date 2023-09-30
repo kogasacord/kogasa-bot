@@ -5,6 +5,9 @@ export const name = "chat";
 export const cooldown = 40;
 export const description = "Chat with Kogasa! (Model: Base Llama2 7B)"
 export async function execute(client: Client, msg: Message, args: string[]) {
+    msg.reply("This feature is currently disabled so I can scope message history for users only.")
+    return;
+
     const user_message = args.join(" ");
     if (user_message.length <= 0) {
         msg.reply("Send me a message!")
