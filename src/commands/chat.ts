@@ -74,7 +74,6 @@ export async function execute(client: Client, msg: Message, args: string[], exte
         // pushing the ids into message_pb_id_buffer to get processed by queue_simulate
         message_id_pb_buffer.push(pb_msg.id)
     }
-    console.log(message_history);
 
     // message_id_pb_buffer gets reduced to MAX_LENGTH if there's too much messages, simulating a queue.
     // the function automatically deletes the reduced messages.
@@ -84,7 +83,7 @@ export async function execute(client: Client, msg: Message, args: string[], exte
     
     processing_users.splice(index_of_processing_user, 1);
      
-    await msg.reply(JSON.stringify([...message_history, ...current_message_buffer]));
+    await msg.reply(llama_response.response);
     // msg.reply(JSON.stringify([...message_history, ...current_message_buffer]))
 }
 
