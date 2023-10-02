@@ -42,6 +42,8 @@ export async function execute(client: Client, msg: Message, args: string[], exte
     const user = await findThroughCollection<PBUsers>(users, "user_id", msg.author.id);
 
     processing_users.push(msg.author.id)
+    message_history.push({ role: "system", content: "Reply as Youmu Konpaku. Direct, serious, cold, disciplined. Reply in 2 sentences only." })
+
 
     if (!user) {
         await users.create({ user_id: msg.author.id })
@@ -72,6 +74,8 @@ export async function execute(client: Client, msg: Message, args: string[], exte
         // pushing the ids into message_pb_id_buffer to get processed by queue_simulate
         message_id_pb_buffer.push(pb_msg.id)
     }
+    console.log(message_history);
+
     // message_id_pb_buffer gets reduced to MAX_LENGTH if there's too much messages, simulating a queue.
     // the function automatically deletes the reduced messages.
     const message_id_pb_queued_buffer = await queue_simulate(messages, message_id_pb_buffer, MAX_LENGTH);
@@ -80,7 +84,7 @@ export async function execute(client: Client, msg: Message, args: string[], exte
     
     processing_users.splice(index_of_processing_user, 1);
      
-    await msg.reply(llama_response.response);
+    await msg.reply(JSON.stringify([...message_history, ...current_message_buffer]));
     // msg.reply(JSON.stringify([...message_history, ...current_message_buffer]))
 }
 
