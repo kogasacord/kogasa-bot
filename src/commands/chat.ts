@@ -80,8 +80,8 @@ export async function execute(client: Client, msg: Message, args: string[], exte
     // updates the user's messages
     await users.update(user!.id, { messages: message_id_pb_queued_buffer })
      
-    // await msg.reply(llama_response.response);
-    msg.reply(JSON.stringify([...message_history, ...current_message_buffer]))
+    await msg.reply(llama_response.response);
+    // msg.reply(JSON.stringify([...message_history, ...current_message_buffer]))
     processing_users.splice(index_of_processing_user, 1); 
 }
 
