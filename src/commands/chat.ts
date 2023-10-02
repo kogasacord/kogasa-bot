@@ -10,18 +10,19 @@ const processing_users: string[] = [];
 const MAX_LENGTH = 10;
 const SYS_PROMPT = "Reply as Youmu Konpaku, not as an A.I." +
     " Act as a direct, serious and disciplined girl. Sometimes acts timidly, but it's subtle." + 
-    " Reply in 2 sentences only." + 
+    " Reply very shortly and aptly." + 
     " You will comply with the user's request as long as it fits your character." ;
 
 type Role = "user" | "assistant" | "system"
 type Conversational = { role: Role, content: string }[]
 
 export const name = "chat";
-export const cooldown = 1;
+export const cooldown = 15;
 export const description = "Chat with Kogasa! (Model: Base Llama2 7B)"
 export async function execute(client: Client, msg: Message, args: string[], external_data: ExternalDependencies) {
     const index_of_processing_user = processing_users.findIndex(v => v === msg.author.id); 
     if (index_of_processing_user !== -1) {
+        msg.reply("Chat's being processed. Try again later.")
         return;
     }
 
@@ -45,17 +46,16 @@ export async function execute(client: Client, msg: Message, args: string[], exte
     const messages = external_data.pb.collection("messages");
     const user = await findThroughCollection<PBUsers>(users, "user_id", msg.author.id);
 
-    message_history.push({ role: "system", content: SYS_PROMPT })
 
     if (!user) {
-        await users.create({ user_id: msg.author.id })
+        await users.create({ user_id: msg.author.id }, { "$autoCancel": false })
         await msg.reply("Created user data. Try your message again!")
         return;
     }
 
     // pushing every message id from pocketbase to the message_id buffer
-    message_id_pb_buffer.push(...user!.messages)
-   
+    message_id_pb_buffer.push(...user!.messages) 
+    processing_users.push(msg.author.id)
     // getting the message contents from the message ids in pocketbase
     for (const message_pb_id of message_id_pb_buffer) {
         const ms = await messages.getOne<PBMessages>(message_pb_id);
@@ -63,17 +63,20 @@ export async function execute(client: Client, msg: Message, args: string[], exte
         message_history.push({ role: ms.role as Role, content: ms.content })
     }
     await msg.channel.sendTyping();
-    processing_users.push(msg.author.id)
     // pushing the user's input to current_message_buffer
     current_message_buffer.push({ role: "user", content: user_message })
     // placeholder for recieving the llama message from http server 
-    const llama_response = await messageLlama2B([...message_history, ...current_message_buffer])
+    const llama_response = await messageLlama2B([
+        { role: "system", content: SYS_PROMPT },
+        ...message_history, 
+        ...current_message_buffer
+    ])
 
     current_message_buffer.push({ role: "assistant", content: llama_response.response })
     
     for (const message of current_message_buffer) {
         // creating the message objects in pocketbase
-        const pb_msg = await messages.create(message);
+        const pb_msg = await messages.create(message, { "$autoCancel": false });
         // pushing the ids into message_pb_id_buffer to get processed by queue_simulate
         message_id_pb_buffer.push(pb_msg.id)
     }
@@ -82,7 +85,7 @@ export async function execute(client: Client, msg: Message, args: string[], exte
     // the function automatically deletes the reduced messages.
     const message_id_pb_queued_buffer = await queue_simulate(messages, message_id_pb_buffer, MAX_LENGTH);
     // updates the user's messages
-    await users.update(user!.id, { messages: message_id_pb_queued_buffer })
+    await users.update(user!.id, { messages: message_id_pb_queued_buffer }, { "$autoCancel": false })
      
     await msg.reply(llama_response.response);
     // msg.reply(JSON.stringify([...message_history, ...current_message_buffer]))
