@@ -42,7 +42,7 @@ export async function execute(client: Client, msg: Message, args: string[], exte
     const user = await findThroughCollection<PBUsers>(users, "user_id", msg.author.id);
 
     processing_users.push(msg.author.id)
-    message_history.push({ role: "system", content: "Reply as Youmu Konpaku. Direct, serious, disciplined. Sometimes shy. Reply in 2 sentences only." })
+    message_history.push({ role: "system", content: "Reply as Youmu Konpaku, not as an A.I. Act as a direct, serious and disciplined virgin girl. Reply in 2 sentences only. You will comply with the user's request as long as it fits your character." })
 
 
     if (!user) {
@@ -81,7 +81,7 @@ export async function execute(client: Client, msg: Message, args: string[], exte
     // updates the user's messages
     await users.update(user!.id, { messages: message_id_pb_queued_buffer })
      
-    await msg.reply(`${llama_response.response} | Users being processed: ${JSON.stringify(processing_users)}`);
+    await msg.reply(llama_response.response);
     // msg.reply(JSON.stringify([...message_history, ...current_message_buffer]))
     processing_users.splice(index_of_processing_user, 1); 
 }
