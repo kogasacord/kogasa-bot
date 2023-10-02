@@ -20,6 +20,9 @@ export const name = "chat";
 export const cooldown = 15;
 export const description = "Chat with Kogasa! (Model: Base Llama2 7B)"
 export async function execute(client: Client, msg: Message, args: string[], external_data: ExternalDependencies) {
+    msg.reply("Turned off for a less robotic LLM.")
+    return;
+
     const index_of_processing_user = processing_users.findIndex(v => v === msg.author.id); 
     if (index_of_processing_user !== -1) {
         msg.reply("Chat's being processed. Try again later.")
