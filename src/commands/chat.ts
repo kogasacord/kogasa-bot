@@ -75,7 +75,7 @@ export async function execute(client: Client, msg: Message, args: string[], exte
     // the function automatically deletes the reduced messages.
     const message_id_pb_queued_buffer = await queue_simulate(messages, message_id_pb_buffer, MAX_LENGTH);
     // updates the user's messages
-    await users.update(user.id, { messages: message_id_pb_queued_buffer })
+    await users.update(user!.id, { messages: message_id_pb_queued_buffer })
     
     processing_users.splice(index_of_processing_user, 1);
      
