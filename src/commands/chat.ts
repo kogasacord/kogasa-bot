@@ -10,7 +10,7 @@ const processing_users: string[] = [];
 const MAX_LENGTH = 10;
 
 type Role = "user" | "assistant" | "system"
-type Conversational = { role: Role, message_content: string }[]
+type Conversational = { role: Role, content: string }[]
 
 export const name = "chat";
 export const cooldown = 1;
@@ -56,15 +56,15 @@ export async function execute(client: Client, msg: Message, args: string[], exte
     for (const message_pb_id of message_id_pb_buffer) {
         const ms = await messages.getOne<PBMessages>(message_pb_id);
         // and putting it into message_history
-        message_history.push({ role: ms.role as Role, message_content: ms.message_content })
+        message_history.push({ role: ms.role as Role, content: ms.message_content })
     }
     await msg.channel.sendTyping(); 
     // pushing the user's input to current_message_buffer
-    current_message_buffer.push({ role: "user", message_content: user_message })
+    current_message_buffer.push({ role: "user", content: user_message })
     // placeholder for recieving the llama message from http server 
     const llama_response = await messageLlama2B([...message_history, ...current_message_buffer])
 
-    current_message_buffer.push({ role: "assistant", message_content: llama_response.response })
+    current_message_buffer.push({ role: "assistant", content: llama_response.response })
     
     for (const message of current_message_buffer) {
         // creating the message objects in pocketbase
