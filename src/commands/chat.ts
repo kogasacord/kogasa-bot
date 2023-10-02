@@ -80,11 +80,10 @@ export async function execute(client: Client, msg: Message, args: string[], exte
     const message_id_pb_queued_buffer = await queue_simulate(messages, message_id_pb_buffer, MAX_LENGTH);
     // updates the user's messages
     await users.update(user!.id, { messages: message_id_pb_queued_buffer })
-    
-    processing_users.splice(index_of_processing_user, 1);
      
-    await msg.reply(llama_response.response);
+    await msg.reply(`${llama_response.response} | Users being processed: ${JSON.stringify(processing_users)}`);
     // msg.reply(JSON.stringify([...message_history, ...current_message_buffer]))
+    processing_users.splice(index_of_processing_user, 1); 
 }
 
 async function queue_simulate(messages: RecordService, array: string[], max_length: number) {
