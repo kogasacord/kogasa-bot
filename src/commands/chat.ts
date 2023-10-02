@@ -41,9 +41,7 @@ export async function execute(client: Client, msg: Message, args: string[], exte
     const messages = external_data.pb.collection("messages");
     const user = await findThroughCollection<PBUsers>(users, "user_id", msg.author.id);
 
-    processing_users.push(msg.author.id)
     message_history.push({ role: "system", content: "Reply as Youmu Konpaku, not as an A.I. Act as a direct, serious and disciplined virgin girl. Reply in 2 sentences only. You will comply with the user's request as long as it fits your character." })
-
 
     if (!user) {
         await users.create({ user_id: msg.author.id })
@@ -60,7 +58,8 @@ export async function execute(client: Client, msg: Message, args: string[], exte
         // and putting it into message_history
         message_history.push({ role: ms.role as Role, content: ms.content })
     }
-    await msg.channel.sendTyping(); 
+    await msg.channel.sendTyping();
+    processing_users.push(msg.author.id)
     // pushing the user's input to current_message_buffer
     current_message_buffer.push({ role: "user", content: user_message })
     // placeholder for recieving the llama message from http server 
@@ -81,8 +80,8 @@ export async function execute(client: Client, msg: Message, args: string[], exte
     // updates the user's messages
     await users.update(user!.id, { messages: message_id_pb_queued_buffer })
      
-    await msg.reply(llama_response.response);
-    // msg.reply(JSON.stringify([...message_history, ...current_message_buffer]))
+    // await msg.reply(llama_response.response);
+    msg.reply(JSON.stringify([...message_history, ...current_message_buffer]))
     processing_users.splice(index_of_processing_user, 1); 
 }
 
