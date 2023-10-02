@@ -39,13 +39,14 @@ export async function execute(client: Client, msg: Message, args: string[], exte
 
     const users = external_data.pb.collection("users");
     const messages = external_data.pb.collection("messages");
-    let user = await findThroughCollection<PBUsers>(users, "user_id", msg.author.id);
+    const user = await findThroughCollection<PBUsers>(users, "user_id", msg.author.id);
 
     processing_users.push(msg.author.id)
 
     if (!user) {
         await users.create({ user_id: msg.author.id })
-        user = await findThroughCollection<PBUsers>(users, "user_id", msg.author.id);
+        await msg.reply("Created user data. Try your message again!")
+        return;
     }
 
     // pushing every message id from pocketbase to the message_id buffer
@@ -97,7 +98,7 @@ async function queue_simulate(messages: RecordService, array: string[], max_leng
 export async function messageLlama2B(msg_history: Conversational) {
     const llama = await fetch("http://localhost:5000/", {
         method: "POST",
-        body: JSON.stringify({ msg_history: msg_history }),
+        body: JSON.stringify({ history: msg_history }),
         headers: {
             "Content-Type": "application/json",
             "Accept": "application/json",
