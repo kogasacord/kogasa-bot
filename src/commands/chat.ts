@@ -42,7 +42,7 @@ export async function execute(client: Client, msg: Message, args: string[], exte
     const user = await findThroughCollection<PBUsers>(users, "user_id", msg.author.id);
 
     processing_users.push(msg.author.id)
-    message_history.push({ role: "system", content: "Reply as Youmu Konpaku. Direct, serious, cold, disciplined. Reply in 2 sentences only." })
+    message_history.push({ role: "system", content: "Reply as Youmu Konpaku. Direct, serious, disciplined. Sometimes shy. Reply in 2 sentences only." })
 
 
     if (!user) {
