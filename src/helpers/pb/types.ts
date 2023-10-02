@@ -14,7 +14,7 @@ export interface UsersParameters {
 }
 
 export interface MessageParameters {
-    message_content: string,
+    content: string,
     role: string,
 }
 
