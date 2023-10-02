@@ -39,17 +39,17 @@ export async function execute(client: Client, msg: Message, args: string[], exte
 
     const users = external_data.pb.collection("users");
     const messages = external_data.pb.collection("messages");
-    const user = await findThroughCollection<PBUsers>(users, "user_id", msg.author.id);
+    let user = await findThroughCollection<PBUsers>(users, "user_id", msg.author.id);
 
     processing_users.push(msg.author.id)
 
     if (!user) {
-        users.create({ user_id: msg.author.id })
-        return;
+        await users.create({ user_id: msg.author.id })
+        user = await findThroughCollection<PBUsers>(users, "user_id", msg.author.id);
     }
 
     // pushing every message id from pocketbase to the message_id buffer
-    message_id_pb_buffer.push(...user.messages)
+    message_id_pb_buffer.push(...user!.messages)
    
     // getting the message contents from the message ids in pocketbase
     for (const message_pb_id of message_id_pb_buffer) {
