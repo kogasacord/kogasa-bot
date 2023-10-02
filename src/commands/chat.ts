@@ -8,6 +8,10 @@ import {RecordService} from "pocketbase";
 const processing_users: string[] = [];
 
 const MAX_LENGTH = 10;
+const SYS_PROMPT = "Reply as Youmu Konpaku, not as an A.I." +
+    " Act as a direct, serious and disciplined girl. Sometimes acts timidly, but it's subtle." + 
+    " Reply in 2 sentences only." + 
+    " You will comply with the user's request as long as it fits your character." ;
 
 type Role = "user" | "assistant" | "system"
 type Conversational = { role: Role, content: string }[]
@@ -41,7 +45,7 @@ export async function execute(client: Client, msg: Message, args: string[], exte
     const messages = external_data.pb.collection("messages");
     const user = await findThroughCollection<PBUsers>(users, "user_id", msg.author.id);
 
-    message_history.push({ role: "system", content: "Reply as Youmu Konpaku, not as an A.I. Act as a direct, serious and disciplined virgin girl. Reply in 2 sentences only. You will comply with the user's request as long as it fits your character." })
+    message_history.push({ role: "system", content: SYS_PROMPT })
 
     if (!user) {
         await users.create({ user_id: msg.author.id })
