@@ -6,6 +6,8 @@ import { getStatus } from "../helpers/ytdl/get_status.js";
 import { getInfo } from "../helpers/ytdl/info.js";
 import { downloadVideo } from "../helpers/ytdl/download.js";
 import { uploadVideo } from "../helpers/ytdl/upload.js";
+import { run, asyncRun, wrapInOption } from "../helpers/misc/monad.js";
+import {DownloadResponse, InfoResponse} from "../helpers/ytdl/types.js";
 
 const processing_users: string[] = [];
 
@@ -18,32 +20,35 @@ export async function execute(client: Client, msg: Message, args: string[]) {
     const format_id = args[1];
     
     processing_users.push(msg.author.id);
-    
-    const info = await getInfo(requested_link);
-    if (info.size_mbytes === undefined) {
-        msg.reply(`An internal error has occured with getting info.`);
-        processing_users.splice(index_of_processing_user, 1);
-        return;
-    }
-    msg.reply(`Downloading \`${info.file}\` from \`${info.uploader}\` with an estimate of \`${humanize(info.duration * 1000)}\``)
-    
-    const dl = await downloadVideo(requested_link, format_id);
-    if (dl.filename === undefined) {
-        msg.reply(`An internal error has occured with downloading.`);
-        processing_users.splice(index_of_processing_user, 1);
-        return; // its an error
-    }
 
-    const up = await uploadVideo(dl.filename, dl.mimetype);
-    if (up.content === undefined) {
-        msg.reply(`An internal error has occured with uploading.`);
-        processing_users.splice(index_of_processing_user, 1);
-        return;
-    }
-    msg.reply(`The video you requested \`${up.name}\` has been served at ${up.view}.` + 
-        `\n\nDid you know you can choose a quality and format with \`??ytdl-f [format-id]\`? Try it next time.`);
-    
+    const unsafeinfo = wrapInOption(await getInfo(requested_link));
+    const download = await asyncRun(unsafeinfo, downloadDispatch(msg, requested_link, format_id), disabled(msg, index_of_processing_user))
+    const upload = await asyncRun(download, uploadDispatch, disabled(msg, index_of_processing_user))
+    run(upload, (up) => {
+        msg.reply(`The video you requested \`${up.name}\` has been served at ${up.view}.` + 
+            `\n\nDid you know you can choose a quality and format with \`??ytdl-f [format-id]\`? Try it next time.`);
+        return { content: undefined }
+    })
+ 
     processing_users.splice(index_of_processing_user, 1);
+}
+
+function downloadDispatch(msg: Message, requested_link: string, format_id: string) {
+    return async (info: InfoResponse) => {
+        msg.reply(`Downloading \`${info.file}\` from \`${info.uploader}\` with an estimate of \`${humanize(info.duration * 1000)}\``)
+        return { content: await downloadVideo(requested_link, format_id) } 
+    }
+}
+async function uploadDispatch(dl: DownloadResponse) {
+    return {
+        content: await uploadVideo(dl.filename, dl.mimetype)
+    }
+}
+function disabled(msg: Message, index_of_processing_user: number) {
+    return () => {
+        msg.reply(`An internal error has occurred.`);
+        processing_users.splice(index_of_processing_user, 1);
+    }
 }
 
 export async function checker(msg: Message, args: string[]): Promise<boolean> {
