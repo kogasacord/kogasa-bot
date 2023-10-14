@@ -27,7 +27,7 @@ function gachaSpecificWebsite(
     websites: { rarity: string, site: string }[],
     chances: Map<string, Tier>
 ) {
-    const rannum = getRandomInt(1, 100);
+    const rannum = getRandomInt(1, 300);
     
     for (const rarity_name of chances.keys()) {
         const rarity_value = chances.get(rarity_name);

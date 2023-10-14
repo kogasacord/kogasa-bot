@@ -33,10 +33,11 @@ console.log(`Imported ${chalk.bgGreen(`${commands.size} commands`)}.`)
 const websites = await grabAllRandomWebsites(path.join(__dirname, "./media/randomweb.jsonl"))
 console.log(`Imported ${websites.length} websites.`)
 const tiers = new Map<string, Tier>([
-    ["C", { chance: 45, name: "Common", emote: ":cd:" }], // implement low_chance and high_chance to compare together
-    ["UC", { chance: 77, name: "Uncommon", emote: ":comet:" }],
-    ["R", { chance: 94, name: "Rare", emote: ":sparkles:" }],
-    ["SR", { chance: 100, name: "Super Rare", emote: ":sparkles::camping:" }]
+    ["C", { chance: 137, name: "Common", emote: ":cd:" }], // implement low_chance and high_chance to compare together
+    ["UC", { chance: 220, name: "Uncommon", emote: ":comet:" }],
+    ["R", { chance: 275, name: "Rare", emote: ":sparkles:" }],
+    ["SR", { chance: 292, name: "Super Rare", emote: ":sparkles::camping:" }],
+    ["Q", { chance: 300, name: "Flower", emote: ":white_flower:" }]
 ])
 
 if (!settings.test)

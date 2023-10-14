@@ -22,8 +22,14 @@ export async function execute(client: Client, msg: Message, args: string[]) {
     processing_users.push(msg.author.id);
 
     const unsafeinfo = wrapInOption(await getInfo(requested_link));
-    const download = await asyncRun(unsafeinfo, downloadDispatch(msg, requested_link, format_id), disabled(msg, index_of_processing_user))
-    const upload = await asyncRun(download, uploadDispatch, disabled(msg, index_of_processing_user))
+    const download = await asyncRun(unsafeinfo, 
+        downloadDispatch(msg, requested_link, format_id), 
+        disabled(msg, index_of_processing_user)
+    )
+    const upload = await asyncRun(download, 
+        uploadDispatch, 
+        disabled(msg, index_of_processing_user)
+    )
     run(upload, (up) => {
         msg.reply(`The video you requested \`${up.name}\` has been served at ${up.view}.` + 
             `\n\nDid you know you can choose a quality and format with \`??ytdl-f [format-id]\`? Try it next time.`);

@@ -21,8 +21,9 @@ export function run<K, T>(
 }
 export async function asyncRun<K, T>(
     input: Option<T>,
-    transform: (_: T) => Promise<Option<K>>,
-    none?: () => void
+    transform: (_: T, ...args: any[]) => Promise<Option<K>>,
+    none?: () => void,
+    ...args: any[]
 ): Promise<Option<K>> {
     if (input.hasNull) {
         if (none) {
@@ -33,7 +34,7 @@ export async function asyncRun<K, T>(
     if (input.content === undefined) {
         return { content: undefined, hasNull: true };
     }
-    return await transform(input.content);
+    return await transform(input.content, ...args);
 }
 export function wrapInOption<T>(object: T | undefined): Option<T> {
     return {
