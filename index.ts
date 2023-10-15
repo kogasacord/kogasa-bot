@@ -36,7 +36,7 @@ const tiers = new Map<string, Tier>([
     ["C", { chance: 137, name: "Common", emote: ":cd:" }], // implement low_chance and high_chance to compare together
     ["UC", { chance: 220, name: "Uncommon", emote: ":comet:" }],
     ["R", { chance: 275, name: "Rare", emote: ":sparkles:" }],
-    ["SR", { chance: 292, name: "Super Rare", emote: ":sparkles::camping:" }],
+    ["SR", { chance: 299, name: "Super Rare", emote: ":sparkles::camping:" }],
     ["Q", { chance: 300, name: "Flower", emote: ":white_flower:" }]
 ])
 
