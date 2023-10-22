@@ -13,9 +13,10 @@ Prefix: `??`
 - `sauce`: Reply to an image to find the source of the image relating to anime.
 - `help`: Finally, a help command!
 - `set [command_name/"all"] [channel_id/"all"] [true/false]`: Settings.
-- `doctor`: Check if your servers are working.
+- `doctor`: Check if your servers are working. 
 
 **Other features**:
+- `??quoter` - Quotes but includes replies.
 
 A basic file structure for easy additions to the bot.
 

@@ -14,7 +14,7 @@ export async function importDirectories(
     const dir = url.pathToFileURL(path.join(dirname, selected_path));
     const specialCommandFiles = readdirSync(dir)
         .filter(file =>
-            file.endsWith(".ts"));
+            file.endsWith(".js"));
     for (const file of specialCommandFiles) {
         const command: CommandModule = await import(`${dir}\\${file}`);
         commands.set(command.name, command);
