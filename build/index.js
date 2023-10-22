@@ -16,10 +16,10 @@ const client = new Client({
 });
 const pb = new Pocketbase("http://127.0.0.1:8090");
 const commands = new Collection()
-    .concat((await importDirectories(__dirname, "/src/commands/")), (await importDirectories(__dirname, "/src/commands/specials/")), (await importDirectories(__dirname, "/src/commands/settings/")));
+    .concat((await importDirectories(__dirname, "/build/src/commands/")), (await importDirectories(__dirname, "/src/commands/specials/")), (await importDirectories(__dirname, "/src/commands/settings/")));
 const cooldowns = new Collection();
 console.log(`Imported ${chalk.bgGreen(`${commands.size} commands`)}.`);
-const websites = await grabAllRandomWebsites(path.join(__dirname, "./media/randomweb.jsonl"));
+const websites = await grabAllRandomWebsites(path.join(__dirname, "/build/media/randomweb.jsonl"));
 console.log(`Imported ${websites.length} websites.`);
 const tiers = new Map([
     ["C", { chance: 137, name: "Common", emote: ":cd:" }],
