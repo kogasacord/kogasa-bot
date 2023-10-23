@@ -10,6 +10,7 @@ export async function execute(client, msg) {
         return;
     const replied = msg.channel.messages.cache.get(msg.reference.messageId)
         ?? await msg.channel.messages.fetch(msg.reference.messageId);
+    console.log(replied.attachments.at(0));
     const mimetype = mime.lookup(replied.attachments.at(0)
         ? replied.attachments.at(0).url
         : "");
@@ -17,7 +18,7 @@ export async function execute(client, msg) {
     try {
         msg.reply({
             files: [{
-                    attachment: await quote(parsed_content, replied.author.displayName, replied.author.displayAvatarURL({ size: 1024 }), mimetype, replied.attachments.at(0)?.url),
+                    attachment: await quote(parsed_content, replied.author.displayName, replied.author.displayAvatarURL({ size: 1024 }), replied.attachments.at(0)?.contentType, replied.attachments.at(0)?.url),
                 }]
         });
     }
@@ -34,7 +35,10 @@ export async function checker(msg, args) {
     return true;
 }
 async function quote(text, author, avatar_url, mimetype, attachment_url) {
-    if (attachment_url !== undefined && mimetype !== false) {
+    console.log(mimetype);
+    if (attachment_url !== undefined
+        && mimetype !== null
+        && mimetype !== undefined) {
         if (mimetype.includes("image/")) {
             return quoteAttachment(text, author, avatar_url, attachment_url);
         }

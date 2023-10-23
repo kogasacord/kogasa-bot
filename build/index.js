@@ -68,10 +68,13 @@ client.on("messageCreate", async (msg) => {
         }
         if (timestamps.has(author_id)) {
             const expirationTime = timestamps.get(author_id);
-            if (now < expirationTime) {
-                const expiredTimestamp = Math.round(expirationTime / 1000);
-                msg.reply(`Please wait, you are on a cooldown for \`${command.name}\`.`
-                    + ` You can use it again <t:${expiredTimestamp}:R>.`);
+            if (now < expirationTime.cooldown) {
+                const expiredTimestamp = Math.round(expirationTime.cooldown / 1000);
+                if (!expirationTime.hasMessaged) {
+                    msg.reply(`Please wait, you are on a cooldown for \`${command.name}\`.`
+                        + ` You can use it again <t:${expiredTimestamp}:R>.`);
+                    expirationTime.hasMessaged = true;
+                }
             }
             return;
         }
@@ -84,7 +87,10 @@ client.on("messageCreate", async (msg) => {
         const cooldownAdditional = command.dyn_cooldown
             ? await command.dyn_cooldown(args) * 1000
             : 0;
-        timestamps?.set(author_id, now + cooldownAdditional + cooldownAmount);
+        timestamps?.set(author_id, {
+            cooldown: now + cooldownAdditional + cooldownAmount,
+            hasMessaged: false,
+        });
         setTimeout(() => timestamps.delete(author_id), cooldownAmount + cooldownAdditional);
         const ext = {
             pb: pb,
