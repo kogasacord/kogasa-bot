@@ -1,24 +1,25 @@
-import mime from "mime-types";
 import { ChannelType } from "discord.js";
 import { quoteAttachment } from "../helpers/quote/attachment.js";
 import { quoteDefault } from "../helpers/quote/default.js";
 export const name = "quote";
-export const cooldown = 5;
+export const cooldown = 10;
 export const description = "Reply to someone and capture a.. suspicious message.";
 export async function execute(client, msg) {
     if (msg.channel.type !== ChannelType.GuildText)
         return;
     const replied = msg.channel.messages.cache.get(msg.reference.messageId)
         ?? await msg.channel.messages.fetch(msg.reference.messageId);
-    console.log(replied.attachments.at(0));
-    const mimetype = mime.lookup(replied.attachments.at(0)
-        ? replied.attachments.at(0).url
-        : "");
     const parsed_content = await parseQuotes(client, replied.content);
     try {
         msg.reply({
             files: [{
-                    attachment: await quote(parsed_content, replied.author.displayName, replied.author.displayAvatarURL({ size: 1024 }), replied.attachments.at(0)?.contentType, replied.attachments.at(0)?.url),
+                    attachment: await quote(parsed_content, replied.author.displayName, replied.author.displayAvatarURL({ size: 1024, extension: "png" }), replied.attachments.at(0)?.contentType, replied.attachments.at(0)?.url
+                        ? {
+                            url: replied.attachments.at(0).url ?? 0,
+                            height: replied.attachments.at(0).height ?? 0,
+                            width: replied.attachments.at(0).width ?? 0
+                        }
+                        : undefined),
                 }]
         });
     }
@@ -34,13 +35,12 @@ export async function checker(msg, args) {
     }
     return true;
 }
-async function quote(text, author, avatar_url, mimetype, attachment_url) {
-    console.log(mimetype);
-    if (attachment_url !== undefined
+async function quote(text, author, avatar_url, mimetype, attachment) {
+    if (attachment !== undefined
         && mimetype !== null
         && mimetype !== undefined) {
         if (mimetype.includes("image/")) {
-            return quoteAttachment(text, author, avatar_url, attachment_url);
+            return quoteAttachment(text, author, avatar_url, attachment.url, attachment.height, attachment.width, mimetype);
         }
     }
     return quoteDefault(text, author, avatar_url);

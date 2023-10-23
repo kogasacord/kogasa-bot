@@ -15,15 +15,22 @@ export async function execute(client: Client, msg: Message) {
    
     const parsed_content = await parseQuotes(client, replied.content);
 
-    try {
+	try {
         msg.reply({
             files: [{
                 attachment: await quote(
                     parsed_content, 
                     replied.author.displayName,
-                    replied.author.displayAvatarURL({ size: 1024 }),
+                    replied.author.displayAvatarURL({ size: 1024, extension: "png" }),
                     replied.attachments.at(0)?.contentType,
-                    replied.attachments.at(0)?.url
+					replied.attachments.at(0)?.url 
+						? 	{
+								url: replied.attachments.at(0)!.url ?? 0,
+								height: replied.attachments.at(0)!.height ?? 0,
+								width: replied.attachments.at(0)!.width ?? 0
+							}
+						:   undefined,
+
                 ),
             }]
         })
@@ -46,14 +53,24 @@ async function quote(
     author: string, 
     avatar_url: string,
     mimetype: string | null | undefined,
-    attachment_url?: string,
+    attachment?: {
+		url: string,
+		height: number,
+		width: number
+	},
 ) {
-    if (attachment_url !== undefined 
+    if (attachment !== undefined 
 			&& mimetype !== null 
 			&& mimetype !== undefined
 	) {
         if (mimetype.includes("image/")) {
-            return quoteAttachment(text, author, avatar_url, attachment_url);
+            return quoteAttachment(
+				text, author, avatar_url, 
+				attachment.url,
+				attachment.height,
+				attachment.width,
+				mimetype
+			);
         }
     }
     return quoteDefault(text, author, avatar_url);
