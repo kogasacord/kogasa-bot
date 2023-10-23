@@ -9,7 +9,7 @@ import { Client, Collection, ChannelType, Message, ActivityType } from "discord.
 import settings from "./settings.json" assert { type: "json" };
 import config from "./config.json" assert { type: "json" };
 
-import { CommandModule, ExternalDependencies, Tier } from "./src/helpers/types.js";
+import { CommandModule, Cooldown, ExternalDependencies, Tier } from "./src/helpers/types.js";
 import { importDirectories } from "./src/helpers/misc/import.js";
 import { commandChannelAccess } from "./src/helpers/settings/command_scope.js";
 import { prefixChange } from "./src/helpers/settings/prefix.js";
@@ -28,7 +28,9 @@ const commands = new Collection<string, CommandModule>()
         (await importDirectories(__dirname, "/src/commands/specials/")),
         (await importDirectories(__dirname, "/src/commands/settings/")),
     );
-const cooldowns = new Collection<string, Collection<string, number>>();
+
+const cooldowns = new Collection<string, Collection<string, Cooldown>>();
+
 console.log(`Imported ${chalk.bgGreen(`${commands.size} commands`)}.`)
 const websites = await grabAllRandomWebsites(path.join(__dirname, "./media/randomweb.jsonl"))
 console.log(`Imported ${websites.length} websites.`)
@@ -75,7 +77,7 @@ client.on("messageCreate", async (msg) => {
 
         // cooldowns
         if (!cooldowns.has(command.name)) {
-            cooldowns.set(command.name, new Collection());
+            cooldowns.set(command.name, new Collection<string, Cooldown>());
         }
 
         const now = Date.now();
@@ -89,11 +91,14 @@ client.on("messageCreate", async (msg) => {
 
         if (timestamps.has(author_id)) {
             const expirationTime = timestamps.get(author_id)!;
-            if (now < expirationTime) {
-                const expiredTimestamp = Math.round(expirationTime / 1000);
-                msg.reply(
-                    `Please wait, you are on a cooldown for \`${command.name}\`.`
-                    + ` You can use it again <t:${expiredTimestamp}:R>.`);
+            if (now < expirationTime.cooldown) {
+                const expiredTimestamp = Math.round(expirationTime.cooldown / 1000);
+                if (!expirationTime.hasMessaged) {
+					msg.reply(
+                    	`Please wait, you are on a cooldown for \`${command.name}\`.`
+                    	+ ` You can use it again <t:${expiredTimestamp}:R>.`);
+					expirationTime.hasMessaged = true;
+				}
             }
             return;
         }
@@ -109,7 +114,10 @@ client.on("messageCreate", async (msg) => {
             ? await command.dyn_cooldown(args) * 1000
             : 0;
 
-        timestamps?.set(author_id, now + cooldownAdditional + cooldownAmount);
+        timestamps?.set(author_id, {
+			cooldown: now + cooldownAdditional + cooldownAmount,
+			hasMessaged: false,
+		});
         setTimeout(() => timestamps.delete(author_id), cooldownAmount + cooldownAdditional);
 
         const ext: ExternalDependencies = {

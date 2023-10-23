@@ -24,6 +24,11 @@ export type ExternalDependencies = {
     prefix:   string,
     external_data: any[]
 }
+export type Cooldown = {
+	cooldown: number,
+	hasMessaged: boolean,
+}
+
 export type JSONObject = { [a: string]: any }
 export type Tier = {
     chance: number,
