@@ -6,7 +6,7 @@ import { quoteDefault } from "../../helpers/quote/default.js";
 export const name = "doctor";
 export const cooldown = 20;
 export const special = true;
-export const description = "Send me to Eirin and let them check my health. [Partially Implemented (5%)]"
+export const description = "Send me to Eirin and let them check my health."
 export async function execute(
     client: Client,
     msg: Message,
@@ -14,47 +14,70 @@ export async function execute(
     ext: ExternalDependencies,
 ) {
     const doctor_results = {
-        ytdl_server_on:   false,
-        canvas_server_on: false,
-        llama2b_server_on: false,
+        ytdl:    false,
+        canvas:  false,
+        llama2b: false,
     }
-    try {
-        await getInfo("https://www.youtube.com/watch?v=vQHVGXdcqEQ");
-        doctor_results.ytdl_server_on = true;
-    } catch (err) {
-        doctor_results.ytdl_server_on = false;
-    }
-
-    try {
-        await quoteDefault("test", "Alice", msg.author.avatarURL() ?? "https://cdn.discordapp.com/attachments/967277090191855709/1142501550875488388/file.jpg")
-        doctor_results.canvas_server_on = true;
-    } catch (err) {
-        doctor_results.canvas_server_on = false;
-    }
-
-    try {
-        await pingLlama2B()
-        doctor_results.llama2b_server_on = true;
-    } catch (err) {
-        doctor_results.llama2b_server_on = false;
-    }
-
-    msg.reply(
-        `## Eirin's Diagnosis:\n`
-            + `\`YTDL Server\`: ${doctor_results.ytdl_server_on ? "ON" : "OFF"}\n`
-            + `\`Canvas\`: ${doctor_results.canvas_server_on ? "ON" : "OFF"}`
-    );
+	doctor_results.ytdl = await pingYTDL();
+	doctor_results.canvas = await pingCanvas();
+	doctor_results.llama2b = await pingLlama2B();
+    msg.reply(formatDiagnosis(doctor_results));
 }
 
+function formatDiagnosis(doctor: { [k: string]: boolean }) {
+	const diagnosis: string[] = ["## Eirin's Diagnosis \n\n"];
+	const servers = Object.entries(doctor);
+	let hasDownServers: boolean = false;
+	for (const server of servers) {
+		diagnosis.push(`- ${server[0]}: ${server[1] ? "Up. :white_sun_small_cloud:" : "Down. :umbrella:"}`)
+		if (!hasDownServers)
+			hasDownServers = server[1];
+	}
+	if (hasDownServers)
+		diagnosis.push("\nContact Alice.")
+	return diagnosis.join("\n");
+}
 
 export async function pingLlama2B() {
-    const llama = await fetch("http://localhost:5000/ping", {
-        method: "GET",
-        headers: {
-            "Content-Type": "application/json",
-            "Accept": "application/json",
-        },
-    });
-    return await llama.json() as { response: string };
+	try {
+    	const llama = await fetch("http://localhost:5000/ping", {
+        	method: "GET",
+        	headers: {
+            	"Content-Type": "application/json",
+            	"Accept": "application/json",
+        	},
+    	});
+    	return await llama.json() as boolean; // turn this into a boolean soon.
+	} catch (err) {
+		return false;
+	}
+}
+export async function pingYTDL() {
+	try {
+    	const ytdl = await fetch("http://localhost:3000/ping", {
+        	method: "GET",
+        	headers: {
+            	"Content-Type": "application/json",
+            	"Accept": "application/json",
+        	},
+    	});
+    	return await ytdl.json() as boolean;
+	} catch (err) {
+		return false;
+	}
+}
+export async function pingCanvas() {
+	try {
+    	const c = await fetch("http://localhost:4000/ping", {
+        	method: "GET",
+        	headers: {
+            	"Content-Type": "application/json",
+            	"Accept": "application/json",
+        	},
+    	});
+    	return await c.json() as boolean;
+	} catch (err) {
+		return false;
+	}
 }
 // check the different HTTPS and commands
