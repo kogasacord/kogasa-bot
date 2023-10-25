@@ -7,6 +7,7 @@ import { ExternalDependencies, Tier, Websites } from "../helpers/types.js";
 // https://www.desmos.com/calculator/veqgifgo8z
 
 export const name = "randomweb";
+export const aliases = ["rweb"];
 export const cooldown = 30;
 export const description = "Sends a random website to you, scaled by rarity. The more rare it is, the more obscure (or goofy) the website is. Goes from Common to Super Rare."
 export async function execute(client: Client, msg: Message, args: string[], external_data: ExternalDependencies) {

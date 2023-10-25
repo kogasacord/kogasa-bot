@@ -4,6 +4,7 @@ import { quoteAttachment } from "../helpers/quote/attachment.js";
 import { quoteDefault } from "../helpers/quote/default.js";
 
 export const name = "quote";
+export const aliases = ["q"];
 export const cooldown = 10;
 export const description = "Reply to someone and capture a.. suspicious message."
 export async function execute(client: Client, msg: Message) {

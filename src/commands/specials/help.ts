@@ -1,5 +1,6 @@
 import { Client, Message, EmbedBuilder } from "discord.js";
 import { ExternalDependencies } from "../../helpers/types.js";
+import {formatArray} from "../../helpers/misc/smartjoin.js";
 
 export const name = "help";
 export const cooldown = 20;
@@ -15,10 +16,13 @@ export async function execute(
     const embed = new EmbedBuilder()
         .setTitle("Help! Bad Apple!")
         .setDescription("~~~~~");
-    for (const command of ext.commands) {
+    for (const [name, command] of ext.commands) {
         embed.addFields({
-            name:  `${ext.prefix}${command[0]}`,
-            value: `${command[1].description ?? "No description provided."}`,
+            name:  `${ext.prefix}${name}`,
+            value: `${command.description ?? "No description provided."}\n` 
+						+ (command.aliases 
+								? `**\`Aliases\`**: \`${formatArray(command.aliases)}\`` 
+								: ""),
             inline: true,
         });
     }

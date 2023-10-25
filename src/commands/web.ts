@@ -2,6 +2,7 @@ import { Client, Message } from "discord.js";
 import { ExternalDependencies, Tier, Websites } from "../helpers/types";
 
 export const name = "randomwebinfo";
+export const aliases = ["rwebinfo"];
 export const cooldown = 15;
 export const description = "Information about randomweb. It will come with tracking your collected websites soon."
 export async function execute(client: Client, msg: Message, args: string[], external_data: ExternalDependencies) {

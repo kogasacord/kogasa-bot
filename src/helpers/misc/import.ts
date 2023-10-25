@@ -18,7 +18,19 @@ export async function importDirectories(
     for (const file of specialCommandFiles) {
         const command: CommandModule = await import(`${dir}\\${file}`);
         commands.set(command.name, command);
-        console.log(`Imported ${chalk.green(file)}.`);
+        console.log(`Imported ${chalk.green(file)}`);
     }
     return commands;
+}
+
+export function postprocessAliases(col: Collection<string, CommandModule>) {
+	const aliases = new Map<string, string>();
+	for (const [name, command] of col) {
+		if (!command.aliases)
+			continue;
+		for (const alias of command.aliases) {
+			aliases.set(alias, name);
+		}
+	}
+	return aliases;
 }

@@ -1,5 +1,7 @@
 module.exports = {
-	apps: [{
-		name: "kogasa-bot"
-	}]
+	apps: [
+		{
+			name: "kogasa-bot"
+		}
+	]
 }

@@ -10,7 +10,7 @@ import settings from "./settings.json" assert { type: "json" };
 import config from "./config.json" assert { type: "json" };
 
 import { CommandModule, Cooldown, ExternalDependencies, Tier } from "./src/helpers/types.js";
-import { importDirectories } from "./src/helpers/misc/import.js";
+import { importDirectories, postprocessAliases } from "./src/helpers/misc/import.js";
 import { commandChannelAccess } from "./src/helpers/settings/command_scope.js";
 import { prefixChange } from "./src/helpers/settings/prefix.js";
 import { grabAllRandomWebsites } from "./src/helpers/misc/random.js";
@@ -28,6 +28,8 @@ const commands = new Collection<string, CommandModule>()
         (await importDirectories(__dirname, "/src/commands/specials/")),
         (await importDirectories(__dirname, "/src/commands/settings/")),
     );
+// { alias: name }
+const aliases = postprocessAliases(commands);
 
 const cooldowns = new Collection<string, Collection<string, Cooldown>>();
 
@@ -38,12 +40,13 @@ const tiers = new Map<string, Tier>([
     ["C", { chance: 137, name: "Common", emote: ":cd:" }], // implement low_chance and high_chance to compare together
     ["UC", { chance: 220, name: "Uncommon", emote: ":comet:" }],
     ["R", { chance: 275, name: "Rare", emote: ":sparkles:" }],
-    ["SR", { chance: 299, name: "Super Rare", emote: ":sparkles::camping:" }],
+    ["SR", { chance: 298, name: "Super Rare", emote: ":sparkles::camping:" }],
     ["Q", { chance: 300, name: "Flower", emote: ":white_flower:" }]
 ])
 
 if (!settings.test)
     await enableAutoDelete();
+
 
 client.on("messageCreate", async (msg) => {
     if (msg.channel.type !== ChannelType.GuildText)
@@ -61,7 +64,9 @@ client.on("messageCreate", async (msg) => {
     const c = msg.content.split(" ");
     const args = msg.content.split(" ");
     const name = c[0].replace(prefix, "");
-    const command = commands.get(name);
+	
+	// alias integration
+    const command = aliasToCommand(name);
     args.shift();
 
     try {
@@ -131,6 +136,14 @@ client.on("messageCreate", async (msg) => {
         console.error(err);
     }
 });
+
+function aliasToCommand(name: string) {
+	const alias = aliases.get(name);
+	if (alias) {
+    	return commands.get(alias);
+	}
+	return commands.get(name)
+}
 
 client.on("ready", async (client) => {
     console.log(`Done! [Test mode: ${settings.test}]`);
