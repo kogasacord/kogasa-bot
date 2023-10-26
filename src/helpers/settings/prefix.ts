@@ -8,7 +8,8 @@ export async function prefixChange(
     guildID: string
 ) {
     let prefix = test ? "!!" : "??";
-    const server_settings = await findThroughCollection<ServerSettings>(pb.collection("server_settings"), "serverid", guildID)
+    // findThroughCollection is an unoptimized mess.
+	const server_settings = await findThroughCollection<ServerSettings>(pb.collection("server_settings"), "serverid", guildID)
     if (server_settings) {
         const server_prefix = server_settings.prefix;
         if (server_prefix)

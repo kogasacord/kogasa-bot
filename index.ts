@@ -30,7 +30,6 @@ const commands = new Collection<string, CommandModule>()
     );
 // { alias: name }
 const aliases = postprocessAliases(commands);
-
 const cooldowns = new Collection<string, Collection<string, Cooldown>>();
 
 console.log(`Imported ${chalk.bgGreen(`${commands.size} commands`)}.`)

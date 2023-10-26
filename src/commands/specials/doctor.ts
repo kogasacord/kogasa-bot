@@ -2,12 +2,14 @@ import { Client, Message } from "discord.js";
 import { ExternalDependencies } from "../../helpers/types.js";
 import { getInfo } from "../../helpers/ytdl/info.js";
 import { quoteDefault } from "../../helpers/quote/default.js";
+import { pingURL } from "../../helpers/misc/ping.js";
 
 const YTDLURL = "http://localhost:3000/ping";
 const CANVASURL = "http://localhost:4000/ping";
 const LLAMAURL = "http://localhost:5000/ping";
 
 export const name = "doctor";
+export const aliases = ["eirinhelp!"]
 export const cooldown = 20;
 export const special = true;
 export const description = "Send me to Eirin and let them check my health."
@@ -17,6 +19,7 @@ export async function execute(
     args: string[],
     ext: ExternalDependencies,
 ) {
+	await msg.channel.sendTyping();
 	const doctor_results = {
         ytdl:    false,
         canvas:  false,
@@ -25,11 +28,20 @@ export async function execute(
 	doctor_results.ytdl = await pingServer(YTDLURL);
 	doctor_results.canvas = await pingServer(CANVASURL);
 	doctor_results.llama2b = await pingServer(LLAMAURL);
-    msg.reply(formatDiagnosis(doctor_results));
+
+	const pings = await pingURL("discord.com");
+	const average_latency = pings
+		.map(c => c.time)
+		.reduce((prev, curr, index) => prev + curr) / pings.length;
+	
+    msg.reply(`## Eirin's Diagnosis\n\n` 
+			  + `Latency to discord.com: \`${average_latency}\`ms\n`
+			  + `Commands imported: \`${[...ext.commands.entries()].length}\`\n`
+			  + `${formatDiagnosis(doctor_results)}`);
 }
 
 function formatDiagnosis(doctor: { [k: string]: boolean }) {
-	const diagnosis: string[] = ["## Eirin's Diagnosis \n\n"];
+	const diagnosis: string[] = [];
 	const servers = Object.entries(doctor);
 	let hasDownServers: boolean = false;
 	for (const server of servers) {

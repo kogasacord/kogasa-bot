@@ -8,7 +8,7 @@ export const aliases = ["q"];
 export const cooldown = 10;
 export const description = "Reply to someone and capture a.. suspicious message."
 export async function execute(client: Client, msg: Message) {
-    if (msg.channel.type !== ChannelType.GuildText)
+	if (msg.channel.type !== ChannelType.GuildText)
         return;
 
     const replied = msg.channel.messages.cache.get(msg.reference!.messageId!) 
