@@ -10,10 +10,10 @@ interface Ping {
 /*
 * This function requires admin privileges for Windows.
 */
-export function pingURL(url: string) {
+export function pingURL(url: string, ping_count: number = 3) {
 	return new Promise<Ping[]>((res, rej) => {
 		const pings: Ping[] = [];
-		const proc = child_process.spawn("ping", [optionforOS(), "2", url])
+		const proc = child_process.spawn("ping", [optionforOS(), `${ping_count}`, url])
 		proc.stdout.on("data", (chunk: Buffer) => {
 			const regex = [...chunk.toString().matchAll(/\w+=\d+/g)];
 			if (regex.length < 3) {

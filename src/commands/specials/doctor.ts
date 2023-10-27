@@ -28,12 +28,12 @@ export async function execute(
 	doctor_results.ytdl = await pingServer(YTDLURL);
 	doctor_results.canvas = await pingServer(CANVASURL);
 	doctor_results.llama2b = await pingServer(LLAMAURL);
-	const pings = await pingURL("discord.com");
+	const pings = await pingURL("discord.com", 3);
 	const average_latency = pings
 		.map(c => c.time)
 		.reduce((prev, curr, index) => prev + curr) / pings.length;
     msg.reply(`## Eirin's Diagnosis\n\n` 
-			  + `Latency to discord.com: \`????\`ms\n`
+			  + `Latency to discord.com: \`${average_latency}\`ms\n`
 			  + `Commands imported: \`${[...ext.commands.entries()].length}\`\n`
 			  + `${formatDiagnosis(doctor_results)}`);
 }
