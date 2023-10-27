@@ -45,5 +45,3 @@ function optionforOS() {
 		return "-c"
 	throw Error("Unimplemented OS for ping.")
 }
-
-console.log(await pingURL("discord.com"));
