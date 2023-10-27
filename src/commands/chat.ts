@@ -1,9 +1,7 @@
 import fetch from "node-fetch";
 import { Client, Message } from "discord.js";
-import { ExternalDependencies } from "../helpers/types";
-import {findThroughCollection} from "../helpers/pb/pb.js";
-import {MessageParameters, PBMessages, PBUsers} from "../helpers/pb/types";
-import {RecordService} from "pocketbase";
+import helpers, { MessageParameters, PBMessages, PBUsers, ExternalDependencies } from "../helpers/helpers.js"
+import { RecordService } from "pocketbase";
 
 const processing_users: string[] = [];
 
@@ -47,7 +45,7 @@ export async function execute(client: Client, msg: Message, args: string[], exte
 
     const users = external_data.pb.collection("users");
     const messages = external_data.pb.collection("messages");
-    const user = await findThroughCollection<PBUsers>(users, "user_id", msg.author.id);
+    const user = await helpers.findThroughCollection<PBUsers>(users, "user_id", msg.author.id);
 
 
     if (!user) {

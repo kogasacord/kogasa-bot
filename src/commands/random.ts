@@ -1,7 +1,6 @@
 import chalk from "chalk";
-import { getRandomInt } from "../helpers/misc/random.js";
+import helpers, { Websites, Tier, ExternalDependencies } from "../helpers/helpers.js"
 import { Client, Message } from "discord.js";
-import { ExternalDependencies, Tier, Websites } from "../helpers/types.js";
 
 // by percentage to 100%
 // https://www.desmos.com/calculator/veqgifgo8z
@@ -28,7 +27,7 @@ function gachaSpecificWebsite(
     websites: { rarity: string, site: string }[],
     chances: Map<string, Tier>
 ) {
-    const rannum = getRandomInt(1, 300);
+    const rannum = helpers.getRandomInt(1, 300);
     
     for (const rarity_name of chances.keys()) {
         const rarity_value = chances.get(rarity_name);
@@ -39,7 +38,7 @@ function gachaSpecificWebsite(
         if (rannum <= rarity_value.chance) {
             const rarity_websites = websites.filter((v) => v.rarity === rarity_name);
             return {
-                website: rarity_websites[getRandomInt(0, rarity_websites.length - 1)],
+                website: rarity_websites[helpers.getRandomInt(0, rarity_websites.length - 1)],
                 rarity_name: rarity_value.name,
                 rarity_emote: rarity_value.emote,
                 diceroll: rannum

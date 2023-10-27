@@ -2,21 +2,17 @@ import chalk from "chalk";
 import * as url from 'url';
 import path from "path";
 import Pocketbase from "pocketbase";
+import { Client, Collection, ChannelType, Message, ActivityType } from "discord.js";
 
 import { enableAutoDelete } from "./src/startup.js";
-import { Client, Collection, ChannelType, Message, ActivityType } from "discord.js";
+import helpers, { CommandModule, Cooldown, ExternalDependencies, Tier } from "./src/helpers/helpers.js";
 
 import settings from "./settings.json" assert { type: "json" };
 import config from "./config.json" assert { type: "json" };
 
-import { CommandModule, Cooldown, ExternalDependencies, Tier } from "./src/helpers/types.js";
-import { importDirectories, postprocessAliases } from "./src/helpers/misc/import.js";
-import { commandChannelAccess } from "./src/helpers/settings/command_scope.js";
-import { prefixChange } from "./src/helpers/settings/prefix.js";
-import { grabAllRandomWebsites } from "./src/helpers/misc/random.js";
+///////////////////////////////////////////////////////////////////////////////////////////////
 
 const __dirname = url.fileURLToPath(new URL('.', import.meta.url));
-
 const client = new Client({
     intents: ["Guilds", "GuildMessages", "MessageContent", "GuildIntegrations"],
 });
@@ -24,16 +20,16 @@ const pb = new Pocketbase("http://127.0.0.1:8090");
 
 const commands = new Collection<string, CommandModule>()
     .concat(
-        (await importDirectories(__dirname, "/src/commands/")),
-        (await importDirectories(__dirname, "/src/commands/specials/")),
-        (await importDirectories(__dirname, "/src/commands/settings/")),
+        (await helpers.importDirectories(__dirname, "/src/commands/")),
+        (await helpers.importDirectories(__dirname, "/src/commands/specials/")),
+        (await helpers.importDirectories(__dirname, "/src/commands/settings/")),
     );
 // { alias: name }
-const aliases = postprocessAliases(commands);
+const aliases = helpers.postprocessAliases(commands);
 const cooldowns = new Collection<string, Collection<string, Cooldown>>();
 
 console.log(`Imported ${chalk.bgGreen(`${commands.size} commands`)}.`)
-const websites = await grabAllRandomWebsites(path.join(__dirname, "./media/randomweb.jsonl"))
+const websites = await helpers.grabAllRandomWebsites(path.join(__dirname, "./media/randomweb.jsonl"))
 console.log(`Imported ${websites.length} websites.`)
 const tiers = new Map<string, Tier>([
     ["C", { chance: 137, name: "Common", emote: ":cd:" }], // implement low_chance and high_chance to compare together
@@ -55,7 +51,7 @@ client.on("messageCreate", async (msg) => {
         return;
 
     // local prefix changing
-    const prefix = await prefixChange(pb, settings.test, msg.channel.guildId);
+    const prefix = await helpers.prefixChange(pb, settings.test, msg.channel.guildId);
 
     if (!msg.content.startsWith(prefix))
         return;
@@ -72,7 +68,7 @@ client.on("messageCreate", async (msg) => {
         if (!command) return;
         // scoping
         if (!command.noscope) {
-            const response = await commandChannelAccess(pb, name, msg.channel.id, msg.channel.guildId)
+            const response = await helpers.commandChannelAccess(pb, name, msg.channel.id, msg.channel.guildId)
             if (response) {
                 msg.reply(response);
                 return;

@@ -1,5 +1,4 @@
 import { Client, Message } from "discord.js";
-import {pingURL} from "../helpers/misc/ping.js";
 
 export const name = "ping";
 export const aliases = ["pong"]

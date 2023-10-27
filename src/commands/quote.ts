@@ -1,7 +1,7 @@
 import mime from "mime-types";
+import helpers from "../helpers/helpers.js"
 import { ChannelType, Client, Message } from "discord.js";
-import { quoteAttachment } from "../helpers/quote/attachment.js";
-import { quoteDefault } from "../helpers/quote/default.js";
+
 
 export const name = "quote";
 export const aliases = ["q"];
@@ -65,7 +65,7 @@ async function quote(
 			&& mimetype !== undefined
 	) {
         if (mimetype.includes("image/")) {
-            return quoteAttachment(
+            return helpers.quoteAttachment(
 				text, author, avatar_url, 
 				attachment.url,
 				attachment.height,
@@ -74,7 +74,7 @@ async function quote(
 			);
         }
     }
-    return quoteDefault(text, author, avatar_url);
+    return helpers.quoteDefault(text, author, avatar_url);
 }
 
 async function parseQuotes(client: Client, str: string) {

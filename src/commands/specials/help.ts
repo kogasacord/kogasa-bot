@@ -1,6 +1,5 @@
+import helpers, { ExternalDependencies } from "../../helpers/helpers.js";
 import { Client, Message, EmbedBuilder } from "discord.js";
-import { ExternalDependencies } from "../../helpers/types.js";
-import {formatArray} from "../../helpers/misc/smartjoin.js";
 
 export const name = "help";
 export const cooldown = 20;
@@ -21,7 +20,7 @@ export async function execute(
             name:  `${ext.prefix}${name}`,
             value: `${command.description ?? "No description provided."}\n` 
 						+ (command.aliases 
-								? `**\`Aliases\`**: \`${formatArray(command.aliases)}\`` 
+								? `**\`Aliases\`**: \`${helpers.formatArray(command.aliases)}\`` 
 								: ""),
             inline: true,
         });

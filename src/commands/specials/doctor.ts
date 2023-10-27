@@ -1,12 +1,15 @@
 import { Client, Message } from "discord.js";
-import { ExternalDependencies } from "../../helpers/types.js";
-import { getInfo } from "../../helpers/ytdl/info.js";
-import { quoteDefault } from "../../helpers/quote/default.js";
-import { pingURL } from "../../helpers/misc/ping.js";
+import helpers, { ExternalDependencies } from "../../helpers/helpers.js";
 
 const YTDLURL = "http://localhost:3000/ping";
 const CANVASURL = "http://localhost:4000/ping";
 const LLAMAURL = "http://localhost:5000/ping";
+
+let latency = await getAverageLatency("discord.com", 3);
+
+setInterval(async () => {
+	latency = await getAverageLatency("discord.com", 3);
+}, 60 * 3000)
 
 export const name = "doctor";
 export const aliases = ["eirinhelpme"]
@@ -28,12 +31,8 @@ export async function execute(
 	doctor_results.ytdl = await pingServer(YTDLURL);
 	doctor_results.canvas = await pingServer(CANVASURL);
 	doctor_results.llama2b = await pingServer(LLAMAURL);
-	const pings = await pingURL("discord.com", 3);
-	const average_latency = pings
-		.map(c => c.time)
-		.reduce((prev, curr, index) => prev + curr) / pings.length;
     msg.reply(`## Eirin's Diagnosis\n\n` 
-			  + `Latency to discord.com: \`${average_latency}\`ms\n`
+			  + `Latency to discord.com, refreshed every minute: \`${latency}ms\`. \n`
 			  + `Commands imported: \`${[...ext.commands.entries()].length}\`\n`
 			  + `${formatDiagnosis(doctor_results)}`);
 }
@@ -50,6 +49,14 @@ function formatDiagnosis(doctor: { [k: string]: boolean }) {
 	if (hasDownServers)
 		diagnosis.push("\nContact Alice.")
 	return diagnosis.join("\n");
+}
+
+async function getAverageLatency(url: string, ping_count: number) {
+	const pings = await helpers.pingURL(url, ping_count);
+	const average_latency = pings
+		.map(c => c.time)
+		.reduce((prev, curr) => prev + curr) / pings.length;
+	return average_latency;
 }
 
 export async function pingServer(url: string) {

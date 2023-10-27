@@ -1,13 +1,6 @@
 import humanize from "humanize-duration";
 import { Client, Message } from "discord.js";
-import { formatCheckResults } from "../helpers/ytdl/format_check.js";
-import { checkLink } from "../helpers/ytdl/check_link.js";
-import { getStatus } from "../helpers/ytdl/get_status.js";
-import { getInfo } from "../helpers/ytdl/info.js";
-import { downloadVideo } from "../helpers/ytdl/download.js";
-import { uploadVideo } from "../helpers/ytdl/upload.js";
-import { run, asyncRun, wrapInOption } from "../helpers/misc/monad.js";
-import {DownloadResponse, InfoResponse} from "../helpers/ytdl/types.js";
+import helpers, { DownloadResponse, InfoResponse } from "../helpers/helpers.js";
 
 const processing_users: string[] = [];
 
@@ -21,16 +14,16 @@ export async function execute(client: Client, msg: Message, args: string[]) {
     
     processing_users.push(msg.author.id);
 
-    const unsafeinfo = wrapInOption(await getInfo(requested_link));
-    const download = await asyncRun(unsafeinfo, 
+    const unsafeinfo = helpers.wrapInOption(await helpers.getInfo(requested_link));
+    const download = await helpers.asyncRun(unsafeinfo, 
         downloadDispatch(msg, requested_link, format_id), 
         disabled(msg, index_of_processing_user)
     )
-    const upload = await asyncRun(download, 
+    const upload = await helpers.asyncRun(download, 
         uploadDispatch, 
         disabled(msg, index_of_processing_user)
     )
-    run(upload, (up) => {
+    helpers.run(upload, (up) => {
         msg.reply(`The video you requested \`${up.name}\` has been served at ${up.view}.` + 
             `\n\nDid you know you can choose a quality and format with \`??ytdl-f [format-id]\`? Try it next time.`);
         return { content: undefined }
@@ -42,12 +35,12 @@ export async function execute(client: Client, msg: Message, args: string[]) {
 function downloadDispatch(msg: Message, requested_link: string, format_id: string) {
     return async (info: InfoResponse) => {
         msg.reply(`Downloading \`${info.file}\` from \`${info.uploader}\` with an estimate of \`${humanize(info.duration * 1000)}\``)
-        return { content: await downloadVideo(requested_link, format_id) } 
+        return { content: await helpers.downloadVideo(requested_link, format_id) } 
     }
 }
 async function uploadDispatch(dl: DownloadResponse) {
     return {
-        content: await uploadVideo(dl.filename, dl.mimetype)
+        content: await helpers.uploadVideo(dl.filename, dl.mimetype)
     }
 }
 function disabled(msg: Message, index_of_processing_user: number) {
@@ -77,13 +70,13 @@ export async function checker(msg: Message, args: string[]): Promise<boolean> {
         return false;
     }
 
-    const checks = await checkLink(requested_link, format_id);
+    const checks = await helpers.checkLink(requested_link, format_id);
     if (checks.reasons !== undefined && checks.reasons.length > 0) {
-        msg.reply(formatCheckResults(checks));
+        msg.reply(helpers.formatCheckResults(checks));
         return false;
     }
 
-    const status = await getStatus();
+    const status = await helpers.getStatus();
     if (status && status.hasReachedLimit) {
         msg.reply(`Sorry ${msg.author.displayName}! My box is currently full. Please try again later.`);
         return false;
@@ -93,7 +86,7 @@ export async function checker(msg: Message, args: string[]): Promise<boolean> {
 }
 
 export async function dyn_cooldown(args: string[]): Promise<number> {
-    const info = await getInfo(args[0]);
+    const info = await helpers.getInfo(args[0]);
     // https://www.desmos.com/calculator/cxw8pneayf
     return (info.duration * info.duration) / 3500;
 }

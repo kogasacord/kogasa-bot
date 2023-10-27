@@ -1,15 +1,12 @@
+import helpers from "../helpers/helpers.js";
 import { Client, EmbedBuilder, Message } from "discord.js";
-import { getFormats } from "../helpers/ytdl/get_formats.js";
-import { checkIfLink } from "../helpers/misc/link.js";
-import { formatCheckResults } from "../helpers/ytdl/format_check.js";
-import { checkLink } from "../helpers/ytdl/check_link.js";
 
 export const name = "ytdlf";
 export const cooldown = 20;
 export const description = "Find formats for a specific YouTube video."
 export async function execute(client: Client, msg: Message, args: string[]) {
     const requested_link = args[0];
-    const f = await getFormats(requested_link);
+    const f = await helpers.getFormats(requested_link);
     
     let isOver = false;
     let indexer = 0;
@@ -40,13 +37,13 @@ export async function checker(msg: Message, args: string[]): Promise<boolean> {
         msg.reply(`You did not give me a link to scan.`);
         return false;
     }
-    if (!checkIfLink(requested_link)) {
+    if (!helpers.checkIfLink(requested_link)) {
         msg.reply("You did not send me a link.");
         return false;
     }
-    const checks = await checkLink(requested_link);
+    const checks = await helpers.checkLink(requested_link);
     if (checks.reasons !== undefined && checks.reasons.length > 0) {
-        msg.reply(formatCheckResults(checks));
+        msg.reply(helpers.formatCheckResults(checks));
         return false;
     }
     return true;
