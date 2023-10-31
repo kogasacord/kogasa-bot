@@ -59,13 +59,16 @@ client.on("messageCreate", async (msg) => {
     const c = msg.content.split(" ");
     const args = msg.content.split(" ");
     const name = c[0].replace(prefix, "");
-	
+
 	// alias integration
     const command = aliasToCommand(name);
     args.shift();
 
     try {
-        if (!command) return;
+        if (!command) {
+			// fuzzy searching for commands
+			return;
+		};
         // scoping
         if (!command.noscope) {
             const response = await helpers.commandChannelAccess(pb, name, msg.channel.id, msg.channel.guildId)
@@ -132,12 +135,12 @@ client.on("messageCreate", async (msg) => {
     }
 });
 
-function aliasToCommand(name: string) {
-	const alias = aliases.get(name);
-	if (alias) {
-    	return commands.get(alias);
+function aliasToCommand(alias: string) {
+	const command_name = aliases.get(alias);
+	if (command_name) {
+    	return commands.get(command_name);
 	}
-	return commands.get(name)
+	return commands.get(alias);
 }
 
 client.on("ready", async (client) => {
