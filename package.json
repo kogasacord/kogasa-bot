@@ -5,13 +5,14 @@
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-	"start": "node build/index.js"
+    "start": "node build/index.js"
   },
   "author": "",
   "license": "ISC",
   "devDependencies": {
     "@types/humanize-duration": "^3.27.1",
     "@types/mime-types": "^2.1.1",
+    "@types/seedrandom": "^3.0.7",
     "typescript": "^5.1.6"
   },
   "dependencies": {
@@ -22,7 +23,9 @@
     "mime-types": "^2.1.35",
     "node-fetch": "^3.3.2",
     "pocketbase": "^0.16.0",
-    "sagiri": "^3.4.0"
+    "random": "^4.1.0",
+    "sagiri": "^3.4.0",
+    "seedrandom": "^3.0.5"
   },
   "type": "module"
 }

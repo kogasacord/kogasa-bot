@@ -8,7 +8,7 @@ import { Client, Message } from "discord.js";
 export const name = "randomweb";
 export const aliases = ["rweb"];
 export const cooldown = 30;
-export const description = "Sends a random website to you, scaled by rarity. The more rare it is, the more obscure (or goofy) the website is. Goes from Common to Super Rare."
+export const description = "Sends a random website to you, scaled by rarity. The more rare it is, the more obscure (or goofy) the website is. Goes from Common to Super Rare. Currently using a strong random number generator."
 export async function execute(client: Client, msg: Message, args: string[], external_data: ExternalDependencies) {
     const websites: Websites = external_data.external_data[0];
     const tiers: Map<string, Tier> = external_data.external_data[1];
