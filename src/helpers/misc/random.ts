@@ -3,6 +3,7 @@ import readline from "readline";
 import seedrandom from "seedrandom";
 import random from "random";
 import crypto from "crypto";
+import { Tier } from "../types";
 
 const seed = crypto.randomBytes(400).toString();
 const rng = random.clone(seedrandom(seed, { entropy: true }))
@@ -12,7 +13,7 @@ const rng = random.clone(seedrandom(seed, { entropy: true }))
 	* Inpure function.
 	*/
 export function getRandomInt(min: number, max: number) {
-	return rng.uniformInt(0, 100)();
+	return rng.uniformInt(min, max)();
 }
 
 export function grabAllRandomWebsites(path: string) {
@@ -27,3 +28,28 @@ export function grabAllRandomWebsites(path: string) {
         readInterface.on('close', () => { res(sites) });
     })
 }
+
+export function gachaSpecificWebsite(
+    websites: { rarity: string, site: string }[],
+    chances: Map<string, Tier>
+) {
+    const rannum = getRandomInt(1, 300);
+    
+    for (const rarity_name of chances.keys()) {
+        const rarity_value = chances.get(rarity_name);
+
+        if (!rarity_value) {
+            throw Error("Something went wrong with grabbing rarity from the \"Tiers\" Hashmap.");
+        }
+        if (rannum <= rarity_value.chance) {
+            const rarity_websites = websites.filter((v) => v.rarity === rarity_name);
+            return {
+                website: rarity_websites[getRandomInt(0, rarity_websites.length - 1)],
+                rarity_name: rarity_value.name,
+                rarity_emote: rarity_value.emote,
+                diceroll: rannum
+            }
+        }
+    }
+}
+

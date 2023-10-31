@@ -18,7 +18,7 @@ import { importDirectories, postprocessAliases } from "./misc/import.js"
 import { checkIfLink } from "./misc/link.js"
 import { run, asyncRun, wrapInOption } from "./misc/monad.js"
 import { pingURL } from "./misc/ping.js"
-import { getRandomInt, grabAllRandomWebsites } from "./misc/random.js"
+import { getRandomInt, grabAllRandomWebsites, gachaSpecificWebsite } from "./misc/random.js"
 import { formatArray } from "./misc/smartjoin.js"
 
 import { CommandModule as Command, ExternalDependencies as Ext, Cooldown as Cool, JSONObject as JSONO, Tier as Ti, Websites as Webs } from "./types.js"
@@ -70,7 +70,7 @@ const mod = {
 	getRandomInt,
 	grabAllRandomWebsites,
 	formatArray,
-
+	gachaSpecificWebsite
 };
 
 export type CommandModule = Command
