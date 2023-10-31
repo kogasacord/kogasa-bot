@@ -7,13 +7,13 @@ import { Client, Message } from "discord.js";
 
 export const name = "randomweb";
 export const aliases = ["rweb"];
-export const cooldown = 30;
+export const cooldown = 2;
 export const description = "Sends a random website to you, scaled by rarity. The more rare it is, the more obscure (or goofy) the website is. Goes from Common to Super Rare. Currently using a strong random number generator."
 export async function execute(client: Client, msg: Message, args: string[], external_data: ExternalDependencies) {
     const websites: Websites = external_data.external_data[0];
     const tiers: Map<string, Tier> = external_data.external_data[1];
     const gacha = gachaSpecificWebsite(websites, tiers);
-    if (gacha) {
+    if (gacha && gacha.website) {
         msg.reply(`:package: ||${gacha.rarity_emote} <${gacha.website.site}>|| (${gacha.website.rarity} | ${gacha.rarity_name}) ${gacha.rarity_name === "Flower" ? "You uncover something strange." : ""}`)
     } else {
         msg.reply(
@@ -27,7 +27,7 @@ function gachaSpecificWebsite(
     websites: { rarity: string, site: string }[],
     chances: Map<string, Tier>
 ) {
-    const rannum = helpers.getRandomInt(1, 300);
+    const rannum = helpers.getRandomInt(1, 300 - 1);
     
     for (const rarity_name of chances.keys()) {
         const rarity_value = chances.get(rarity_name);
