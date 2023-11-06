@@ -55,7 +55,9 @@ async function getAverageLatency(url: string, ping_count: number) {
 	const pings = await helpers.pingURL(url, ping_count);
 	const average_latency = pings
 		.map(c => c.time)
-		.reduce((prev, curr) => prev + curr) / pings.length;
+
+	if (average_latency.length > 1)
+		return average_latency.reduce((prev, curr) => prev + curr) / pings.length;
 	return average_latency;
 }
 
