@@ -1,3 +1,4 @@
+/*
 import MiniSearch from "minisearch";
 
 const mini = new MiniSearch({
@@ -7,3 +8,4 @@ const mini = new MiniSearch({
 function search(object: { command: string }) {
 	
 }
+*/
