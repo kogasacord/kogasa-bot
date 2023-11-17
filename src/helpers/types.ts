@@ -1,4 +1,5 @@
 import Pocketbase from "pocketbase"
+import { Queue } from "./misc/queue.js";
 import { Client, Message, Collection } from "discord.js";
 
 export type CommandModule = { 
@@ -21,20 +22,19 @@ export type ExternalDependencies = {
     pb: Pocketbase,
     commands: Collection<string, CommandModule>,
     prefix:   string,
-    external_data: any[]
+    external_data: [Website[], Map<string, Tier>, Map<string, Queue<string>>]
 }
 export type Cooldown = {
 	cooldown: number,
 	hasMessaged: boolean,
 }
-
+export type Website = {
+	rarity: string, 
+	site: string
+};
 export type JSONObject = { [a: string]: any }
 export type Tier = {
     chance: number,
     name: string,
     emote: string
 } & JSONObject
-export type Websites = {
-    rarity: string;
-    site: string;
-}[]

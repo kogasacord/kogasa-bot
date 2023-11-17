@@ -3,7 +3,7 @@ import readline from "readline";
 import seedrandom from "seedrandom";
 import random from "random";
 import crypto from "crypto";
-import { Tier } from "../types";
+import { Tier, Website } from "../types";
 
 const seed = crypto.randomBytes(400).toString();
 const rng = random.clone(seedrandom(seed, { entropy: true }))
@@ -16,7 +16,7 @@ export function getRandomInt(min: number, max: number) {
 	return rng.uniformInt(min, max)();
 }
 
-export function grabAllRandomWebsites(path: string) {
+export function grabAllRandomWebsites(path: string): Promise<Website[]> {
     return new Promise<{ rarity: string, site: string }[]>((res, rej) => {
         const sites: { rarity: string, site: string }[] = []
         const readInterface = readline.createInterface({
@@ -30,7 +30,7 @@ export function grabAllRandomWebsites(path: string) {
 }
 
 export function gachaSpecificWebsite(
-    websites: { rarity: string, site: string }[],
+    websites: Website[],
     chances: Map<string, Tier>
 ) {
     const rannum = getRandomInt(1, 300);

@@ -6,9 +6,11 @@ import { Client, Collection, ChannelType, Message, ActivityType } from "discord.
 
 import { enableAutoDelete } from "./src/startup.js";
 import helpers, { CommandModule, Cooldown, ExternalDependencies, Tier } from "./src/helpers/helpers.js";
+import { Queue } from "./src/helpers/misc/queue.js";
 
 import settings from "./settings.json" assert { type: "json" };
 import config from "./config.json" assert { type: "json" };
+import {Website} from "./src/helpers/types.js";
 
 ///////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -27,17 +29,16 @@ const commands = new Collection<string, CommandModule>()
 // { alias: name }
 const aliases = helpers.postprocessAliases(commands);
 const cooldowns = new Collection<string, Collection<string, Cooldown>>();
-
-console.log(`Imported ${chalk.bgGreen(`${commands.size} commands`)}.`)
-const websites = await helpers.grabAllRandomWebsites(path.join(__dirname, "./media/randomweb.jsonl"))
-console.log(`Imported ${websites.length} websites.`)
+const websites: Website[] = await helpers.grabAllRandomWebsites(path.join(__dirname, "./media/randomweb.jsonl"))
 const tiers = new Map<string, Tier>([
-    ["C", { chance: 137, name: "Common", emote: ":cd:" }], // implement low_chance and high_chance to compare together
-    ["UC", { chance: 220, name: "Uncommon", emote: ":comet:" }],
-    ["R", { chance: 275, name: "Rare", emote: ":sparkles:" }],
-    ["SR", { chance: 298, name: "Super Rare", emote: ":sparkles::camping:" }],
-    ["Q", { chance: 300, name: "Flower", emote: ":white_flower:" }]
-])
+	["C", {chance: 137, name: "Common", emote: ":cd:"}], // implement low_chance and high_chance to compare together
+	["UC", {chance: 220, name: "Uncommon", emote: ":comet:"}],
+	["R", {chance: 275, name: "Rare", emote: ":sparkles:"}],
+	["SR", {chance: 298, name: "Super Rare", emote: ":sparkles::camping:"}],
+	["Q", {chance: 300, name: "Flower", emote: ":white_flower:"}]
+]);
+
+const chat_buffer = new Map<string, Queue<string>>();
 
 if (!settings.test)
     await enableAutoDelete();
@@ -46,6 +47,12 @@ if (!settings.test)
 client.on("messageCreate", async (msg) => {
     if (msg.channel.type !== ChannelType.GuildText)
         return;
+
+		let chat_buffer_channel = chat_buffer.get(msg.channelId);
+		if (!chat_buffer_channel) {
+				chat_buffer.set(msg.channelId, new Queue(10));
+		}
+		chat_buffer_channel?.push(`${msg.author.displayName.toUpperCase()}: ${msg.content}`);
 
     if (msg.author.bot)
         return;
@@ -118,16 +125,16 @@ client.on("messageCreate", async (msg) => {
             : 0;
 
         timestamps?.set(author_id, {
-			cooldown: now + cooldownAdditional + cooldownAmount,
-			hasMessaged: false,
-		});
+					cooldown: now + cooldownAdditional + cooldownAmount,
+					hasMessaged: false,
+				});
         setTimeout(() => timestamps.delete(author_id), cooldownAmount + cooldownAdditional);
 
         const ext: ExternalDependencies = {
             pb: pb,
             commands: commands,
             prefix: prefix,
-            external_data: [websites, tiers]
+            external_data: [websites, tiers, chat_buffer]
         }
         command.execute(client, msg, args, ext);
     } catch (err) {

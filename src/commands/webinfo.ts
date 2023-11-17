@@ -6,8 +6,8 @@ export const aliases = ["rwebinfo"];
 export const cooldown = 15;
 export const description = "Information about randomweb. It will come with tracking your collected websites soon."
 export async function execute(client: Client, msg: Message, args: string[], external_data: ExternalDependencies) {
-    const websites: Websites = external_data.external_data[0];
-    const tiers: Map<string, Tier> = external_data.external_data[1];
+    const websites = external_data.external_data[0];
+    const tiers = external_data.external_data[1];
 
     msg.reply(
         `\`\`\``
