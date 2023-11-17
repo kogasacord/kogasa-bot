@@ -2,7 +2,7 @@ import chalk from "chalk";
 import * as url from 'url';
 import path from "path";
 import Pocketbase from "pocketbase";
-import { Client, Collection, ChannelType, Message, ActivityType } from "discord.js";
+import { Client, Collection, ChannelType, Message, ActivityType, Options } from "discord.js";
 
 import { enableAutoDelete } from "./src/startup.js";
 import helpers, { CommandModule, Cooldown, ExternalDependencies, Tier } from "./src/helpers/helpers.js";
@@ -10,13 +10,18 @@ import { Queue } from "./src/helpers/misc/queue.js";
 
 import settings from "./settings.json" assert { type: "json" };
 import config from "./config.json" assert { type: "json" };
-import {Website} from "./src/helpers/types.js";
+import {ChatBuffer, Website} from "./src/helpers/types.js";
 
 ///////////////////////////////////////////////////////////////////////////////////////////////
 
 const __dirname = url.fileURLToPath(new URL('.', import.meta.url));
 const client = new Client({
     intents: ["Guilds", "GuildMessages", "MessageContent", "GuildIntegrations"],
+		makeCache: Options.cacheWithLimits({
+			...Options.DefaultMakeCacheSettings,
+			MessageManager: 2000,
+			UserManager: 100,
+		}),
 });
 const pb = new Pocketbase("http://127.0.0.1:8090");
 
@@ -38,7 +43,7 @@ const tiers = new Map<string, Tier>([
 	["Q", {chance: 300, name: "Flower", emote: ":white_flower:"}]
 ]);
 
-const chat_buffer = new Map<string, Queue<string>>();
+const chat_buffer: ChatBuffer = new Map();
 
 if (!settings.test)
     await enableAutoDelete();
@@ -52,7 +57,12 @@ client.on("messageCreate", async (msg) => {
 		if (!chat_buffer_channel) {
 				chat_buffer.set(msg.channelId, new Queue(10));
 		}
-		chat_buffer_channel?.push(`${msg.author.displayName.toUpperCase()}: ${msg.content}`);
+		chat_buffer_channel?.push([
+			msg.author.displayName.toUpperCase(), 
+			msg.content, 
+			msg.reference?.channelId,
+			msg.reference?.messageId,
+		]);
 
     if (msg.author.bot)
         return;

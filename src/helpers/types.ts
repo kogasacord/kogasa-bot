@@ -18,11 +18,12 @@ export type CommandModule = {
     special?:      boolean, // currently does nothing
     noscope?:      boolean, // avoids the scope check
 };
+export type ChatBuffer = Map<string, Queue<[string, string, undefined | string, undefined | string]>>;
 export type ExternalDependencies = {
     pb: Pocketbase,
     commands: Collection<string, CommandModule>,
     prefix:   string,
-    external_data: [Website[], Map<string, Tier>, Map<string, Queue<string>>]
+    external_data: [Website[], Map<string, Tier>, ChatBuffer]
 }
 export type Cooldown = {
 	cooldown: number,
