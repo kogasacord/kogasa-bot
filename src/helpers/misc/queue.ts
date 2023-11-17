@@ -17,10 +17,3 @@ export class Queue<T> {
 		return this.contents;
 	}
 }
-
-const queues = new Queue<number>(5);
-
-for (let index = 0; index < 20; index++) {
-	queues.push(index);
-	console.log(queues.get_internal());
-}
