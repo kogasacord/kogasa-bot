@@ -1,5 +1,5 @@
 import { Client, Message } from "discord.js";
-import { ExternalDependencies, Tier, Websites } from "../helpers/types";
+import { ExternalDependencies } from "../helpers/types";
 
 export const name = "randomwebinfo";
 export const aliases = ["rwebinfo"];

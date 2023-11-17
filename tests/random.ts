@@ -1,6 +1,7 @@
 import path from "path";
 import url from "url";
-import helpers, { Tier, Websites } from "../src/helpers/helpers.js";
+import helpers, { Tier } from "../src/helpers/helpers.js";
+import {Website} from "../src/helpers/types.js";
 
 const __dirname = url.fileURLToPath(new URL('.', import.meta.url));
 
@@ -13,7 +14,7 @@ const tiers = new Map<string, Tier>([
 	["Q", {chance: 300, name: "Flower", emote: ":white_flower:"}]
 ]);
 
-export function gacha(websites: Websites, tiers: Map<string, Tier>) {
+export function gacha(websites: Website[], tiers: Map<string, Tier>) {
 	const count = new Map<string, number>();
 	for (let i = 0; i < 5000; i++) {
 		const a = helpers.gachaSpecificWebsite(websites, tiers);

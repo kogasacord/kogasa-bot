@@ -22,7 +22,14 @@ import { getRandomInt, grabAllRandomWebsites, gachaSpecificWebsite } from "./mis
 import { formatArray } from "./misc/smartjoin.js"
 import { Queue } from "./misc/queue.js"
 
-import { CommandModule as Command, ExternalDependencies as Ext, Cooldown as Cool, JSONObject as JSONO, Tier as Ti, Websites as Webs } from "./types.js"
+import { 
+	CommandModule as Command, 
+	ExternalDependencies as Ext, 
+	Cooldown as Cool, 
+	JSONObject as JSONO, 
+	Tier as Ti, 
+	Website as Webs 
+} from "./types.js"
 import { 
 	PocketbaseResult as PBR, 
 	UsersParameters as UP, 
@@ -81,7 +88,7 @@ export type ExternalDependencies = Ext
 export type Cooldown = Cool
 export type JSONObject = JSONO
 export type Tier = Ti
-export type Websites = Webs
+export type Website = Webs
 
 export type PocketbaseResult<T> = PBR<T>
 export type UsersParameters = UP
