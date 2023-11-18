@@ -16,6 +16,10 @@ export function getRandomInt(min: number, max: number) {
 	return rng.uniformInt(min, max)();
 }
 
+export function pickRandom<T>(iterable: T[]): T {
+	return iterable[getRandomInt(0, iterable.length)];
+}
+
 export function grabAllRandomWebsites(path: string): Promise<Website[]> {
     return new Promise<{ rarity: string, site: string }[]>((res, rej) => {
         const sites: { rarity: string, site: string }[] = []

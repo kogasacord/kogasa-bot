@@ -12,6 +12,7 @@ import settings from "./settings.json" assert { type: "json" };
 import config from "./config.json" assert { type: "json" };
 import {ChatBuffer, Website} from "./src/helpers/types.js";
 import {getMessage} from "./src/helpers/misc/fetch.js";
+import {pickRandom} from "./src/helpers/misc/random.js";
 
 ///////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -174,12 +175,23 @@ function aliasToCommand(alias: string) {
 
 client.on("ready", async (client) => {
     console.log(`Done! [Test mode: ${settings.test}]`);
-    client.user.setPresence({
-        activities: [{
-            name: "the Human Village",
-            type: ActivityType.Watching,
-        }],
-        status: "online",
-    })
+		const presence = pickRandom([
+			"the Human Village",
+			"Alice's Bed",
+			"the Road to Eientei",
+			"Marisa in the Forest of Magic",
+			"Reimu in the Hakurei Shrine",
+			"the skies"
+		]);
+
+		setInterval(() => {
+			client.user.setPresence({
+				activities: [{
+					name: presence,
+					type: ActivityType.Watching,
+				}],
+				status: "online",
+			});
+		}, 1000 * 10)
 });
 client.login(settings.test ? config.test_token : config.token)
