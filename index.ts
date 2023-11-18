@@ -183,7 +183,6 @@ client.on("ready", async (client) => {
 			"Reimu in the Hakurei Shrine",
 			"the skies"
 		]);
-
 		setInterval(() => {
 			client.user.setPresence({
 				activities: [{
