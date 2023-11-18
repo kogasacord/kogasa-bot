@@ -11,6 +11,7 @@ import { Queue } from "./src/helpers/misc/queue.js";
 import settings from "./settings.json" assert { type: "json" };
 import config from "./config.json" assert { type: "json" };
 import {ChatBuffer, Website} from "./src/helpers/types.js";
+import {getMessage} from "./src/helpers/misc/fetch.js";
 
 ///////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -57,12 +58,23 @@ client.on("messageCreate", async (msg) => {
 		if (!chat_buffer_channel) {
 				chat_buffer.set(msg.channelId, new Queue(10));
 		}
-		chat_buffer_channel?.push([
-			msg.author.displayName.toUpperCase(), 
-			msg.content, 
-			msg.reference?.channelId,
-			msg.reference?.messageId,
-		]);
+		
+		const replied = msg.reference && msg.reference.messageId
+			? await getMessage(client, msg.reference.channelId, msg.reference.messageId) 
+			: null;
+		chat_buffer_channel?.push({
+			display_name: msg.author.displayName,
+			content: msg.content,
+			channel_id: msg.channelId,
+			message_id: msg.id,
+			replied: msg.reference && msg.reference.messageId && replied 
+				? {
+					channel_id: msg.reference.channelId,
+					message_id: msg.reference.messageId,
+					display_name: replied.author.displayName,
+					content: replied.content,
+				} : undefined
+		});
 
     if (msg.author.bot)
         return;

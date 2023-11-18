@@ -1,6 +1,6 @@
-import { Channel, ChannelType, Client, Embed, EmbedBuilder, GuildChannel, GuildHubType, Message, TextChannel } from "discord.js";
+import { Client, EmbedBuilder, Message } from "discord.js";
 import { ExternalDependencies } from "../helpers/types.js";
-import {toSuperScript} from "../helpers/misc/tosuperscript.js";
+import { getMessage } from "../helpers/misc/fetch.js";
 
 export const name = "buffer";
 export const aliases = ["back"]
@@ -18,14 +18,14 @@ export async function execute(client: Client, msg: Message, args: string[], exte
 
 		let format = "";
 		for (const message of messages) {
-			const [display_names, message_content, replied_channelId, replied_messageId] = message;
-
-			if (replied_channelId && replied_messageId) {
-				const replied_message: Message<true> = await getRepliedMessage(client, replied_channelId, replied_messageId) as any;
-				const message_format = `${replied_message.author.displayName}: ${replied_message.content}`;
-				format += `┌── ${message_format}\n`;
+			if (message.replied) {
+				const replied_message_format = await formatMessage(client, message.replied.channel_id, message.replied.message_id) 
+					?? `[Lost to time.]`;
+				format += `┌── ${replied_message_format}\n`;
 			}
-			format += `${display_names}: ${message_content}\n`;
+			const message_format = await formatMessage(client, message.channel_id, message.message_id) 
+				?? `[Lost to time.]`;
+			format += `${message_format}\n`;
 		}
 		embed.addFields({name: "Bang.", value: format});
 	} else {
@@ -34,11 +34,15 @@ export async function execute(client: Client, msg: Message, args: string[], exte
 	msg.reply({ embeds: [embed] });
 }
 
-async function getRepliedMessage(client: Client, channel_id: string, message_id: string): Promise<Message<true> | null> {
-	const channel = (client.channels.cache.get(channel_id)
-		?? await client.channels.fetch(channel_id));
-	if (channel && channel.type === ChannelType.GuildText) {
-		return channel.messages.cache.get(message_id) ?? await channel.messages.fetch(message_id);	
+async function formatMessage(
+	client: Client,
+	channel_id: string,
+	message_id: string,
+) {
+	const replied_message = await getMessage(client, channel_id, message_id);
+	if (replied_message) {
+		return `${replied_message.author.displayName}: ${replied_message.content}`;
+	} else {
+		return null;
 	}
-	return null;
 }

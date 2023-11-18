@@ -18,7 +18,14 @@ export type CommandModule = {
     special?:      boolean, // currently does nothing
     noscope?:      boolean, // avoids the scope check
 };
-export type ChatBuffer = Map<string, Queue<[string, string, undefined | string, undefined | string]>>;
+type UserChatBuffer = {
+	display_name: string,
+	content: string,
+	channel_id: string,
+	message_id: string,
+}
+export type ChatBufferMessage = UserChatBuffer & { replied?: UserChatBuffer };
+export type ChatBuffer = Map<string, Queue<ChatBufferMessage>>;
 export type ExternalDependencies = {
     pb: Pocketbase,
     commands: Collection<string, CommandModule>,

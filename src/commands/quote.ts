@@ -66,12 +66,12 @@ async function quote(
 	) {
         if (mimetype.includes("image/")) {
             return helpers.quoteAttachment(
-				text, author, avatar_url, 
-				attachment.url,
-				attachment.height,
-				attachment.width,
-				mimetype
-			);
+								text, author, avatar_url, 
+								attachment.url,
+								attachment.height,
+								attachment.width,
+								mimetype
+						);
         }
     }
     return helpers.quoteDefault(text, author, avatar_url);
@@ -103,6 +103,9 @@ async function parseQuotes(client: Client, str: string) {
     return parsed_emotes;
 }
 
+/*
+	* Extracts discord's emotes and mentions from the message content.
+	*/
 async function extractObjects(
     str: string, 
     extract: RegExp, 
