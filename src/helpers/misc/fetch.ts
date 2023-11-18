@@ -10,7 +10,6 @@ export async function getMessage(client: Client, channel_id: string, message_id:
 		}
 		return null;
 	} catch (err) {
-		console.error(err);
 		return null;
 	}
 }

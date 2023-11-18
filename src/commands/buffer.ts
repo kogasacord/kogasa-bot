@@ -19,12 +19,10 @@ export async function execute(client: Client, msg: Message, args: string[], exte
 		let format = "";
 		for (const message of messages) {
 			if (message.replied) {
-				const replied_message_format = await formatMessage(client, message.replied.channel_id, message.replied.message_id) 
-					?? `[Lost to time.]`;
+				const replied_message_format = await formatMessage(client, message.replied.channel_id, message.replied.message_id, message.replied.display_name, message.replied.content);
 				format += `┌── ${replied_message_format}\n`;
 			}
-			const message_format = await formatMessage(client, message.channel_id, message.message_id) 
-				?? `[Lost to time.]`;
+			const message_format = await formatMessage(client, message.channel_id, message.message_id, message.display_name, message.content) 
 			format += `${message_format}\n`;
 		}
 		embed.addFields({name: "Bang.", value: format});
@@ -38,11 +36,13 @@ async function formatMessage(
 	client: Client,
 	channel_id: string,
 	message_id: string,
+	display_name: string,
+	content: string,
 ) {
 	const replied_message = await getMessage(client, channel_id, message_id);
 	if (replied_message) {
 		return `${replied_message.author.displayName}: ${replied_message.content}`;
 	} else {
-		return null;
+		return `${display_name} [DELETED]: ${content}`;
 	}
 }

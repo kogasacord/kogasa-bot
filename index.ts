@@ -191,6 +191,6 @@ client.on("ready", async (client) => {
 				}],
 				status: "online",
 			});
-		}, 1000 * 10)
+		}, 1000 * 60)
 });
 client.login(settings.test ? config.test_token : config.token)
