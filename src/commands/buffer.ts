@@ -39,10 +39,13 @@ async function formatMessage(
 	display_name: string,
 	content: string,
 ) {
-	const replied_message = await getMessage(client, channel_id, message_id);
-	if (replied_message) {
-		return `${replied_message.author.displayName}: ${replied_message.content}`;
+	const updated_message = await getMessage(client, channel_id, message_id);
+	if (updated_message) {
+		if (updated_message.content !== content) {
+			return `\`${updated_message.author.displayName} [EDITED]:\` ~~${content}~~ ${updated_message.content}`
+		}
+		return `\`${updated_message.author.displayName}:\` ${updated_message.content}`;
 	} else {
-		return `${display_name} [DELETED]: ${content}`;
+		return `\`${display_name}\` [DELETED]: ${content}`;
 	}
 }
