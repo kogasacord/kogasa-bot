@@ -13,18 +13,19 @@ export type CommandModule = {
         deps:      ExternalDependencies,
     ) => void,
     dyn_cooldown?: (args: string[])               => Promise<number>,
-	aliases?:      string[],
+		aliases?:      string[],
     checker?:      (msg: Message, args: string[]) => Promise<boolean>, 
     special?:      boolean, // currently does nothing
     noscope?:      boolean, // avoids the scope check
 };
-type UserChatBuffer = {
+export type ChatBufferMessage = {
+	id: string,
 	display_name: string,
 	content: string,
-	channel_id: string,
-	message_id: string,
-}
-export type ChatBufferMessage = UserChatBuffer & { replied?: UserChatBuffer };
+	is_deleted: boolean,
+	edits: string[],
+	replied?: ChatBufferMessage,
+};
 export type ChatBuffer = Map<string, Queue<ChatBufferMessage>>;
 export type ExternalDependencies = {
     pb: Pocketbase,

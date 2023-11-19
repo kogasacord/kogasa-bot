@@ -8,7 +8,7 @@ export class Queue<T> {
 		this.contents.push(content);
 	}
 	pop() {
-		this.contents.pop();
+		return this.contents.pop();
 	}
 	adjustLength(length: number) {
 		this.max_length = length;

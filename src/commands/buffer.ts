@@ -1,9 +1,9 @@
 import { Client, EmbedBuilder, Message } from "discord.js";
-import { ExternalDependencies } from "../helpers/types.js";
+import { ChatBufferMessage, ExternalDependencies } from "../helpers/types.js";
 import { getMessage } from "../helpers/misc/fetch.js";
 
 export const name = "buffer";
-export const aliases = ["back"]
+export const aliases = ["back", "backtrack", "b"]
 export const cooldown = 5;
 export const description = "Backtrack a channel, a command better than Small's implementation."
 export async function execute(client: Client, msg: Message, args: string[], external_data: ExternalDependencies) {
@@ -18,12 +18,7 @@ export async function execute(client: Client, msg: Message, args: string[], exte
 
 		let format = "";
 		for (const message of messages) {
-			if (message.replied) {
-				const replied_message_format = await formatMessage(client, message.replied.channel_id, message.replied.message_id, message.replied.display_name, message.replied.content);
-				format += `┌── ${replied_message_format}\n`;
-			}
-			const message_format = await formatMessage(client, message.channel_id, message.message_id, message.display_name, message.content) 
-			format += `${message_format}\n`;
+			format += `${formatMessage(message)}\n`;
 		}
 		embed.addFields({name: "Bang.", value: format});
 	} else {
@@ -32,20 +27,11 @@ export async function execute(client: Client, msg: Message, args: string[], exte
 	msg.reply({ embeds: [embed] });
 }
 
-async function formatMessage(
-	client: Client,
-	channel_id: string,
-	message_id: string,
-	display_name: string,
-	content: string,
-) {
-	const updated_message = await getMessage(client, channel_id, message_id);
-	if (updated_message) {
-		if (updated_message.content !== content) {
-			return `\`${updated_message.author.displayName} [EDITED]:\` ~~${content}~~ ${updated_message.content}`
-		}
-		return `\`${updated_message.author.displayName}:\` ${updated_message.content}`;
-	} else {
-		return `\`${display_name}\` [DELETED]: ${content}`;
-	}
+function formatMessage(message: ChatBufferMessage) {
+	let format = "";
+	if (message.replied)
+		format += `╔═ \`${message.replied.display_name}\` ${message.replied.is_deleted ? "[DELETED]" : ""}: ${message.replied.content}\n`;
+	format += `\`${message.display_name}\`${message.is_deleted ? " [DELETED]:" : ":"} ${message.edits.length >= 1 ? "\n" : ""}${message.edits.map((v, i) => `||${v}||\n`).join("")} ${message.content}`;
+
+	return format;
 }

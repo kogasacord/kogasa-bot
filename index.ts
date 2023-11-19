@@ -50,30 +50,82 @@ const chat_buffer: ChatBuffer = new Map();
 if (!settings.test)
     await enableAutoDelete();
 
+client.on("messageUpdate", async (partial_old_msg, partial_new_msg) => {
+	const old_msg = await getMessage(client, partial_old_msg.channelId, partial_old_msg.id);
+	const new_msg = await getMessage(client, partial_new_msg.channelId, partial_new_msg.id);
+	if (!(new_msg && old_msg))
+		return;
+
+	const chat_buffer_channel = chat_buffer.get(new_msg.channelId)!;
+	const replied = new_msg.reference && new_msg.reference.messageId
+		? await getMessage(client, new_msg.reference.channelId, new_msg.reference.messageId) 
+		: null;
+	const chat_buffer_message = chat_buffer_channel.get_internal().find((buffer_message) => buffer_message.id === new_msg.id);
+	const replied_buffer_message = chat_buffer_channel
+		.get_internal()
+		.find((buffer_message) => {
+			if (buffer_message.replied && replied) {
+				return buffer_message.replied.id === replied.id
+			}
+			return false;
+		});
+	if (chat_buffer_message) {
+		chat_buffer_message.content = new_msg.content;
+		chat_buffer_message.edits.push(old_msg.content);
+	}
+	if (replied_buffer_message) {
+		replied_buffer_message.content = new_msg.content;
+	}
+})
+
+client.on("messageDelete", async (msg) => {
+	let chat_buffer_channel = chat_buffer.get(msg.channelId)!;
+	const replied = msg.reference && msg.reference.messageId
+		? await getMessage(client, msg.reference.channelId, msg.reference.messageId) 
+		: null;
+	const chat_buffer_message = chat_buffer_channel.get_internal().find((buffer_message) => buffer_message.id === msg.id);
+	const replied_buffer_message = chat_buffer_channel
+		.get_internal()
+		.find((buffer_message) => {
+			if (buffer_message.replied && replied) {
+				return buffer_message.replied.id === replied.id
+			}
+			return false;
+		});
+	if (chat_buffer_message) {
+		chat_buffer_message.is_deleted = true;
+	}
+	if (replied_buffer_message) {
+		replied_buffer_message.is_deleted = true;
+	}
+})
 
 client.on("messageCreate", async (msg) => {
     if (msg.channel.type !== ChannelType.GuildText)
         return;
 
 		let chat_buffer_channel = chat_buffer.get(msg.channelId);
-		if (!chat_buffer_channel) {
-				chat_buffer.set(msg.channelId, new Queue(10));
+		if (chat_buffer_channel === undefined) {
+			chat_buffer.set(msg.channelId, new Queue(15));
+			chat_buffer_channel = chat_buffer.get(msg.channelId);
 		}
-		
 		const replied = msg.reference && msg.reference.messageId
 			? await getMessage(client, msg.reference.channelId, msg.reference.messageId) 
 			: null;
-		chat_buffer_channel?.push({
+			
+		chat_buffer_channel!.push({
+			id: msg.id,
 			display_name: msg.author.displayName,
 			content: msg.content,
-			channel_id: msg.channelId,
-			message_id: msg.id,
-			replied: msg.reference && msg.reference.messageId && replied 
+			is_deleted: false,
+			edits: [] as string[],
+			replied: replied 
 				? {
-					channel_id: msg.reference.channelId,
-					message_id: msg.reference.messageId,
-					display_name: replied.author.displayName,
-					content: replied.content,
+						id: replied.id,
+						display_name: replied.author.displayName,
+						content: replied.content,
+						is_deleted: false,
+						edits: [] as string[]
 				} : undefined
 		});
 
