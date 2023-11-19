@@ -15,73 +15,82 @@ import { quoteDefault } from "./quote/default.js"
 import { findThroughCollection } from "./pb/pb.js"
 
 import { importDirectories, postprocessAliases } from "./misc/import.js"
+import { getMessage } from "./misc/fetch.js"
 import { checkIfLink } from "./misc/link.js"
 import { run, asyncRun, wrapInOption } from "./misc/monad.js"
 import { pingURL } from "./misc/ping.js"
-import { getRandomInt, grabAllRandomWebsites, gachaSpecificWebsite } from "./misc/random.js"
+import {
+  pickRandom,
+  getRandomInt,
+  grabAllRandomWebsites,
+  gachaSpecificWebsite,
+} from "./misc/random.js"
 import { formatArray } from "./misc/smartjoin.js"
 import { Queue } from "./misc/queue.js"
 
-import { 
-	CommandModule as Command, 
-	ExternalDependencies as Ext, 
-	Cooldown as Cool, 
-	JSONObject as JSONO, 
-	Tier as Ti, 
-	Website as Webs 
-} from "./types.js"
-import { 
-	PocketbaseResult as PBR, 
-	UsersParameters as UP, 
-	MessageParameters as MP, 
-	ServerSettingsParameters as SSP, 
-	ChannelIDsSettings as CID, 
-	CommandScopesParameters as CSP, 
-	PBMessages as PBM, 
-	PBUsers as PBU, 
-	ServerSettings as SS, 
-	CommandSettings as CS, 
-	ChannelIDsParameters as CIDP 
-} from "./pb/types.js";
 import {
-	DownloadResponse as DR,
-	UploadResponse as UR,
-	InfoResponse as IR,
-	FormatResponse as FR,
-	CheckResult as CR,
-	StatusResult as SR,
+  CommandModule as Command,
+  ExternalDependencies as Ext,
+  Cooldown as Cool,
+  JSONObject as JSONO,
+  Tier as Ti,
+  Website as Webs,
+} from "./types.js"
+import {
+  PocketbaseResult as PBR,
+  UsersParameters as UP,
+  MessageParameters as MP,
+  ServerSettingsParameters as SSP,
+  ChannelIDsSettings as CID,
+  CommandScopesParameters as CSP,
+  PBMessages as PBM,
+  PBUsers as PBU,
+  ServerSettings as SS,
+  CommandSettings as CS,
+  ChannelIDsParameters as CIDP,
+} from "./pb/types.js"
+import {
+  DownloadResponse as DR,
+  UploadResponse as UR,
+  InfoResponse as IR,
+  FormatResponse as FR,
+  CheckResult as CR,
+  StatusResult as SR,
 } from "./ytdl/types.js"
 
 const mod = {
-	checkLink,
-	downloadVideo,
-	formatCheckResults,
-	getFormats,
-	getStatus,
-	getInfo,
-	uploadVideo,
-	
-	commandChannelAccess,
-	prefixChange,
+  checkLink,
+  downloadVideo,
+  formatCheckResults,
+  getFormats,
+  getStatus,
+  getInfo,
+  uploadVideo,
 
-	quoteAttachment,
-	quoteDefault,
+  commandChannelAccess,
+  prefixChange,
 
-	findThroughCollection,
-	importDirectories,
-	postprocessAliases,
-	checkIfLink,
-	run, asyncRun,
-	wrapInOption,
+  quoteAttachment,
+  quoteDefault,
 
-	pingURL,
-	getRandomInt,
-	grabAllRandomWebsites,
-	formatArray,
-	gachaSpecificWebsite,
-	
-	Queue
-};
+  findThroughCollection,
+  importDirectories,
+  postprocessAliases,
+  checkIfLink,
+  run,
+  asyncRun,
+  wrapInOption,
+
+  pingURL,
+  getRandomInt,
+  grabAllRandomWebsites,
+  formatArray,
+  gachaSpecificWebsite,
+
+  getMessage,
+  pickRandom,
+  Queue,
+}
 
 export type CommandModule = Command
 export type ExternalDependencies = Ext
@@ -92,10 +101,10 @@ export type Website = Webs
 
 export type PocketbaseResult<T> = PBR<T>
 export type UsersParameters = UP
-export type MessageParameters = MP 
-export type ServerSettingsParameters = SSP 
-export type ChannelIDsSettings = CID 
-export type CommandScopesParameters = CSP 
+export type MessageParameters = MP
+export type ServerSettingsParameters = SSP
+export type ChannelIDsSettings = CID
+export type CommandScopesParameters = CSP
 export type ChannelIDsParameters = CIDP
 export type PBMessages<T = {}> = PBM<T>
 export type PBUsers<T = {}> = PBU<T>
@@ -109,4 +118,4 @@ export type FormatResponse = FR
 export type CheckResult = CR
 export type StatusResult = SR
 
-export default mod;
+export default mod
