@@ -68,7 +68,11 @@ client.on("messageUpdate", async (partial_new_msg) => {
   )
   if (!new_msg) return
 
-  const chat_buffer_channel = chat_buffer.get(new_msg.channelId)!
+	let chat_buffer_channel = chat_buffer.get(new_msg.channelId);
+  if (!chat_buffer_channel) {
+    chat_buffer.set(new_msg.channelId, new Queue(15))
+    chat_buffer_channel = chat_buffer.get(new_msg.channelId)
+  }
   const replied =
     new_msg.reference && new_msg.reference.messageId
       ? await helpers.getMessage(
@@ -77,10 +81,10 @@ client.on("messageUpdate", async (partial_new_msg) => {
           new_msg.reference.messageId
         )
       : null
-  const chat_buffer_message = chat_buffer_channel
+  const chat_buffer_message = chat_buffer_channel!
     .get_internal()
     .find((buffer_message) => buffer_message.id === new_msg.id)
-  const replied_buffer_message = chat_buffer_channel
+  const replied_buffer_message = chat_buffer_channel!
     .get_internal()
     .find((buffer_message) => {
       if (buffer_message.replied && replied) {
@@ -98,7 +102,12 @@ client.on("messageUpdate", async (partial_new_msg) => {
 })
 
 client.on("messageDelete", async (msg) => {
-  const chat_buffer_channel = chat_buffer.get(msg.channelId)!
+	let chat_buffer_channel = chat_buffer.get(msg.channelId);
+  if (!chat_buffer_channel) {
+    chat_buffer.set(msg.channelId, new Queue(15))
+    chat_buffer_channel = chat_buffer.get(msg.channelId)
+  }
+
   const replied =
     msg.reference && msg.reference.messageId
       ? await helpers.getMessage(
@@ -107,10 +116,10 @@ client.on("messageDelete", async (msg) => {
           msg.reference.messageId
         )
       : null
-  const chat_buffer_message = chat_buffer_channel
+  const chat_buffer_message = chat_buffer_channel!
     .get_internal()
     .find((buffer_message) => buffer_message.id === msg.id)
-  const replied_buffer_message = chat_buffer_channel
+  const replied_buffer_message = chat_buffer_channel!
     .get_internal()
     .find((buffer_message) => {
       if (buffer_message.replied && replied) {
