@@ -282,15 +282,16 @@ function aliasToCommand(alias: string) {
 
 client.on("ready", async (client) => {
   console.log(`Done! [Test mode: ${settings.test}]`)
-  const presence = helpers.pickRandom([
-    "the Human Village",
-    "Alice's Bed",
-    "the Road to Eientei",
-    "Marisa in the Forest of Magic",
-    "Reimu in the Hakurei Shrine",
-    "the skies",
-  ])
   setInterval(() => {
+
+		const presence = helpers.pickRandom([
+			"the Human Village",
+			"Alice's Bed",
+			"the Road to Eientei",
+			"Marisa in the Forest of Magic",
+			"Reimu in the Hakurei Shrine",
+			"the skies",
+		]);
     client.user.setPresence({
       activities: [
         {
