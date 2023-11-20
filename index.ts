@@ -68,7 +68,7 @@ client.on("messageUpdate", async (partial_new_msg) => {
   )
   if (!new_msg) return
 
-	let chat_buffer_channel = chat_buffer.get(new_msg.channelId);
+  let chat_buffer_channel = chat_buffer.get(new_msg.channelId)
   if (!chat_buffer_channel) {
     chat_buffer.set(new_msg.channelId, new Queue(15))
     chat_buffer_channel = chat_buffer.get(new_msg.channelId)
@@ -102,7 +102,7 @@ client.on("messageUpdate", async (partial_new_msg) => {
 })
 
 client.on("messageDelete", async (msg) => {
-	let chat_buffer_channel = chat_buffer.get(msg.channelId);
+  let chat_buffer_channel = chat_buffer.get(msg.channelId)
   if (!chat_buffer_channel) {
     chat_buffer.set(msg.channelId, new Queue(15))
     chat_buffer_channel = chat_buffer.get(msg.channelId)
@@ -283,15 +283,14 @@ function aliasToCommand(alias: string) {
 client.on("ready", async (client) => {
   console.log(`Done! [Test mode: ${settings.test}]`)
   setInterval(() => {
-
-		const presence = helpers.pickRandom([
-			"the Human Village",
-			"Alice's Bed",
-			"the Road to Eientei",
-			"Marisa in the Forest of Magic",
-			"Reimu in the Hakurei Shrine",
-			"the skies",
-		]);
+    const presence = helpers.pickRandom([
+      "the Human Village",
+      "Alice's Bed",
+      "the Road to Eientei",
+      "Marisa in the Forest of Magic",
+      "Reimu in the Hakurei Shrine",
+      "the skies",
+    ])
     client.user.setPresence({
       activities: [
         {

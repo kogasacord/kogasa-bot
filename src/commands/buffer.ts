@@ -7,27 +7,31 @@ export const cooldown = 5
 export const description =
   "Backtrack a channel, a command better than Small's implementation."
 export async function execute(
-  client: Client,
+  _: Client,
   msg: Message,
-  args: string[],
+  __: string[],
   external_data: ExternalDependencies
 ) {
   const queue_collection = external_data.external_data[2]
   const queue = queue_collection.get(msg.channelId)
-  const embed = new EmbedBuilder()
+  const embed = new EmbedBuilder().setTitle("Backtracked.").setColor("Navy")
   if (queue) {
     const messages = queue.get_internal()
     if (messages.length < 1) {
-      return embed.addFields({ name: "no messages here.", value: "huh" })
+      return
     }
 
-    let format = ""
+    let format: string[] = []
     for (const message of messages) {
-      format += `${formatMessage(message)}\n`
+      format.push(`${formatMessage(message)}\n`)
+      if (format.join("").length > 4096) {
+        format.shift()
+      }
     }
-    embed.addFields({ name: "Bang.", value: format })
+
+    embed.setDescription(format.join(""))
   } else {
-    embed.addFields({ name: "no messages here.", value: "huh" })
+    embed.setDescription("No messages found.")
   }
   msg.reply({ embeds: [embed] })
 }
