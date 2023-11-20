@@ -17,7 +17,7 @@ export function getRandomInt(min: number, max: number) {
 }
 
 export function pickRandom<T>(iterable: T[]): T {
-  return iterable[getRandomInt(0, iterable.length)]
+  return iterable[getRandomInt(0, iterable.length - 1)]
 }
 
 export function grabAllRandomWebsites(path: string): Promise<Website[]> {
