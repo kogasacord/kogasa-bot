@@ -5,7 +5,7 @@ export const name = "buffer"
 export const aliases = ["back", "backtrack", "b"]
 export const cooldown = 5
 export const description =
-  "Backtrack a channel, a command better than Small's implementation."
+  "Backtrack a channel, a command better than Small's implementation. `??buffer (delete | edit | normal | none)`"
 
 type Filter = "delete" | "edit" | "normal" | "none"
 
