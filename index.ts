@@ -70,7 +70,7 @@ client.on("messageUpdate", async (partial_new_msg) => {
 
   let chat_buffer_channel = chat_buffer.get(new_msg.channelId)
   if (!chat_buffer_channel) {
-    chat_buffer.set(new_msg.channelId, new Queue(15))
+    chat_buffer.set(new_msg.channelId, new Queue(20))
     chat_buffer_channel = chat_buffer.get(new_msg.channelId)
   }
   const replied =
