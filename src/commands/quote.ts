@@ -90,15 +90,7 @@ async function parseQuotes(client: Client, str: string) {
     }
   )
 
-  const parsed_emotes = await extractObjects(
-    parsed_mentions,
-    /(?<=<:(.+?))\d+(?=>)/g,
-    /<:(.+?):\d+>/g,
-    async (extracted) => {
-      // placeholder for the replacement algorithm for emojis
-      return ""
-    }
-  )
+  const parsed_emotes = parsed_mentions.replace(/<a?:[^\s]+:\d+>/g, "")
 
   return parsed_emotes
 }
