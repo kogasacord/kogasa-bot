@@ -25,52 +25,42 @@ A basic file structure for easy additions to the bot.
 ## Running
 
 ### Base Kogasa
-
 1. Put a `config.json` on the root of the folder.
 
 The structure of it is like this:
-
 ```json
 {
-  "token": "[token of the bot here]",
-  "clientID": "[application id of the bot here]",
-  "test_token": "[token of the *test* bot here]",
-  "saucenao_token": "[saucenao token here]"
+    "token": "[token of the bot here]",
+    "clientID": "[application id of the bot here]",
+    "test_token": "[token of the *test* bot here]",
+    "saucenao_token": "[saucenao token here]",
 }
 ```
-
 2. Download [pocketbase](https://pocketbase.io/docs/) and download the [migration folder](https://github.com/kogasacord/kogasa-pb-base).
-   Extract the pocketbase.zip and put the migration folder inside of the pocketbase folder.
+Extract the pocketbase.zip and put the migration folder inside of the pocketbase folder.
 3. Run `pocketbase serve` inside the pocketbase folder.
 4. Run `npm install`.
 5. Run `npx tsc` and go to the `/build` folder and run `node index.js` there.
 
 ### Fully Featured Kogasa
-
 This assumes you have done Base Kogasa.
-
 1. Download and extract [ytdlp-drive](https://github.com/kogasacord/ytdlp-drive-https-api).
 2. Put a `config.json` with this structure:
-
 ```json
 {
-  "clientID": "clientID of google drive",
-  "clientSecret": "clientSecret of google drive",
-  "redirectURI": "https://developers.google.com/oauthplayground",
-  "token": "token of google drive"
+    "clientID": "clientID of google drive",
+    "clientSecret": "clientSecret of google drive",
+    "redirectURI": "https://developers.google.com/oauthplayground",
+    "token": "token of google drive"
 }
 ```
-
 3. Run `npm install` and `ts-node --esm index.ts`.
 4. Download and extract [canvas](https://github.com/kogasacord/canvas-http-api).
 5. Run `npm install` and `ts-node --esm index.ts`.
 
 ## Contributing
-
 1. Make sure to use prettier after you make changes to the code. Run it by calling `npm run format`.
 
 ## Misc
-
 Why is there SO MUCH HTTP servers??
-
 - It seemed cool to implement but it got out of hand quickly.
