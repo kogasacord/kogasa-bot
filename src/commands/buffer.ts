@@ -37,17 +37,43 @@ export async function execute(
     let format: string[] = []
 
     for (const message of messages) {
-      format.push(`${formatMessage(message)}\n`)
-      if (format.join("").length > 4096) {
-        format.shift()
+      format.push(`${formatMessage(message, 4000)}\n`)
+      while (format.join("").length > 4000) {
+        shortenLongestString(format)
       }
     }
-
     embed.setDescription(format.join(""))
   } else {
     embed.setDescription("No messages found.")
   }
   msg.reply({ embeds: [embed] })
+}
+
+function limitMessageLength(message: ChatBufferMessage, maxLength: number) {
+  if (message.content.length > maxLength) {
+    return message.content.substring(0, maxLength)
+  }
+  return message.content;
+}
+
+function shortenLongestString(stringBuffer: string[]) {
+  let maxLength = 0;
+  let indexToRemove = -1;
+
+  for (let i = 0; i < stringBuffer.length; i++) {
+    const string = stringBuffer[i];
+    if (string.length > maxLength) {
+      maxLength = string.length;
+      indexToRemove = i;
+    }
+  }
+
+  if (indexToRemove !== -1) {
+    const maxStringLength = stringBuffer[indexToRemove].length * .50;
+    const longestString = stringBuffer[indexToRemove];
+    const shortenedString = longestString.substring(0, maxStringLength);
+    stringBuffer[indexToRemove] = shortenedString + "..." + "\n";
+  }
 }
 
 function preprocessChatBuffer(filter: Filter, buffer: ChatBufferMessage[]) {
@@ -65,7 +91,7 @@ function preprocessChatBuffer(filter: Filter, buffer: ChatBufferMessage[]) {
   }
 }
 
-function formatMessage(message: ChatBufferMessage) {
+function formatMessage(message: ChatBufferMessage, maxMessageLength: number) {
   let format = ""
   if (message.replied)
     format += `╔═ \`${message.replied.display_name}\` ${
@@ -76,6 +102,6 @@ function formatMessage(message: ChatBufferMessage) {
     message.is_deleted ? " [DELETED]:" : ":"
   } ${message.edits.length >= 1 ? "\n" : ""}${message.edits
     .map((v) => `||${v}||\n`)
-    .join("")} ${message.content}`
+    .join("")} ${limitMessageLength(message, maxMessageLength)}`
   return format
 }
