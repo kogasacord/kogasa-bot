@@ -37,17 +37,40 @@ export async function execute(
     let format: string[] = []
 
     for (const message of messages) {
+      limitMessageLength(message, 4000)
       format.push(`${formatMessage(message)}\n`)
-      if (format.join("").length > 4096) {
-        format.shift()
+      while (format.join("").length > 4000) {
+        removeLongestString(format)
       }
     }
-
     embed.setDescription(format.join(""))
   } else {
     embed.setDescription("No messages found.")
   }
   msg.reply({ embeds: [embed] })
+}
+
+function limitMessageLength(message: ChatBufferMessage, maxLength: number) {
+  if (message.content.length > maxLength) {
+    message.content = message.content.substring(0, maxLength)
+  }
+  return
+}
+
+function removeLongestString(stringArray: string[]) {
+  let maxLength = 0
+  let indexToRemove = -1
+
+  stringArray.forEach((str, index) => {
+    if (str.length > maxLength) {
+      maxLength = str.length
+      indexToRemove = index
+    }
+  })
+
+  if (indexToRemove !== -1) {
+    stringArray.splice(indexToRemove, 1)
+  }
 }
 
 function preprocessChatBuffer(filter: Filter, buffer: ChatBufferMessage[]) {
