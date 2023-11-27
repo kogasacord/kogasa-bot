@@ -7,9 +7,10 @@ export const aliases = ["q"]
 export const cooldown = 10
 export const description =
   "Reply to someone and capture a.. suspicious message."
-export async function execute(client: Client, msg: Message) {
+export async function execute(client: Client, msg: Message, args: string[]) {
   if (msg.channel.type !== ChannelType.GuildText) return
-
+	const show_boundaries = args[0] === "boundary";
+	
   const replied =
     msg.channel.messages.cache.get(msg.reference!.messageId!) ??
     (await msg.channel.messages.fetch(msg.reference!.messageId!))
@@ -22,8 +23,9 @@ export async function execute(client: Client, msg: Message) {
         {
           attachment: await quote(
             parsed_content,
-            replied.author.displayName,
+            "- " + replied.author.displayName,
             replied.author.displayAvatarURL({ size: 1024, extension: "png" }),
+						show_boundaries,
             replied.attachments.at(0)?.contentType,
             replied.attachments.at(0)?.url
               ? {
@@ -54,6 +56,7 @@ async function quote(
   text: string,
   author: string,
   avatar_url: string,
+	show_boundaries: boolean,
   mimetype: string | null | undefined,
   attachment?: {
     url: string
@@ -70,11 +73,12 @@ async function quote(
         attachment.url,
         attachment.height,
         attachment.width,
-        mimetype
+        mimetype,
+				show_boundaries,
       )
     }
   }
-  return helpers.quoteDefault(text, author, avatar_url)
+	return helpers.quoteDefault(text, author, avatar_url, show_boundaries);
 }
 
 async function parseQuotes(client: Client, str: string) {

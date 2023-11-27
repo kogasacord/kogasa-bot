@@ -7,18 +7,22 @@ export async function quoteAttachment(
   attachment_url: string,
   height: number,
   width: number,
-  mimetype: string
+  mimetype: string,
+	show_boundaries: boolean,
 ) {
   const check = await fetch("http://localhost:4000/quote/img", {
     method: "POST",
     body: JSON.stringify({
-      text: text,
-      author: author,
-      avatar_url: avatar_url,
-      attachment_url: attachment_url,
-      attachment_height: height,
-      attachment_width: width,
-      mimetype: mimetype,
+			text: text,
+			author: author,
+			avatar_url: avatar_url,
+			attachment_url: attachment_url,
+			attachment_height: height,
+			attachment_width: width,
+			mimetype: mimetype,
+			use_test_pfp: false,
+			show_bounding: show_boundaries,
+			pipe_to_file: false,
     }),
     headers: {
       "Content-Type": "application/json",
