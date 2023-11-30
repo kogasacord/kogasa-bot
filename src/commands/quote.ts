@@ -23,7 +23,7 @@ export async function execute(client: Client, msg: Message, args: string[]) {
         {
           attachment: await quote(
             parsed_content,
-            "- " + replied.author.displayName,
+            replied.author.displayName,
             replied.author.displayAvatarURL({ size: 1024, extension: "png" }),
 						show_boundaries,
             replied.attachments.at(0)?.contentType,
