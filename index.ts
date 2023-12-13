@@ -156,10 +156,12 @@ client.on("messageCreate", async (msg) => {
         )
       : null
 
+  const attachments = msg.attachments.map((v) => v.url)
   chat_buffer_channel!.push({
     id: msg.id,
     display_name: msg.author.displayName,
     content: msg.content,
+    attachments: attachments,
     is_deleted: false,
     edits: [] as string[],
     replied: replied
@@ -167,6 +169,7 @@ client.on("messageCreate", async (msg) => {
           id: replied.id,
           display_name: replied.author.displayName,
           content: replied.content,
+          attachments: attachments,
           is_deleted: false,
           edits: [] as string[],
         }

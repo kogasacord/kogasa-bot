@@ -22,6 +22,7 @@ export type ChatBufferMessage = {
   id: string
   display_name: string
   content: string
+  attachments: string[]
   is_deleted: boolean
   edits: string[]
   replied?: ChatBufferMessage

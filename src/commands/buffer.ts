@@ -53,26 +53,26 @@ function limitMessageLength(message: ChatBufferMessage, maxLength: number) {
   if (message.content.length > maxLength) {
     return message.content.substring(0, maxLength)
   }
-  return message.content;
+  return message.content
 }
 
 function shortenLongestString(stringBuffer: string[]) {
-  let maxLength = 0;
-  let indexToRemove = -1;
+  let maxLength = 0
+  let indexToRemove = -1
 
   for (let i = 0; i < stringBuffer.length; i++) {
-    const string = stringBuffer[i];
+    const string = stringBuffer[i]
     if (string.length > maxLength) {
-      maxLength = string.length;
-      indexToRemove = i;
+      maxLength = string.length
+      indexToRemove = i
     }
   }
 
   if (indexToRemove !== -1) {
-    const maxStringLength = stringBuffer[indexToRemove].length * .50;
-    const longestString = stringBuffer[indexToRemove];
-    const shortenedString = longestString.substring(0, maxStringLength);
-    stringBuffer[indexToRemove] = shortenedString + "..." + "\n";
+    const maxStringLength = stringBuffer[indexToRemove].length * 0.5
+    const longestString = stringBuffer[indexToRemove]
+    const shortenedString = longestString.substring(0, maxStringLength)
+    stringBuffer[indexToRemove] = shortenedString + "..." + "\n"
   }
 }
 
@@ -93,15 +93,26 @@ function preprocessChatBuffer(filter: Filter, buffer: ChatBufferMessage[]) {
 
 function formatMessage(message: ChatBufferMessage, maxMessageLength: number) {
   let format = ""
-  if (message.replied)
-    format += `╔═ \`${message.replied.display_name}\` ${
-      message.replied.is_deleted ? "[DELETED]" : ""
-    }: ${message.replied.content}\n`
 
-  format += `\`${message.display_name}\`${
-    message.is_deleted ? " [DELETED]:" : ":"
-  } ${message.edits.length >= 1 ? "\n" : ""}${message.edits
-    .map((v) => `||${v}||\n`)
-    .join("")} ${limitMessageLength(message, maxMessageLength)}`
+  if (message.replied) {
+    const attachments = `${message.replied.attachments
+      .map((v, i) => `[Attachment ${i + 1}](${v})`)
+      .join(" ")}`
+    const deleted = `${message.replied.is_deleted ? "[DELETED]" : ""}: ${
+      message.replied.content
+    }: ${attachments}\n`
+    format += `╔═ \`${message.replied.display_name}\` ${deleted}`
+  }
+
+  const attachments = `${
+    message.attachments.length >= 1 && message.content.length > 0 ? ":" : ""
+  } ${message.attachments.map((v, i) => `[Attachment ${i + 1}](${v})`).join(" ")}`
+  const delete_tag = message.is_deleted ? " [DELETED]" : ""
+  const edits = message.edits.map((v) => `||${v}||\n`).join("")
+  const format_edits = `${message.edits.length >= 1 ? "\n" : ""}${edits}`
+  const message_content_limited = limitMessageLength(message, maxMessageLength)
+
+  format += `\`${message.display_name}\`${delete_tag}: ${format_edits} ${message_content_limited}${attachments}`
+
   return format
 }
