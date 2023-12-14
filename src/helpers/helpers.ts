@@ -15,7 +15,7 @@ import { quoteDefault } from "./quote/default.js"
 import { findThroughCollection } from "./pb/pb.js"
 
 import { importDirectories, postprocessAliases } from "./misc/import.js"
-import { getMessage } from "./misc/fetch.js"
+import { completePartialMessage } from "./misc/fetch.js"
 import { checkIfLink } from "./misc/link.js"
 import { run, asyncRun, wrapInOption } from "./misc/monad.js"
 import { pingURL } from "./misc/ping.js"
@@ -87,7 +87,7 @@ const mod = {
   formatArray,
   gachaSpecificWebsite,
 
-  getMessage,
+  completePartialMessage,
   pickRandom,
   Queue,
 }

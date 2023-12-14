@@ -6,11 +6,10 @@ import {
   Client,
   Collection,
   ChannelType,
-  Message,
   ActivityType,
   Options,
 } from "discord.js"
-
+import { ChatBuffer, Website } from "./src/helpers/types.js"
 import { enableAutoDelete } from "./src/startup.js"
 import helpers, {
   CommandModule,
@@ -22,7 +21,9 @@ import { Queue } from "./src/helpers/misc/queue.js"
 
 import settings from "./settings.json" assert { type: "json" }
 import config from "./config.json" assert { type: "json" }
-import { ChatBuffer, Website } from "./src/helpers/types.js"
+
+import {messageUpdate} from "./src/discord/message_update.js"
+import {messageDelete} from "./src/discord/message_delete.js"
 
 ///////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -60,80 +61,8 @@ const chat_buffer: ChatBuffer = new Map()
 
 if (!settings.test) await enableAutoDelete()
 
-client.on("messageUpdate", async (partial_new_msg) => {
-  const new_msg = await helpers.getMessage(
-    client,
-    partial_new_msg.channelId,
-    partial_new_msg.id
-  )
-  if (!new_msg) return
-
-  let chat_buffer_channel = chat_buffer.get(new_msg.channelId)
-  if (!chat_buffer_channel) {
-    chat_buffer.set(new_msg.channelId, new Queue(20))
-    chat_buffer_channel = chat_buffer.get(new_msg.channelId)
-  }
-  const replied =
-    new_msg.reference && new_msg.reference.messageId
-      ? await helpers.getMessage(
-          client,
-          new_msg.reference.channelId,
-          new_msg.reference.messageId
-        )
-      : null
-  const chat_buffer_message = chat_buffer_channel!
-    .get_internal()
-    .find((buffer_message) => buffer_message.id === new_msg.id)
-  const replied_buffer_message = chat_buffer_channel!
-    .get_internal()
-    .find((buffer_message) => {
-      if (buffer_message.replied && replied) {
-        return buffer_message.replied.id === replied.id
-      }
-      return false
-    })
-  if (chat_buffer_message) {
-    chat_buffer_message.edits.push(`${chat_buffer_message.content}`)
-    chat_buffer_message.content = new_msg.content
-  }
-  if (replied_buffer_message) {
-    replied_buffer_message.content = new_msg.content
-  }
-})
-
-client.on("messageDelete", async (msg) => {
-  let chat_buffer_channel = chat_buffer.get(msg.channelId)
-  if (!chat_buffer_channel) {
-    chat_buffer.set(msg.channelId, new Queue(15))
-    chat_buffer_channel = chat_buffer.get(msg.channelId)
-  }
-
-  const replied =
-    msg.reference && msg.reference.messageId
-      ? await helpers.getMessage(
-          client,
-          msg.reference.channelId,
-          msg.reference.messageId
-        )
-      : null
-  const chat_buffer_message = chat_buffer_channel!
-    .get_internal()
-    .find((buffer_message) => buffer_message.id === msg.id)
-  const replied_buffer_message = chat_buffer_channel!
-    .get_internal()
-    .find((buffer_message) => {
-      if (buffer_message.replied && replied) {
-        return buffer_message.replied.id === replied.id
-      }
-      return false
-    })
-  if (chat_buffer_message) {
-    chat_buffer_message.is_deleted = true
-  }
-  if (replied_buffer_message) {
-    replied_buffer_message.is_deleted = true
-  }
-})
+client.on("messageUpdate", (msg) => messageUpdate(client, msg, chat_buffer));
+client.on("messageDelete", async (msg) => messageDelete(client, msg, chat_buffer));
 
 client.on("cacheSweep", (message) => {
   console.log(`Sweeped cache: ${message}`)
@@ -149,7 +78,7 @@ client.on("messageCreate", async (msg) => {
   }
   const replied =
     msg.reference && msg.reference.messageId
-      ? await helpers.getMessage(
+      ? await helpers.completePartialMessage(
           client,
           msg.reference.channelId,
           msg.reference.messageId
