@@ -16,6 +16,7 @@ export async function importDirectories(
     file.endsWith(".js")
   )
   for (const file of specialCommandFiles) {
+		// collect all commandmodules into a Promise<CommandModule>[] so you can resolve all of them at once
     const command: CommandModule = await import(`${dir}\\${file}`)
     commands.set(command.name, command)
     console.log(`Imported ${chalk.green(file)}`)
@@ -23,7 +24,11 @@ export async function importDirectories(
   return commands
 }
 
-export function postprocessAliases(col: Collection<string, CommandModule>) {
+/*
+	* Maps aliases to the original command like so:
+	* 	{ "<aliases here>": "<original command here>" }
+	*/
+export function postProcessAliases(col: Collection<string, CommandModule>) {
   const aliases = new Map<string, string>()
   for (const [name, command] of col) {
     if (!command.aliases) continue

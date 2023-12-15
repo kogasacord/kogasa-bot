@@ -14,7 +14,7 @@ import { quoteDefault } from "./quote/default.js"
 
 import { findThroughCollection } from "./pb/pb.js"
 
-import { importDirectories, postprocessAliases } from "./misc/import.js"
+import { importDirectories, postProcessAliases } from "./misc/import.js"
 import { completePartialMessage } from "./misc/fetch.js"
 import { checkIfLink } from "./misc/link.js"
 import { run, asyncRun, wrapInOption } from "./misc/monad.js"
@@ -75,7 +75,7 @@ const mod = {
 
   findThroughCollection,
   importDirectories,
-  postprocessAliases,
+  postProcessAliases,
   checkIfLink,
   run,
   asyncRun,

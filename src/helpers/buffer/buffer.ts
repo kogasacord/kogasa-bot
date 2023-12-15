@@ -5,6 +5,28 @@ import { PartialMessage } from "discord.js";
 
 import helpers from "../helpers.js";
 
+export function makeMessageBuffer(msg: Message): ChatBufferMessage {
+  const attachments = msg.attachments.map((v) => v.url)
+  return {
+    id: msg.id,
+    display_name: msg.author.displayName,
+    content: msg.content,
+    attachments: attachments,
+    is_deleted: false,
+    edits: [] as string[],
+		replied: undefined
+	};
+}
+
+export async function pushMessageToBuffer(client: Client, msg: Message, chat_buffer: ChatBuffer) {
+	const chat_buffer_channel = setChatbuffer(chat_buffer, msg.channelId);
+  const replied = await findReplied(client, msg);
+
+	chat_buffer_channel.push({
+		...makeMessageBuffer(msg),
+		replied: replied ? makeMessageBuffer(replied) : undefined
+	});
+}
 
 export function setChatbuffer(chat_buffer: ChatBuffer, channel_id: string): Queue<ChatBufferMessage> {
 	const chat_buffer_channel = chat_buffer.get(channel_id);

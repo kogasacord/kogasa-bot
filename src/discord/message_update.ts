@@ -1,9 +1,9 @@
 import { Message, Client } from "discord.js";
 import { PartialMessage } from "discord.js";
-import { setChatbuffer, findReplied, findChatBufferMessagewithRealMessage, findRepliedBufferMessagewithRealMessage } from "../helpers/buffer/buffer";
+import { setChatbuffer, findReplied, findChatBufferMessagewithRealMessage, findRepliedBufferMessagewithRealMessage } from "../helpers/buffer/buffer.js";
 
-import helpers from "../helpers/helpers";
-import {ChatBuffer} from "../helpers/types";
+import helpers from "../helpers/helpers.js";
+import {ChatBuffer} from "../helpers/types.js";
 
 export async function messageUpdate(client: Client, partial_new_msg: Message<boolean> | PartialMessage, chat_buffer: ChatBuffer) {
 	const complete_msg = await helpers.completePartialMessage(client, partial_new_msg.channelId, partial_new_msg.id);
