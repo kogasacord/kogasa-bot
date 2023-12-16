@@ -7,8 +7,8 @@ import {
 } from "../pb/types.js"
 
 /*
-	* checks if a command is allowed in scopes | false = not allowed, true = allowed
-	*/
+ * checks if a command is allowed in scopes | false = not allowed, true = allowed
+ */
 export async function commandChannelAccess(
   pb: Pocketbase,
   command_name: string,
@@ -27,19 +27,27 @@ export async function commandChannelAccess(
   )
 
   if (server_record) {
-		if (!channel_record) {
-			return false;
-		}
-		return checkIfCommandIsAllowed(pb, channel_record, command_name);
+    if (!channel_record) {
+      return false
+    }
+    return checkIfCommandIsAllowed(pb, channel_record, command_name)
   }
-	return true;
+  return true
 }
 
-async function checkIfCommandIsAllowed(pb: Pocketbase, channel_record: ChannelIDsSettings, command_name: string) {
-	const scopes = pb.collection("command_scopes");
-	const command_scope = await scopes.getOne<CommandSettings>(channel_record.command_scope);
-	const command_scope_items = new Map<string, boolean>(Object.entries(command_scope)) // types aren't exactly right..! it works for now.
-	const is_command_allowed = command_scope_items.get(command_name) ?? false;
-
-	return is_command_allowed;
+async function checkIfCommandIsAllowed(
+  pb: Pocketbase,
+  channel_record: ChannelIDsSettings,
+  command_name: string
+) {
+  const scopes = pb.collection("command_scopes")
+  const command_scope = await scopes.getOne<CommandSettings>(
+    channel_record.command_scope
+  )
+  const command_scope_items = new Map<string, boolean>(
+    Object.entries(command_scope)
+  ) // types aren't exactly right..! it works for now.
+  const is_command_allowed = command_scope_items.get(command_name) ?? false
+  console.log(is_command_allowed)
+  return is_command_allowed
 }

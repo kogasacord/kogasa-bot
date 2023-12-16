@@ -106,7 +106,9 @@ function formatMessage(message: ChatBufferMessage, maxMessageLength: number) {
 
   const attachments = `${
     message.attachments.length >= 1 && message.content.length > 0 ? ":" : ""
-  } ${message.attachments.map((v, i) => `[Attachment ${i + 1}](${v})`).join(" ")}`
+  } ${message.attachments
+    .map((v, i) => `[Attachment ${i + 1}](${v})`)
+    .join(" ")}`
   const delete_tag = message.is_deleted ? " [DELETED]" : ""
   const edits = message.edits.map((v) => `||${v}||\n`).join("")
   const format_edits = `${message.edits.length >= 1 ? "\n" : ""}${edits}`

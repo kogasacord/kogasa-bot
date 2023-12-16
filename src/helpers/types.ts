@@ -19,7 +19,7 @@ export type CommandModule = {
   noscope?: boolean // avoids the scope check
 }
 // try using this sometimes (or replace everything with it :fear:)
-export type Nullable<T> = undefined | null | T;
+export type Nullable<T> = undefined | null | T
 export type ChatBufferMessage = {
   id: string
   display_name: string
@@ -37,10 +37,11 @@ export type ExternalDependencies = {
   external_data: [Website[], Map<string, Tier>, ChatBuffer]
 }
 export type DiscordExternalDependencies = {
-	commands: Collection<string, CommandModule>,
-	aliases: Map<string, string>,
-	chat_buffer: ChatBuffer,
-	settings: {test: boolean}
+  commands: Collection<string, CommandModule>
+  aliases: Map<string, string>
+  chat_buffer: ChatBuffer
+  websites: Website[]
+  settings: { test: boolean }
 }
 export type Cooldown = {
   cooldown: number
