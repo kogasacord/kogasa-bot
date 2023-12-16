@@ -1,12 +1,12 @@
-import { Client, Message } from "discord.js"
-import { ChatBuffer, ChatBufferMessage } from "../types.js"
-import { Queue } from "../misc/queue.js"
-import { PartialMessage } from "discord.js"
+import { Client, Message } from "discord.js";
+import { ChatBuffer, ChatBufferMessage } from "../types.js";
+import { Queue } from "../misc/queue.js";
+import { PartialMessage } from "discord.js";
 
-import helpers from "../helpers.js"
+import helpers from "../helpers.js";
 
 export function makeMessageBuffer(msg: Message): ChatBufferMessage {
-  const attachments = msg.attachments.map((v) => v.url)
+  const attachments = msg.attachments.map((v) => v.url);
   return {
     id: msg.id,
     display_name: msg.author.displayName,
@@ -15,7 +15,7 @@ export function makeMessageBuffer(msg: Message): ChatBufferMessage {
     is_deleted: false,
     edits: [] as string[],
     replied: undefined,
-  }
+  };
 }
 
 export async function pushMessageToBuffer(
@@ -23,25 +23,25 @@ export async function pushMessageToBuffer(
   msg: Message,
   chat_buffer: ChatBuffer
 ) {
-  const chat_buffer_channel = setChatbuffer(chat_buffer, msg.channelId)
-  const replied = await findReplied(client, msg)
+  const chat_buffer_channel = setChatbuffer(chat_buffer, msg.channelId);
+  const replied = await findReplied(client, msg);
 
   chat_buffer_channel.push({
     ...makeMessageBuffer(msg),
     replied: replied ? makeMessageBuffer(replied) : undefined,
-  })
+  });
 }
 
 export function setChatbuffer(
   chat_buffer: ChatBuffer,
   channel_id: string
 ): Queue<ChatBufferMessage> {
-  const chat_buffer_channel = chat_buffer.get(channel_id)
+  const chat_buffer_channel = chat_buffer.get(channel_id);
   if (!chat_buffer_channel) {
-    chat_buffer.set(channel_id, new Queue(20))
-    return chat_buffer.get(channel_id)!
+    chat_buffer.set(channel_id, new Queue(20));
+    return chat_buffer.get(channel_id)!;
   }
-  return chat_buffer_channel
+  return chat_buffer_channel;
 }
 
 export async function findReplied(
@@ -54,7 +54,7 @@ export async function findReplied(
         msg.reference.channelId,
         msg.reference.messageId
       )
-    : null
+    : null;
 }
 
 export function findChatBufferMessagewithRealMessage(
@@ -63,8 +63,8 @@ export function findChatBufferMessagewithRealMessage(
 ): ChatBufferMessage | undefined {
   const chat_buffer_message = buffer_queue
     .get_internal()
-    .find((buffer_message) => buffer_message.id === new_msg.id)
-  return chat_buffer_message
+    .find((buffer_message) => buffer_message.id === new_msg.id);
+  return chat_buffer_message;
 }
 
 export function findRepliedBufferMessagewithRealMessage(
@@ -75,9 +75,9 @@ export function findRepliedBufferMessagewithRealMessage(
     .get_internal()
     .find((buffer_message) => {
       if (buffer_message.replied) {
-        return buffer_message.replied.id === replied_message_id
+        return buffer_message.replied.id === replied_message_id;
       }
-      return false
-    })
-  return replied_buffer_message
+      return false;
+    });
+  return replied_buffer_message;
 }

@@ -1,5 +1,5 @@
-import fetch from "node-fetch"
-import { CheckResult } from "./types"
+import fetch from "node-fetch";
+import { CheckResult } from "./types";
 
 export async function checkLink(link: string, format_id?: string) {
   const check = await fetch("http://localhost:3000/checklink", {
@@ -9,6 +9,6 @@ export async function checkLink(link: string, format_id?: string) {
       "Content-Type": "application/json",
       Accept: "application/json",
     },
-  })
-  return (await check.json()) as CheckResult
+  });
+  return (await check.json()) as CheckResult;
 }

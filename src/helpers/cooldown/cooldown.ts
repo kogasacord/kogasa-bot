@@ -1,14 +1,14 @@
-import { Collection } from "discord.js"
-import { Cooldown } from "../types.js"
-import { CommandModule } from "../types.js"
-import { Message } from "discord.js"
+import { Collection } from "discord.js";
+import { Cooldown } from "../types.js";
+import { CommandModule } from "../types.js";
+import { Message } from "discord.js";
 
 function setCooldown(
   cooldowns: Collection<string, Collection<string, Cooldown>>,
   command_name: string
 ) {
   if (!cooldowns.has(command_name)) {
-    cooldowns.set(command_name, new Collection<string, Cooldown>())
+    cooldowns.set(command_name, new Collection<string, Cooldown>());
   }
 }
 
@@ -16,11 +16,11 @@ function setCooldown(
 function hasAuthorCooldownPassed(author_timestamp: Cooldown, now: number) {
   if (now < author_timestamp.cooldown) {
     if (!author_timestamp.hasMessaged) {
-      author_timestamp.hasMessaged = true
+      author_timestamp.hasMessaged = true;
     }
-    return false
+    return false;
   }
-  return true
+  return true;
 }
 
 function checkCooldownHasPassed(
@@ -30,14 +30,14 @@ function checkCooldownHasPassed(
   author_id: string,
   now: number
 ) {
-  const author_timestamp = author_timestamps.get(author_id)
+  const author_timestamp = author_timestamps.get(author_id);
   if (author_timestamp) {
     if (!hasAuthorCooldownPassed(author_timestamp, now)) {
-      const expired_timestamp = Math.round(author_timestamp.cooldown / 1000)
+      const expired_timestamp = Math.round(author_timestamp.cooldown / 1000);
       msg.reply(
         `Please wait, you are on a cooldown for \`${command_name}\`.` +
           ` You can use it again <t:${expired_timestamp}:R>.`
-      )
+      );
     }
   }
 }
@@ -48,9 +48,9 @@ async function executeCommandChecker(
   args: string[]
 ) {
   if (command_module.checker) {
-    const pass = await command_module.checker(msg, args)
+    const pass = await command_module.checker(msg, args);
     if (!pass) {
-      return
+      return;
     }
   }
 }
@@ -59,7 +59,7 @@ async function getDynamicCooldown(
   args: string[],
   dyn_cooldown?: (args: string[]) => Promise<number>
 ): Promise<number> {
-  return dyn_cooldown ? (await dyn_cooldown(args)) * 1000 : 0
+  return dyn_cooldown ? (await dyn_cooldown(args)) * 1000 : 0;
 }
 
 async function setAuthorCooldown(
@@ -69,20 +69,20 @@ async function setAuthorCooldown(
   args: string[],
   now: number
 ) {
-  const cooldownAmount = command_module.cooldown * 1000
+  const cooldownAmount = command_module.cooldown * 1000;
   const cooldownAdditional = await getDynamicCooldown(
     args,
     command_module.dyn_cooldown
-  )
+  );
 
   author_timestamps?.set(author_id, {
     cooldown: now + cooldownAdditional + cooldownAmount,
     hasMessaged: false,
-  })
+  });
   setTimeout(
     () => author_timestamps.delete(author_id),
     cooldownAmount + cooldownAdditional
-  )
+  );
 }
 
 export async function implementCooldown(
@@ -91,11 +91,11 @@ export async function implementCooldown(
   msg: Message,
   args: string[]
 ) {
-  setCooldown(cooldowns, command_module.name)
+  setCooldown(cooldowns, command_module.name);
 
-  const now = Date.now()
-  const author_timestamps = cooldowns.get(command_module.name)! // typescript remove, check here if there's any errors.
-  const author_id = msg.author.id
+  const now = Date.now();
+  const author_timestamps = cooldowns.get(command_module.name)!; // typescript remove, check here if there's any errors.
+  const author_id = msg.author.id;
 
   checkCooldownHasPassed(
     author_timestamps,
@@ -103,7 +103,7 @@ export async function implementCooldown(
     command_module.name,
     author_id,
     now
-  )
-  executeCommandChecker(command_module, msg, args)
-  setAuthorCooldown(command_module, author_timestamps, author_id, args, now)
+  );
+  executeCommandChecker(command_module, msg, args);
+  setAuthorCooldown(command_module, author_timestamps, author_id, args, now);
 }

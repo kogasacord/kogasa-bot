@@ -4,4 +4,4 @@ module.exports = {
       name: "kogasa-bot",
     },
   ],
-}
+};

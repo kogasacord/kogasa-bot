@@ -1,4 +1,4 @@
-import fetch from "node-fetch"
+import fetch from "node-fetch";
 
 export async function quoteAttachment(
   text: string,
@@ -28,6 +28,6 @@ export async function quoteAttachment(
       "Content-Type": "application/json",
       Accept: "application/json",
     },
-  })
-  return Buffer.from(await check.arrayBuffer())
+  });
+  return Buffer.from(await check.arrayBuffer());
 }

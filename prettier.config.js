@@ -2,8 +2,10 @@
 const config = {
   trailingComma: "es5",
   tabWidth: 2,
-  semi: false,
+  semi: true,
   singleQuote: false,
-}
+  bracketSpacing: true,
+  arrowParens: "always",
+};
 
-export default config
+export default config;

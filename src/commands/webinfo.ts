@@ -1,19 +1,19 @@
-import { Client, Message } from "discord.js"
-import { ExternalDependencies } from "../helpers/types"
+import { Client, Message } from "discord.js";
+import { ExternalDependencies } from "../helpers/types";
 
-export const name = "randomwebinfo"
-export const aliases = ["rwebinfo"]
-export const cooldown = 15
+export const name = "randomwebinfo";
+export const aliases = ["rwebinfo"];
+export const cooldown = 15;
 export const description =
-  "Information about randomweb. It will come with tracking your collected websites soon."
+  "Information about randomweb. It will come with tracking your collected websites soon.";
 export async function execute(
   client: Client,
   msg: Message,
   args: string[],
   external_data: ExternalDependencies
 ) {
-  const websites = external_data.external_data[0]
-  const tiers = external_data.external_data[1]
+  const websites = external_data.external_data[0];
+  const tiers = external_data.external_data[1];
 
   msg.reply(
     `\`\`\`` +
@@ -34,5 +34,5 @@ export async function execute(
       } out of 300\n` +
       `\`\`\`` +
       `Visualization of chances: <https://www.desmos.com/calculator/veqgifgo8z>`
-  )
+  );
 }

@@ -1,8 +1,8 @@
-import helpers from "../helpers/helpers.js"
-import { ActivityType, Client } from "discord.js"
+import helpers from "../helpers/helpers.js";
+import { ActivityType, Client } from "discord.js";
 
 function ready(client: Client<true>, settings: { test: boolean }) {
-  console.log(`Done! [Test mode: ${settings.test}]`)
+  console.log(`Done! [Test mode: ${settings.test}]`);
   setInterval(() => {
     const presence = helpers.pickRandom([
       "the Human Village",
@@ -11,7 +11,7 @@ function ready(client: Client<true>, settings: { test: boolean }) {
       "Marisa in the Forest of Magic",
       "Reimu in the Hakurei Shrine",
       "the skies",
-    ])
+    ]);
     client.user.setPresence({
       activities: [
         {
@@ -20,6 +20,6 @@ function ready(client: Client<true>, settings: { test: boolean }) {
         },
       ],
       status: "online",
-    })
-  }, 1000 * 60)
+    });
+  }, 1000 * 60);
 }

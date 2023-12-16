@@ -1,21 +1,21 @@
-import mime from "mime-types"
-import helpers from "../helpers/helpers.js"
-import { ChannelType, Client, Message } from "discord.js"
+import mime from "mime-types";
+import helpers from "../helpers/helpers.js";
+import { ChannelType, Client, Message } from "discord.js";
 
-export const name = "quote"
-export const aliases = ["q"]
-export const cooldown = 10
+export const name = "quote";
+export const aliases = ["q"];
+export const cooldown = 10;
 export const description =
-  "Reply to someone and capture a.. suspicious message."
+  "Reply to someone and capture a.. suspicious message.";
 export async function execute(client: Client, msg: Message, args: string[]) {
-  if (msg.channel.type !== ChannelType.GuildText) return
-  const show_boundaries = args[0] === "boundary"
+  if (msg.channel.type !== ChannelType.GuildText) return;
+  const show_boundaries = args[0] === "boundary";
 
   const replied =
     msg.channel.messages.cache.get(msg.reference!.messageId!) ??
-    (await msg.channel.messages.fetch(msg.reference!.messageId!))
+    (await msg.channel.messages.fetch(msg.reference!.messageId!));
 
-  const parsed_content = await parseQuotes(client, replied.content)
+  const parsed_content = await parseQuotes(client, replied.content);
 
   try {
     msg.reply({
@@ -37,19 +37,19 @@ export async function execute(client: Client, msg: Message, args: string[]) {
           ),
         },
       ],
-    })
+    });
   } catch (err) {
-    msg.reply(`Something went wrong.`)
-    console.log(err)
+    msg.reply(`Something went wrong.`);
+    console.log(err);
   }
 }
 
 export async function checker(msg: Message, args: string[]): Promise<boolean> {
   if (!(msg.reference && msg.reference.messageId)) {
-    msg.reply(`You need to reply to a message in-order to quote it.`)
-    return false
+    msg.reply(`You need to reply to a message in-order to quote it.`);
+    return false;
   }
-  return true
+  return true;
 }
 
 async function quote(
@@ -59,9 +59,9 @@ async function quote(
   show_boundaries: boolean,
   mimetype: string | null | undefined,
   attachment?: {
-    url: string
-    height: number
-    width: number
+    url: string;
+    height: number;
+    width: number;
   }
 ) {
   if (attachment !== undefined && mimetype !== null && mimetype !== undefined) {
@@ -75,10 +75,10 @@ async function quote(
         attachment.width,
         mimetype,
         show_boundaries
-      )
+      );
     }
   }
-  return helpers.quoteDefault(text, author, avatar_url, show_boundaries)
+  return helpers.quoteDefault(text, author, avatar_url, show_boundaries);
 }
 
 async function parseQuotes(client: Client, str: string) {
@@ -89,14 +89,14 @@ async function parseQuotes(client: Client, str: string) {
     async (extracted) => {
       const user =
         client.users.cache.get(extracted) ??
-        (await client.users.fetch(extracted))
-      return user.displayName ? user.displayName : user.username
+        (await client.users.fetch(extracted));
+      return user.displayName ? user.displayName : user.username;
     }
-  )
+  );
 
-  const parsed_emotes = parsed_mentions.replace(/<a?:[^\s]+:\d+>/g, "")
+  const parsed_emotes = parsed_mentions.replace(/<a?:[^\s]+:\d+>/g, "");
 
-  return parsed_emotes
+  return parsed_emotes;
 }
 
 /*
@@ -108,10 +108,10 @@ async function extractObjects(
   replace: RegExp,
   replacer: (extracted: string) => Promise<string>
 ) {
-  let string = str.slice()
-  const extracted = str.match(extract)
+  let string = str.slice();
+  const extracted = str.match(extract);
   for (const extract of extracted ?? []) {
-    string = string.replace(replace, await replacer(extract))
+    string = string.replace(replace, await replacer(extract));
   }
-  return string
+  return string;
 }

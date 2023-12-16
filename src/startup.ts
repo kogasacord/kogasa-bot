@@ -1,5 +1,5 @@
-import Pocketbase from "pocketbase"
-import fetch from "node-fetch"
+import Pocketbase from "pocketbase";
+import fetch from "node-fetch";
 
 // scripts to run on startup
 export async function enableAutoDelete() {
@@ -12,6 +12,6 @@ export async function enableAutoDelete() {
       "Content-Type": "application/json",
       Accept: "application/json",
     },
-  })
-  console.log(`Enabled autoDelete for googledrive.`)
+  });
+  console.log(`Enabled autoDelete for googledrive.`);
 }

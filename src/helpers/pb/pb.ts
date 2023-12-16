@@ -1,4 +1,4 @@
-import { RecordService } from "pocketbase"
+import { RecordService } from "pocketbase";
 
 export async function findThroughCollection<T>(
   collection: RecordService,
@@ -11,6 +11,6 @@ export async function findThroughCollection<T>(
     filter: `${id_name} = "${id}"`,
     expand: expand,
     $autoCancel: false,
-  })
-  return server_settings.items.at(0)
+  });
+  return server_settings.items.at(0);
 }

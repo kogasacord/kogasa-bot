@@ -1,32 +1,32 @@
-import { checkLink } from "./ytdl/check_link.js"
-import { downloadVideo } from "./ytdl/download.js"
-import { formatCheckResults } from "./ytdl/format_check.js"
-import { getFormats } from "./ytdl/get_formats.js"
-import { getStatus } from "./ytdl/get_status.js"
-import { getInfo } from "./ytdl/info.js"
-import { uploadVideo } from "./ytdl/upload.js"
+import { checkLink } from "./ytdl/check_link.js";
+import { downloadVideo } from "./ytdl/download.js";
+import { formatCheckResults } from "./ytdl/format_check.js";
+import { getFormats } from "./ytdl/get_formats.js";
+import { getStatus } from "./ytdl/get_status.js";
+import { getInfo } from "./ytdl/info.js";
+import { uploadVideo } from "./ytdl/upload.js";
 
-import { commandChannelAccess } from "./settings/command_scope.js"
-import { prefixChange } from "./settings/prefix.js"
+import { checkCommandChannelAccess } from "./settings/command_scope.js";
+import { prefixChange } from "./settings/prefix.js";
 
-import { quoteAttachment } from "./quote/attachment.js"
-import { quoteDefault } from "./quote/default.js"
+import { quoteAttachment } from "./quote/attachment.js";
+import { quoteDefault } from "./quote/default.js";
 
-import { findThroughCollection } from "./pb/pb.js"
+import { findThroughCollection } from "./pb/pb.js";
 
-import { importDirectories, postProcessAliases } from "./misc/import.js"
-import { completePartialMessage } from "./misc/fetch.js"
-import { checkIfLink } from "./misc/link.js"
-import { run, asyncRun, wrapInOption } from "./misc/monad.js"
-import { pingURL } from "./misc/ping.js"
+import { importDirectories, postProcessAliases } from "./misc/import.js";
+import { completePartialMessage } from "./misc/fetch.js";
+import { checkIfLink } from "./misc/link.js";
+import { run, asyncRun, wrapInOption } from "./misc/monad.js";
+import { pingURL } from "./misc/ping.js";
 import {
   pickRandom,
   getRandomInt,
   grabAllRandomWebsites,
   gachaSpecificWebsite,
-} from "./misc/random.js"
-import { formatArray } from "./misc/smartjoin.js"
-import { Queue } from "./misc/queue.js"
+} from "./misc/random.js";
+import { formatArray } from "./misc/smartjoin.js";
+import { Queue } from "./misc/queue.js";
 
 import {
   CommandModule as Command,
@@ -35,7 +35,7 @@ import {
   JSONObject as JSONO,
   Tier as Ti,
   Website as Webs,
-} from "./types.js"
+} from "./types.js";
 import {
   PocketbaseResult as PBR,
   UsersParameters as UP,
@@ -48,7 +48,7 @@ import {
   ServerSettings as SS,
   CommandSettings as CS,
   ChannelIDsParameters as CIDP,
-} from "./pb/types.js"
+} from "./pb/types.js";
 import {
   DownloadResponse as DR,
   UploadResponse as UR,
@@ -56,7 +56,7 @@ import {
   FormatResponse as FR,
   CheckResult as CR,
   StatusResult as SR,
-} from "./ytdl/types.js"
+} from "./ytdl/types.js";
 
 const mod = {
   checkLink,
@@ -67,7 +67,7 @@ const mod = {
   getInfo,
   uploadVideo,
 
-  commandChannelAccess,
+  checkCommandChannelAccess,
   prefixChange,
 
   quoteAttachment,
@@ -90,32 +90,32 @@ const mod = {
   completePartialMessage,
   pickRandom,
   Queue,
-}
+};
 
-export type CommandModule = Command
-export type ExternalDependencies = Ext
-export type Cooldown = Cool
-export type JSONObject = JSONO
-export type Tier = Ti
-export type Website = Webs
+export type CommandModule = Command;
+export type ExternalDependencies = Ext;
+export type Cooldown = Cool;
+export type JSONObject = JSONO;
+export type Tier = Ti;
+export type Website = Webs;
 
-export type PocketbaseResult<T> = PBR<T>
-export type UsersParameters = UP
-export type MessageParameters = MP
-export type ServerSettingsParameters = SSP
-export type ChannelIDsSettings = CID
-export type CommandScopesParameters = CSP
-export type ChannelIDsParameters = CIDP
-export type PBMessages<T = {}> = PBM<T>
-export type PBUsers<T = {}> = PBU<T>
-export type ServerSettings<T = {}> = SS<T>
-export type CommandSettings<T = {}> = CS<T>
+export type PocketbaseResult<T> = PBR<T>;
+export type UsersParameters = UP;
+export type MessageParameters = MP;
+export type ServerSettingsParameters = SSP;
+export type ChannelIDsSettings = CID;
+export type CommandScopesParameters = CSP;
+export type ChannelIDsParameters = CIDP;
+export type PBMessages<T = {}> = PBM<T>;
+export type PBUsers<T = {}> = PBU<T>;
+export type ServerSettings<T = {}> = SS<T>;
+export type CommandSettings<T = {}> = CS<T>;
 
-export type DownloadResponse = DR
-export type UploadResponse = UR
-export type InfoResponse = IR
-export type FormatResponse = FR
-export type CheckResult = CR
-export type StatusResult = SR
+export type DownloadResponse = DR;
+export type UploadResponse = UR;
+export type InfoResponse = IR;
+export type FormatResponse = FR;
+export type CheckResult = CR;
+export type StatusResult = SR;
 
-export default mod
+export default mod;

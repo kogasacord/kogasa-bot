@@ -1,6 +1,6 @@
 export interface Option<T> {
-  content: T | undefined
-  hasNull?: boolean
+  content: T | undefined;
+  hasNull?: boolean;
 }
 
 export function run<K, T>(
@@ -10,14 +10,14 @@ export function run<K, T>(
 ): Option<K> {
   if (input.hasNull) {
     if (none) {
-      none()
+      none();
     }
-    return { content: undefined, hasNull: true }
+    return { content: undefined, hasNull: true };
   }
   if (input.content === undefined) {
-    return { content: undefined, hasNull: true }
+    return { content: undefined, hasNull: true };
   }
-  return transform(input.content)
+  return transform(input.content);
 }
 export async function asyncRun<K, T>(
   input: Option<T>,
@@ -27,18 +27,18 @@ export async function asyncRun<K, T>(
 ): Promise<Option<K>> {
   if (input.hasNull) {
     if (none) {
-      none()
+      none();
     }
-    return { content: undefined, hasNull: true }
+    return { content: undefined, hasNull: true };
   }
   if (input.content === undefined) {
-    return { content: undefined, hasNull: true }
+    return { content: undefined, hasNull: true };
   }
-  return await transform(input.content, ...args)
+  return await transform(input.content, ...args);
 }
 export function wrapInOption<T>(object: T | undefined): Option<T> {
   return {
     content: object,
     hasNull: object === undefined,
-  }
+  };
 }

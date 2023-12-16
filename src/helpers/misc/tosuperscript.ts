@@ -37,17 +37,17 @@ const SUPERSCRIPTS: { [key: string]: string } = {
   x: "?",
   y: "?",
   z: "?",
-}
+};
 
 export function toSuperScript(x: string) {
   return x
     .split("")
     .map(function (c) {
       if (c in SUPERSCRIPTS) {
-        return SUPERSCRIPTS[c]
+        return SUPERSCRIPTS[c];
       }
 
-      return ""
+      return "";
     })
-    .join("")
+    .join("");
 }

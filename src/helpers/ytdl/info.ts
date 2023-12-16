@@ -1,5 +1,5 @@
-import fetch from "node-fetch"
-import { InfoResponse } from "./types"
+import fetch from "node-fetch";
+import { InfoResponse } from "./types";
 
 export async function getInfo(request: string) {
   const info = await fetch("http://localhost:3000/info", {
@@ -11,6 +11,6 @@ export async function getInfo(request: string) {
       "Content-Type": "application/json",
       Accept: "application/json",
     },
-  })
-  return (await info.json()) as InfoResponse
+  });
+  return (await info.json()) as InfoResponse;
 }
