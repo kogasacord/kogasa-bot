@@ -6,8 +6,8 @@ import { getStatus } from "./ytdl/get_status.js";
 import { getInfo } from "./ytdl/info.js";
 import { uploadVideo } from "./ytdl/upload.js";
 
-import { checkCommandChannelAccess } from "./settings/command_scope.js";
-import { prefixChange } from "./settings/prefix.js";
+import { hasCommandChannelAccess } from "./settings/command_scope.js";
+import { getServerPrefix } from "./settings/prefix.js";
 
 import { quoteAttachment } from "./quote/attachment.js";
 import { quoteDefault } from "./quote/default.js";
@@ -67,8 +67,8 @@ const mod = {
   getInfo,
   uploadVideo,
 
-  checkCommandChannelAccess,
-  prefixChange,
+  hasCommandChannelAccess,
+  getServerPrefix,
 
   quoteAttachment,
   quoteDefault,

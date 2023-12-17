@@ -1,10 +1,9 @@
-import path from "path";
 import Pocketbase from "pocketbase";
 import { ChannelType, Client, Collection, Message } from "discord.js";
 import { pushMessageToBuffer } from "../helpers/buffer/buffer.js";
 import helpers from "../helpers/helpers.js";
 import { separateCommands } from "../helpers/parser/parser.js";
-import { implementCooldown } from "../helpers/cooldown/cooldown.js";
+import { hasAuthorCooldownPassed } from "../helpers/cooldown/cooldown.js";
 import {
   CommandModule,
   Cooldown,
@@ -33,7 +32,7 @@ export async function messageCreate(
     return;
   }
   await pushMessageToBuffer(client, msg, deps.chat_buffer);
-  const prefix = await helpers.prefixChange(
+  const prefix = await helpers.getServerPrefix(
     pb,
     deps.settings.test,
     msg.channel.guildId
@@ -55,19 +54,28 @@ export async function messageCreate(
       return;
     }
     if (!command_module.noscope) {
-      const is_allowed = await helpers.checkCommandChannelAccess(
+      const is_command_allowed = await helpers.hasCommandChannelAccess(
         pb,
         command_module.name,
         msg.channel.id,
         msg.guild!.id
       );
-      if (!is_allowed) {
+      if (!is_command_allowed) {
         msg.reply("Command can't be accessed here.");
         return;
       }
     }
 
-    implementCooldown(user_cooldowns, command_module, msg, args);
+    if (
+      !(await hasAuthorCooldownPassed(
+        user_cooldowns,
+        command_module,
+        msg,
+        args
+      ))
+    ) {
+      return;
+    }
 
     const ext: ExternalDependencies = {
       pb: pb,

@@ -9,7 +9,7 @@ import {
 /*
  * checks if a command is allowed in scopes | false = not allowed, true = allowed
  */
-export async function checkCommandChannelAccess(
+export async function hasCommandChannelAccess(
   pb: Pocketbase,
   command_name: string,
   channel_id: string,

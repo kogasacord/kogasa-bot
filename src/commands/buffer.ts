@@ -28,7 +28,7 @@ export async function execute(
   const queue = queue_collection.get(msg.channelId);
   const embed = new EmbedBuilder().setTitle("Backtracked.").setColor("Navy");
   if (queue) {
-    const messages = preprocessChatBuffer(filter, queue.get_internal());
+    const messages = filterChatBuffer(filter, queue.get_internal());
     if (messages.length < 1) {
       msg.reply("No messages found.");
       return;
@@ -37,7 +37,7 @@ export async function execute(
     let format: string[] = [];
 
     for (const message of messages) {
-      format.push(`${formatMessage(message, 4000)}\n`);
+      format.push(`${formatMessage(message, 2000)}\n`);
       while (format.join("").length > 4000) {
         shortenLongestString(format);
       }
@@ -76,7 +76,7 @@ function shortenLongestString(stringBuffer: string[]) {
   }
 }
 
-function preprocessChatBuffer(filter: Filter, buffer: ChatBufferMessage[]) {
+function filterChatBuffer(filter: Filter, buffer: ChatBufferMessage[]) {
   switch (filter) {
     case "delete":
       return buffer.filter((v) => v.is_deleted === true);
@@ -95,26 +95,34 @@ function formatMessage(message: ChatBufferMessage, maxMessageLength: number) {
   let format = "";
 
   if (message.replied) {
-    const attachments = `${message.replied.attachments
-      .map((v, i) => `[Attachment ${i + 1}](${v})`)
-      .join(" ")}`;
-    const deleted = `${message.replied.is_deleted ? "[DELETED]" : ""}: ${
-      message.replied.content
-    }: ${attachments}\n`;
-    format += `╔═ \`${message.replied.display_name}\` ${deleted}`;
+    const attachments = formatAttachments(message.replied);
+    const deleted = addDeleteTag(message.replied);
+    format += `╔═ \`${message.replied.display_name}\` ${deleted}: ${message.replied.content}: ${attachments}`;
   }
 
-  const attachments = `${
+  const attachments = formatAttachments(message);
+  const delete_tag = addDeleteTag(message);
+  const edits = formatEdits(message);
+  const message_content_limited = limitMessageLength(message, maxMessageLength);
+
+  format += `\`${message.display_name}\`${delete_tag}: ${edits} ${message_content_limited}${attachments}`;
+
+  return format;
+}
+
+function formatAttachments(message: ChatBufferMessage) {
+  return `${
     message.attachments.length >= 1 && message.content.length > 0 ? ":" : ""
   } ${message.attachments
     .map((v, i) => `[Attachment ${i + 1}](${v})`)
     .join(" ")}`;
-  const delete_tag = message.is_deleted ? " [DELETED]" : "";
-  const edits = message.edits.map((v) => `||${v}||\n`).join("");
-  const format_edits = `${message.edits.length >= 1 ? "\n" : ""}${edits}`;
-  const message_content_limited = limitMessageLength(message, maxMessageLength);
-
-  format += `\`${message.display_name}\`${delete_tag}: ${format_edits} ${message_content_limited}${attachments}`;
-
-  return format;
+}
+function formatEdits(message: ChatBufferMessage) {
+  const newline_edits = `${message.edits.length >= 1 ? "\n" : ""}${
+    message.edits.length
+  }`;
+  return newline_edits + message.edits.map((v) => `||${v}||\n`).join("");
+}
+function addDeleteTag(message: ChatBufferMessage) {
+  return message.is_deleted ? " [DELETED]" : "";
 }

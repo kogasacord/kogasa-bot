@@ -2,7 +2,7 @@ import Pocketbase from "pocketbase";
 import { findThroughCollection } from "../pb/pb.js";
 import { ServerSettings } from "../pb/types.js";
 
-export async function prefixChange(
+export async function getServerPrefix(
   pb: Pocketbase,
   test: boolean,
   guildID: string

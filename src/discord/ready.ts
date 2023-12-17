@@ -1,7 +1,7 @@
 import helpers from "../helpers/helpers.js";
 import { ActivityType, Client } from "discord.js";
 
-function ready(client: Client<true>, settings: { test: boolean }) {
+export function ready(client: Client<true>, settings: { test: boolean }) {
   console.log(`Done! [Test mode: ${settings.test}]`);
   setInterval(() => {
     const presence = helpers.pickRandom([
