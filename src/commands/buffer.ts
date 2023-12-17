@@ -5,124 +5,124 @@ export const name = "buffer";
 export const aliases = ["back", "backtrack", "b"];
 export const cooldown = 5;
 export const description =
-  "Backtrack a channel, a command better than Small's implementation. `??buffer (delete | edit | normal | none)`";
+	"Backtrack a channel, a command better than Small's implementation. `??buffer (delete | edit | normal | none)`";
 
 type Filter = "delete" | "edit" | "normal" | "none";
 
 export async function execute(
-  _: Client,
-  msg: Message,
-  args: string[],
-  external_data: ExternalDependencies
+	_: Client,
+	msg: Message,
+	args: string[],
+	external_data: ExternalDependencies
 ) {
-  const filter_args = args.at(0);
+	const filter_args = args.at(0);
 
-  let filter: Filter = "none";
-  if (filter_args) {
-    if (["delete", "edit", "normal", "none"].includes(filter_args)) {
-      filter = filter_args as Filter;
-    }
-  }
+	let filter: Filter = "none";
+	if (filter_args) {
+		if (["delete", "edit", "normal", "none"].includes(filter_args)) {
+			filter = filter_args as Filter;
+		}
+	}
 
-  const queue_collection = external_data.external_data[2];
-  const queue = queue_collection.get(msg.channelId);
-  const embed = new EmbedBuilder().setTitle("Backtracked.").setColor("Navy");
-  if (queue) {
-    const messages = filterChatBuffer(filter, queue.get_internal());
-    if (messages.length < 1) {
-      msg.reply("No messages found.");
-      return;
-    }
+	const queue_collection = external_data.external_data[2];
+	const queue = queue_collection.get(msg.channelId);
+	const embed = new EmbedBuilder().setTitle("Backtracked.").setColor("Navy");
+	if (queue) {
+		const messages = filterChatBuffer(filter, queue.get_internal());
+		if (messages.length < 1) {
+			msg.reply("No messages found.");
+			return;
+		}
 
-    let format: string[] = [];
+		let format: string[] = [];
 
-    for (const message of messages) {
-      format.push(`${formatMessage(message, 2000)}\n`);
-      while (format.join("").length > 4000) {
-        shortenLongestString(format);
-      }
-    }
-    embed.setDescription(format.join(""));
-  } else {
-    embed.setDescription("No messages found.");
-  }
-  msg.reply({ embeds: [embed] });
+		for (const message of messages) {
+			format.push(`${formatMessage(message, 2000)}\n`);
+			while (format.join("").length > 4000) {
+				shortenLongestString(format);
+			}
+		}
+		embed.setDescription(format.join(""));
+	} else {
+		embed.setDescription("No messages found.");
+	}
+	msg.reply({ embeds: [embed] });
 }
 
 function limitMessageLength(message: ChatBufferMessage, maxLength: number) {
-  if (message.content.length > maxLength) {
-    return message.content.substring(0, maxLength);
-  }
-  return message.content;
+	if (message.content.length > maxLength) {
+		return message.content.substring(0, maxLength);
+	}
+	return message.content;
 }
 
 function shortenLongestString(stringBuffer: string[]) {
-  let maxLength = 0;
-  let indexToRemove = -1;
+	let maxLength = 0;
+	let indexToRemove = -1;
 
-  for (let i = 0; i < stringBuffer.length; i++) {
-    const string = stringBuffer[i];
-    if (string.length > maxLength) {
-      maxLength = string.length;
-      indexToRemove = i;
-    }
-  }
+	for (let i = 0; i < stringBuffer.length; i++) {
+		const string = stringBuffer[i];
+		if (string.length > maxLength) {
+			maxLength = string.length;
+			indexToRemove = i;
+		}
+	}
 
-  if (indexToRemove !== -1) {
-    const maxStringLength = stringBuffer[indexToRemove].length * 0.5;
-    const longestString = stringBuffer[indexToRemove];
-    const shortenedString = longestString.substring(0, maxStringLength);
-    stringBuffer[indexToRemove] = shortenedString + "..." + "\n";
-  }
+	if (indexToRemove !== -1) {
+		const maxStringLength = stringBuffer[indexToRemove].length * 0.5;
+		const longestString = stringBuffer[indexToRemove];
+		const shortenedString = longestString.substring(0, maxStringLength);
+		stringBuffer[indexToRemove] = shortenedString + "..." + "\n";
+	}
 }
 
 function filterChatBuffer(filter: Filter, buffer: ChatBufferMessage[]) {
-  switch (filter) {
-    case "delete":
-      return buffer.filter((v) => v.is_deleted === true);
-    case "edit":
-      return buffer.filter((v) => v.edits.length >= 1);
-    case "normal":
-      return buffer.filter((v) => v.is_deleted === false && v.edits.length < 1);
-    case "none":
-      return buffer;
-    default:
-      return buffer;
-  }
+	switch (filter) {
+		case "delete":
+			return buffer.filter((v) => v.is_deleted === true);
+		case "edit":
+			return buffer.filter((v) => v.edits.length >= 1);
+		case "normal":
+			return buffer.filter((v) => v.is_deleted === false && v.edits.length < 1);
+		case "none":
+			return buffer;
+		default:
+			return buffer;
+	}
 }
 
 function formatMessage(message: ChatBufferMessage, maxMessageLength: number) {
-  let format = "";
+	let format = "";
 
-  if (message.replied) {
-    const attachments = formatAttachments(message.replied);
-    const deleted = addDeleteTag(message.replied);
-    format += `╔═ \`${message.replied.display_name}\` ${deleted}: ${message.replied.content}: ${attachments}`;
-  }
+	if (message.replied) {
+		const attachments = formatAttachments(message.replied);
+		const deleted = addDeleteTag(message.replied);
+		format += `╔═ \`${message.replied.display_name}\` ${deleted}: ${message.replied.content}: ${attachments}`;
+	}
 
-  const attachments = formatAttachments(message);
-  const delete_tag = addDeleteTag(message);
-  const edits = formatEdits(message);
-  const message_content_limited = limitMessageLength(message, maxMessageLength);
+	const attachments = formatAttachments(message);
+	const delete_tag = addDeleteTag(message);
+	const edits = formatEdits(message);
+	const message_content_limited = limitMessageLength(message, maxMessageLength);
 
-  format += `\`${message.display_name}\`${delete_tag}: ${edits} ${message_content_limited}${attachments}`;
+	format += `\`${message.display_name}\`${delete_tag}: ${edits} ${message_content_limited}${attachments}`;
 
-  return format;
+	return format;
 }
 
 function formatAttachments(message: ChatBufferMessage) {
-  return `${
-    message.attachments.length >= 1 && message.content.length > 0 ? ":" : ""
-  } ${message.attachments
-    .map((v, i) => `[Attachment ${i + 1}](${v})`)
-    .join(" ")}`;
+	return `${
+		message.attachments.length >= 1 && message.content.length > 0 ? ":" : ""
+	} ${message.attachments
+		.map((v, i) => `[Attachment ${i + 1}](${v})`)
+		.join(" ")}`;
 }
 function formatEdits(message: ChatBufferMessage) {
-  const newline_edits = `${message.edits.length >= 1 ? "\n" : ""}${
-    message.edits.length
-  }`;
-  return newline_edits + message.edits.map((v) => `||${v}||\n`).join("");
+	const newline_edits = `${message.edits.length >= 1 ? "\n" : ""}${
+		message.edits.length
+	}`;
+	return newline_edits + message.edits.map((v) => `||${v}||\n`).join("");
 }
 function addDeleteTag(message: ChatBufferMessage) {
-  return message.is_deleted ? " [DELETED]" : "";
+	return message.is_deleted ? " [DELETED]" : "";
 }

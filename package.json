@@ -1,38 +1,38 @@
 {
-  "name": "kogasa-bot",
-  "version": "1.0.0",
-  "description": "",
-  "main": "index.js",
-  "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "node build/index.js",
-    "format": "npx prettier . --write"
-  },
-  "author": "",
-  "license": "ISC",
-  "devDependencies": {
-    "@types/humanize-duration": "^3.27.1",
-    "@types/mime-types": "^2.1.1",
-    "@types/seedrandom": "^3.0.7",
-    "@typescript-eslint/eslint-plugin": "^6.14.0",
-    "@typescript-eslint/parser": "^6.14.0",
-    "eslint": "^8.56.0",
-    "eslint-config-prettier": "^9.1.0",
-    "prettier": "3.1.0",
-    "typescript": "^5.1.6"
-  },
-  "dependencies": {
-    "chalk": "^5.3.0",
-    "discord.js": "^14.12.1",
-    "googlethis": "^1.7.1",
-    "humanize-duration": "^3.29.0",
-    "mime-types": "^2.1.35",
-    "minisearch": "^6.2.0",
-    "node-fetch": "^3.3.2",
-    "pocketbase": "^0.16.0",
-    "random": "^4.1.0",
-    "sagiri": "^3.4.0",
-    "seedrandom": "^3.0.5"
-  },
-  "type": "module"
+	"name": "kogasa-bot",
+	"version": "1.0.0",
+	"description": "",
+	"main": "index.js",
+	"scripts": {
+		"test": "echo \"Error: no test specified\" && exit 1",
+		"start": "node build/index.js",
+		"format": "npx prettier . --write"
+	},
+	"author": "",
+	"license": "ISC",
+	"devDependencies": {
+		"@types/humanize-duration": "^3.27.1",
+		"@types/mime-types": "^2.1.1",
+		"@types/seedrandom": "^3.0.7",
+		"@typescript-eslint/eslint-plugin": "^6.14.0",
+		"@typescript-eslint/parser": "^6.14.0",
+		"eslint": "^8.56.0",
+		"eslint-config-prettier": "^9.1.0",
+		"prettier": "3.1.0",
+		"typescript": "^5.1.6"
+	},
+	"dependencies": {
+		"chalk": "^5.3.0",
+		"discord.js": "^14.12.1",
+		"googlethis": "^1.7.1",
+		"humanize-duration": "^3.29.0",
+		"mime-types": "^2.1.35",
+		"minisearch": "^6.2.0",
+		"node-fetch": "^3.3.2",
+		"pocketbase": "^0.16.0",
+		"random": "^4.1.0",
+		"sagiri": "^3.4.0",
+		"seedrandom": "^3.0.5"
+	},
+	"type": "module"
 }

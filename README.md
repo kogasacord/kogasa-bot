@@ -32,10 +32,10 @@ The structure of it is like this:
 
 ```json
 {
-  "token": "[token of the bot here]",
-  "clientID": "[application id of the bot here]",
-  "test_token": "[token of the *test* bot here]",
-  "saucenao_token": "[saucenao token here]"
+	"token": "[token of the bot here]",
+	"clientID": "[application id of the bot here]",
+	"test_token": "[token of the *test* bot here]",
+	"saucenao_token": "[saucenao token here]"
 }
 ```
 
@@ -54,10 +54,10 @@ This assumes you have done Base Kogasa.
 
 ```json
 {
-  "clientID": "clientID of google drive",
-  "clientSecret": "clientSecret of google drive",
-  "redirectURI": "https://developers.google.com/oauthplayground",
-  "token": "token of google drive"
+	"clientID": "clientID of google drive",
+	"clientSecret": "clientSecret of google drive",
+	"redirectURI": "https://developers.google.com/oauthplayground",
+	"token": "token of google drive"
 }
 ```
 

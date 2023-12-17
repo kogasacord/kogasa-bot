@@ -5,5 +5,5 @@ export const aliases = ["pong"];
 export const cooldown = 25;
 export const description = "Test command.";
 export async function execute(client: Client, msg: Message, args: string[]) {
-  msg.reply(`I'm moving somewhere else.`);
+	msg.reply(`I'm moving somewhere else.`);
 }

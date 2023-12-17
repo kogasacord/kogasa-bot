@@ -12,17 +12,17 @@ const watching_status = [
 const presence_seconds = 1000 * 60;
 
 export function ready(client: Client<true>, settings: { test: boolean }) {
-  console.log(`Done! [Test mode: ${settings.test}]`);
-  setInterval(() => {
-    const presence = helpers.pickRandom(watching_status);
-    client.user.setPresence({
-      activities: [
-        {
-          name: presence,
-          type: ActivityType.Watching,
-        },
-      ],
-      status: "online",
-    });
-  }, presence_seconds);
+	console.log(`Done! [Test mode: ${settings.test}]`);
+	setInterval(() => {
+		const presence = helpers.pickRandom(watching_status);
+		client.user.setPresence({
+			activities: [
+				{
+					name: presence,
+					type: ActivityType.Watching,
+				},
+			],
+			status: "online",
+		});
+	}, presence_seconds);
 }
