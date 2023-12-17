@@ -10,7 +10,7 @@ export async function hasAuthorCooldownPassed(
   command_module: CommandModule,
   msg: Message,
   args: string[]
-) {
+): Promise<boolean> {
   setCooldown(cooldowns, command_module.name);
 
   const now = Date.now();
@@ -36,14 +36,14 @@ export async function hasAuthorCooldownPassed(
 function setCooldown(
   cooldowns: Collection<string, Collection<string, Cooldown>>,
   command_name: string
-) {
+): void {
   if (!cooldowns.has(command_name)) {
     cooldowns.set(command_name, new Collection<string, Cooldown>());
   }
 }
 
 // checks if the author's cooldown has passed or not
-function authorCooldownCheck(author_timestamp: Cooldown, now: number) {
+function authorCooldownCheck(author_timestamp: Cooldown, now: number): boolean {
   if (now < author_timestamp.cooldown) {
     if (!author_timestamp.hasMessaged) {
       author_timestamp.hasMessaged = true;
@@ -78,7 +78,7 @@ async function executeCommandChecker(
   command_module: CommandModule,
   msg: Message,
   args: string[]
-) {
+): Promise<void> {
   if (command_module.checker) {
     const pass = await command_module.checker(msg, args);
     if (!pass) {

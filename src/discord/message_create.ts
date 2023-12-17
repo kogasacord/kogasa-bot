@@ -66,14 +66,13 @@ export async function messageCreate(
       }
     }
 
-    if (
-      !(await hasAuthorCooldownPassed(
-        user_cooldowns,
-        command_module,
-        msg,
-        args
-      ))
-    ) {
+		const has_cooldown_passed = await hasAuthorCooldownPassed(
+			user_cooldowns,
+			command_module,
+			msg,
+			args
+		);
+    if (!has_cooldown_passed) {
       return;
     }
 

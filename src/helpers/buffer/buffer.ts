@@ -22,7 +22,7 @@ export async function pushMessageToBuffer(
   client: Client,
   msg: Message,
   chat_buffer: ChatBuffer
-) {
+): Promise<void> {
   const chat_buffer_channel = setChatbuffer(chat_buffer, msg.channelId);
   const replied = await findReplied(client, msg);
 
@@ -47,7 +47,7 @@ export function setChatbuffer(
 export async function findReplied(
   client: Client,
   msg: Message<boolean> | PartialMessage
-) {
+): Promise<Message<true> | null> {
   return msg.reference && msg.reference.messageId
     ? await helpers.completePartialMessage(
         client,
@@ -70,7 +70,7 @@ export function findChatBufferMessagewithRealMessage(
 export function findRepliedBufferMessagewithRealMessage(
   buffer_queue: Queue<ChatBufferMessage>,
   replied_message_id: string
-) {
+): ChatBufferMessage | undefined {
   const replied_buffer_message = buffer_queue
     .get_internal()
     .find((buffer_message) => {
