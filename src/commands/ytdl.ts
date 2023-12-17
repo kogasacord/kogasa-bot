@@ -32,7 +32,7 @@ export async function execute(client: Client, msg: Message, args: string[]) {
 	helpers.run(upload, (up) => {
 		msg.reply(
 			`The video you requested \`${up.name}\` has been served at ${up.view}.` +
-				`\n\nDid you know you can choose a quality and format with \`??ytdl-f [format-id]\`? Try it next time.`
+				"\n\nDid you know you can choose a quality and format with `??ytdl-f [format-id]`? Try it next time."
 		);
 		return { content: undefined };
 	});
@@ -61,7 +61,7 @@ async function uploadDispatch(dl: DownloadResponse) {
 }
 function disabled(msg: Message, index_of_processing_user: number) {
 	return () => {
-		msg.reply(`An internal error has occurred.`);
+		msg.reply("An internal error has occurred.");
 		processing_users.splice(index_of_processing_user, 1);
 	};
 }

@@ -1,4 +1,3 @@
-import chalk from "chalk";
 import helpers, { ExternalDependencies } from "../helpers/helpers.js";
 import { Client, Message } from "discord.js";
 
@@ -29,7 +28,7 @@ export async function execute(
 		);
 	} else {
 		msg.reply(
-			`I have no idea what happened to the random number generator if this message shows up.` +
+			"I have no idea what happened to the random number generator if this message shows up." +
 				`\nWebsite list length: ${websites.length}`
 		);
 	}

@@ -34,7 +34,7 @@ export async function execute(
 			return;
 		}
 
-		let format: string[] = [];
+		const format: string[] = [];
 
 		for (const message of messages) {
 			format.push(`${formatMessage(message, 2000)}\n`);

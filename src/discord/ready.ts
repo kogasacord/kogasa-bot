@@ -1,5 +1,5 @@
 import helpers from "../helpers/helpers.js";
-import { ActivityType, Client, PresenceData } from "discord.js";
+import { ActivityType, Client } from "discord.js";
 
 const watching_status = [
 	"the Human Village",

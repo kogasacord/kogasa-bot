@@ -4,7 +4,6 @@ const config = {
 	tabWidth: 2,
 	useTabs: true,
 	semi: true,
-	singleQuote: false,
 	bracketSpacing: true,
 	arrowParens: "always",
 };

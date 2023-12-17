@@ -14,10 +14,10 @@
 		"sourceType": "module"
 	},
 	"plugins": ["@typescript-eslint"],
+	"ignorePatterns": ["/ecosystem.config.js", "build/**/*.js"],
 	"rules": {
-		"indent": ["error", "tab"],
-		"linebreak-style": 0,
+		"semi": ["error", "always"],
 		"quotes": ["error", "double"],
-		"semi": ["error", "always"]
+		"eqeqeq": "error"
 	}
 }

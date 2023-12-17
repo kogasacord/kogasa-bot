@@ -29,19 +29,20 @@ export function pingURL(url: string, ping_count: number = 3) {
 				const split = results[0].split("=");
 				if (split.length > 0) ping.set(split[0], parseInt(split[1]));
 			}
+			// eslint-disable-next-line
 			pings.push(Object.fromEntries(ping) as any);
 		});
 		proc.on("error", (err) => {
 			rej(err);
 		});
-		proc.on("exit", (code) => {
+		proc.on("exit", () => {
 			res(pings);
 		});
 	});
 }
 
 function optionforOS() {
-	const OS: "Windows_NT" | "Linux" | "Darwin" = os.type() as any;
+	const OS = os.type() as "Windows_NT" | "Linux" | "Darwin";
 	if (OS === "Windows_NT") return "-n";
 	if (OS === "Linux") return "-c";
 	throw Error("Unimplemented OS for ping.");

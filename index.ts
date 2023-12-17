@@ -1,6 +1,6 @@
 import path from "path";
 import * as url from "url";
-import { Client, Collection, ActivityType, Options } from "discord.js";
+import { Client, Collection, Options } from "discord.js";
 import {
 	ChatBuffer,
 	DiscordExternalDependencies,

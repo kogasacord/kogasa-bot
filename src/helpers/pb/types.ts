@@ -42,16 +42,18 @@ export interface CommandScopesParameters {
 	dyn?: boolean;
 }
 
-export interface PBMessages<T = {}>
+export interface PBMessages<T = NonNullable<unknown>>
 	extends PocketbaseResult<T>,
 		MessageParameters {}
-export interface PBUsers<T = {}> extends PocketbaseResult<T>, UsersParameters {}
-export interface ServerSettings<T = {}>
+export interface PBUsers<T = NonNullable<unknown>>
+	extends PocketbaseResult<T>,
+		UsersParameters {}
+export interface ServerSettings<T = NonNullable<unknown>>
 	extends PocketbaseResult<T>,
 		ServerSettingsParameters {}
-export interface CommandSettings<T = {}>
+export interface CommandSettings<T = NonNullable<unknown>>
 	extends PocketbaseResult<T>,
 		CommandScopesParameters {}
-export interface ChannelIDsSettings<T = {}>
+export interface ChannelIDsSettings<T = NonNullable<unknown>>
 	extends PocketbaseResult<T>,
 		ChannelIDsParameters {}

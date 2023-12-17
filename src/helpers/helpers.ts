@@ -106,10 +106,10 @@ export type ServerSettingsParameters = SSP;
 export type ChannelIDsSettings = CID;
 export type CommandScopesParameters = CSP;
 export type ChannelIDsParameters = CIDP;
-export type PBMessages<T = {}> = PBM<T>;
-export type PBUsers<T = {}> = PBU<T>;
-export type ServerSettings<T = {}> = SS<T>;
-export type CommandSettings<T = {}> = CS<T>;
+export type PBMessages<T = NonNullable<unknown>> = PBM<T>;
+export type PBUsers<T = NonNullable<unknown>> = PBU<T>;
+export type ServerSettings<T = NonNullable<unknown>> = SS<T>;
+export type CommandSettings<T = NonNullable<unknown>> = CS<T>;
 
 export type DownloadResponse = DR;
 export type UploadResponse = UR;

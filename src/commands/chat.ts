@@ -1,7 +1,6 @@
 import fetch from "node-fetch";
 import { Client, Message } from "discord.js";
 import helpers, {
-	MessageParameters,
 	PBMessages,
 	PBUsers,
 	ExternalDependencies,

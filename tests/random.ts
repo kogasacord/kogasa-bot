@@ -1,9 +1,6 @@
 import path from "path";
-import url from "url";
 import helpers, { Tier } from "../src/helpers/helpers.js";
 import { Website } from "../src/helpers/types.js";
-
-const __dirname = url.fileURLToPath(new URL(".", import.meta.url));
 
 const websites = await helpers.grabAllRandomWebsites(
 	path.join("../media/randomweb.jsonl")

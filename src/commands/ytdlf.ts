@@ -8,7 +8,7 @@ export async function execute(client: Client, msg: Message, args: string[]) {
 	const requested_link = args[0];
 	const f = await helpers.getFormats(requested_link);
 
-	let isOver = false;
+	const isOver = false;
 	let indexer = 0;
 	let embed = new EmbedBuilder()
 		.setTitle("Quality and Format options")
@@ -34,7 +34,7 @@ export async function execute(client: Client, msg: Message, args: string[]) {
 export async function checker(msg: Message, args: string[]): Promise<boolean> {
 	const requested_link = args[0];
 	if (!requested_link) {
-		msg.reply(`You did not give me a link to scan.`);
+		msg.reply("You did not give me a link to scan.");
 		return false;
 	}
 	if (!helpers.checkIfLink(requested_link)) {

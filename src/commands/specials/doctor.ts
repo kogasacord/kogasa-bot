@@ -32,7 +32,7 @@ export async function execute(
 	doctor_results.canvas = await pingServer(CANVASURL);
 	doctor_results.llama2b = await pingServer(LLAMAURL);
 	msg.reply(
-		`## Eirin's Diagnosis\n\n` +
+		"## Eirin's Diagnosis\n\n" +
 			`Latency to discord.com, refreshed every minute: \`${latency}ms\`. \n` +
 			`Commands imported: \`${[...ext.commands.entries()].length}\`\n` +
 			`${formatDiagnosis(doctor_results)}`

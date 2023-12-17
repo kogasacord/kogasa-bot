@@ -21,7 +21,7 @@ export function pickRandom<T>(iterable: T[]): T {
 }
 
 export function grabAllRandomWebsites(path: string): Promise<Website[]> {
-	return new Promise<{ rarity: string; site: string }[]>((res, rej) => {
+	return new Promise<{ rarity: string; site: string }[]>((res) => {
 		const sites: { rarity: string; site: string }[] = [];
 		const readInterface = readline.createInterface({
 			input: fs.createReadStream(path),
@@ -46,7 +46,7 @@ export function gachaSpecificWebsite(
 
 		if (!rarity_value) {
 			throw Error(
-				'Something went wrong with grabbing rarity from the "Tiers" Hashmap.'
+				"Something went wrong with grabbing rarity from the 'Tiers' Hashmap."
 			);
 		}
 		if (rannum <= rarity_value.chance) {

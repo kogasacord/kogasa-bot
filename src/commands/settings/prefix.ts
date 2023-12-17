@@ -20,7 +20,7 @@ export async function execute(
 	if (msg.channel.type !== ChannelType.GuildText) return;
 	if (!msg.member?.permissions.has(PermissionsBitField.Flags.ManageGuild)) {
 		msg.reply(
-			`You would need to have a \`Manage Guild\` permission to edit or create the settings.`
+			"You would need to have a `Manage Guild` permission to edit or create the settings."
 		);
 		return;
 	}
@@ -34,9 +34,7 @@ export async function execute(
 	);
 
 	if (!server_setting) {
-		msg.reply(
-			`Please set up the server using \`??set\` without any arguments.`
-		);
+		msg.reply("Please set up the server using `??set` without any arguments.");
 		return;
 	}
 

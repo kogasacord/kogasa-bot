@@ -51,6 +51,7 @@ export type Website = {
 	rarity: string;
 	site: string;
 };
+// eslint-disable-next-line
 export type JSONObject = { [a: string]: any };
 export type Tier = {
 	chance: number;

@@ -12,7 +12,7 @@ import { findThroughCollection } from "../../helpers/pb/pb.js";
 export const name = "set";
 export const cooldown = 5;
 export const description =
-	'Settings for server owners or moderators to set. `??set [command_name/"all"] [channel_id/"all"] [true/false]`';
+	"Settings for server owners or moderators to set. `??set [command_name/'all'] [channel_id/'all'] [true/false]`";
 export const noscope = true;
 export async function execute(
 	client: Client,
@@ -23,7 +23,7 @@ export async function execute(
 	if (msg.channel.type !== ChannelType.GuildText) return;
 	if (!msg.member?.permissions.has(PermissionsBitField.Flags.ManageGuild)) {
 		msg.reply(
-			`You would need to have a \`Manage Guild\` permission to edit or create the settings.`
+			"You would need to have a `Manage Guild` permission to edit or create the settings."
 		);
 		return;
 	}
@@ -47,7 +47,7 @@ export async function execute(
 
 	if (!server_setting) {
 		// init
-		const re = await msg.reply(`Creating default settings.`);
+		const re = await msg.reply("Creating default settings.");
 		const def = await initializeSettings(settings, msg.channel.guild.id);
 		await re.edit(
 			`Created settings on ${def.serverid} with \`prefix: ${def.prefix}\``
@@ -57,14 +57,12 @@ export async function execute(
 
 	if (!selector) {
 		msg.reply(
-			`Select a selector like so: \`??set ping [channel_id/\"all\"] [true/false]\``
+			"Select a selector like so: `??set ping [channel_id/'all'] [true/false]`"
 		);
 		return;
 	}
 	if (!(channel_id && isEnabledStr)) {
-		msg.reply(
-			`\`??set [command_name/\"all\"] [channel_id/\"all\"] [true/false]\``
-		);
+		msg.reply("`??set [command_name/'all'] [channel_id/'all'] [true/false]`");
 		return;
 	}
 

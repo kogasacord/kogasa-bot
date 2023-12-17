@@ -1,4 +1,3 @@
-import mime from "mime-types";
 import helpers from "../helpers/helpers.js";
 import { ChannelType, Client, Message } from "discord.js";
 
@@ -39,14 +38,14 @@ export async function execute(client: Client, msg: Message, args: string[]) {
 			],
 		});
 	} catch (err) {
-		msg.reply(`Something went wrong.`);
+		msg.reply("Something went wrong.");
 		console.log(err);
 	}
 }
 
-export async function checker(msg: Message, args: string[]): Promise<boolean> {
+export async function checker(msg: Message): Promise<boolean> {
 	if (!(msg.reference && msg.reference.messageId)) {
-		msg.reply(`You need to reply to a message in-order to quote it.`);
+		msg.reply("You need to reply to a message in-order to quote it.");
 		return false;
 	}
 	return true;

@@ -16,7 +16,7 @@ export async function execute(
 	const tiers = external_data.external_data[1];
 
 	msg.reply(
-		`\`\`\`` +
+		"```" +
 			`C Websites count: ${websites.filter((v) => v.rarity === "C").length} | ${
 				300 - tiers.get("C")!.chance
 			} out of 300\n` +
@@ -32,7 +32,7 @@ export async function execute(
 			`Q Websites count: ${websites.filter((v) => v.rarity === "Q").length} | ${
 				tiers.get("Q")!.chance - tiers.get("SR")!.chance
 			} out of 300\n` +
-			`\`\`\`` +
-			`Visualization of chances: <https://www.desmos.com/calculator/veqgifgo8z>`
+			"```" +
+			"Visualization of chances: <https://www.desmos.com/calculator/veqgifgo8z>"
 	);
 }

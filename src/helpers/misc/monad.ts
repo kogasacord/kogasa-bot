@@ -21,9 +21,9 @@ export function run<K, T>(
 }
 export async function asyncRun<K, T>(
 	input: Option<T>,
-	transform: (_: T, ...args: any[]) => Promise<Option<K>>,
+	transform: (_: T, ...args: unknown[]) => Promise<Option<K>>,
 	none?: () => void,
-	...args: any[]
+	...args: unknown[]
 ): Promise<Option<K>> {
 	if (input.hasNull) {
 		if (none) {

@@ -55,7 +55,7 @@ export async function execute(client: Client, msg: Message, args: string[]) {
 
 export async function checker(msg: Message, args: string[]): Promise<boolean> {
 	if (!args.at(0) && msg.reference?.messageId === undefined) {
-		msg.reply(`Reply to an image or give a link for me to search.`);
+		msg.reply("Reply to an image or give a link for me to search.");
 		return false;
 	}
 	return true;
