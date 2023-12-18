@@ -3,13 +3,17 @@ import helpers, { ExternalDependencies } from "../../helpers/helpers.js";
 
 const YTDLURL = "http://localhost:3000/ping";
 const CANVASURL = "http://localhost:4000/ping";
-const LLAMAURL = "http://localhost:5000/ping";
 
 let latency = await getAverageLatency("discord.com", 3);
 
 setInterval(async () => {
 	latency = await getAverageLatency("discord.com", 3);
 }, 60 * 3000);
+
+type DoctorResults = {
+	ytdl: boolean;
+	canvas: boolean;
+};
 
 export const name = "doctor";
 export const aliases = ["eirinhelpme"];
@@ -23,14 +27,12 @@ export async function execute(
 	ext: ExternalDependencies
 ) {
 	await msg.channel.sendTyping();
-	const doctor_results = {
+	const doctor_results: DoctorResults = {
 		ytdl: false,
 		canvas: false,
-		llama2b: false,
 	};
 	doctor_results.ytdl = await pingServer(YTDLURL);
 	doctor_results.canvas = await pingServer(CANVASURL);
-	doctor_results.llama2b = await pingServer(LLAMAURL);
 	msg.reply(
 		"## Eirin's Diagnosis\n\n" +
 			`Latency to discord.com, refreshed every minute: \`${latency}ms\`. \n` +
@@ -39,17 +41,19 @@ export async function execute(
 	);
 }
 
-function formatDiagnosis(doctor: { [k: string]: boolean }) {
+function formatDiagnosis(doctor: DoctorResults) {
 	const diagnosis: string[] = [];
-	const servers = Object.entries(doctor);
 	let hasDownServers: boolean = false;
-	for (const server of servers) {
+	const servers = Object.entries(doctor);
+
+	for (const [server_name, server_status] of servers) {
 		diagnosis.push(
-			`- ${server[0]}: ${
-				server[1] ? "Up. :white_sun_small_cloud:" : "Down. :umbrella:"
+			`- ${server_name}: ${
+				server_status ? "Up. :white_sun_small_cloud:" : "Down. :umbrella:"
 			}`
 		);
-		if (server[1] === false && hasDownServers === false) hasDownServers = true;
+		if (server_status === false && hasDownServers === false)
+			hasDownServers = true;
 	}
 	if (hasDownServers) diagnosis.push("\nContact Alice.");
 	return diagnosis.join("\n");

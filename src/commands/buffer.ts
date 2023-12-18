@@ -56,6 +56,7 @@ function limitMessageLength(message: ChatBufferMessage, maxLength: number) {
 	return message.content;
 }
 
+// mutates array
 function shortenLongestString(stringBuffer: string[]) {
 	let maxLength = 0;
 	let indexToRemove = -1;

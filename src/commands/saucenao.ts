@@ -14,6 +14,7 @@ export const description =
 export async function execute(client: Client, msg: Message, args: string[]) {
 	let response = "## Sources found?:\n\n";
 
+	// if the user's request looks like: `??sauce [link]`
 	if (args.at(0)) {
 		const isLink = checkIfLink(args[0]);
 		if (!isLink) {
@@ -31,6 +32,7 @@ export async function execute(client: Client, msg: Message, args: string[]) {
 		return;
 	}
 
+	// if the user's request looks like: `??sauce` [replying to someone's image attachment];
 	if (msg.reference?.messageId !== undefined) {
 		const replied = await msg.channel.messages.fetch(msg.reference.messageId);
 		const first_attachment = replied.attachments.at(0);

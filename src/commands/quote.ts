@@ -17,25 +17,22 @@ export async function execute(client: Client, msg: Message, args: string[]) {
 	const parsed_content = await parseQuotes(client, replied.content);
 
 	try {
+		const recieved_quote = await quote(
+			parsed_content,
+			replied.author.displayName,
+			replied.author.displayAvatarURL({ size: 1024, extension: "png" }),
+			show_boundaries,
+			replied.attachments.at(0)?.contentType,
+			replied.attachments.at(0)?.url
+				? {
+						url: replied.attachments.at(0)!.url ?? 0,
+						height: replied.attachments.at(0)!.height ?? 0,
+						width: replied.attachments.at(0)!.width ?? 0,
+				  }
+				: undefined
+		);
 		msg.reply({
-			files: [
-				{
-					attachment: await quote(
-						parsed_content,
-						replied.author.displayName,
-						replied.author.displayAvatarURL({ size: 1024, extension: "png" }),
-						show_boundaries,
-						replied.attachments.at(0)?.contentType,
-						replied.attachments.at(0)?.url
-							? {
-									url: replied.attachments.at(0)!.url ?? 0,
-									height: replied.attachments.at(0)!.height ?? 0,
-									width: replied.attachments.at(0)!.width ?? 0,
-							  }
-							: undefined
-					),
-				},
-			],
+			files: [{ attachment: recieved_quote }],
 		});
 	} catch (err) {
 		msg.reply("Something went wrong.");
