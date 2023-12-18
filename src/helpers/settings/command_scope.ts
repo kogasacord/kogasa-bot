@@ -1,40 +1,53 @@
-import Pocketbase from "pocketbase"
-import { findThroughCollection } from "../pb/pb.js"
+import Pocketbase from "pocketbase";
+import { findThroughCollection } from "../pb/pb.js";
 import {
-  ChannelIDsSettings,
-  CommandSettings,
-  ServerSettings,
-} from "../pb/types.js"
+	ChannelIDsSettings,
+	CommandSettings,
+	ServerSettings,
+} from "../pb/types.js";
 
-export async function commandChannelAccess(
-  pb: Pocketbase,
-  command_name: string,
-  channel_id: string,
-  guild_id: string
+/*
+ * checks if a command is allowed in scopes | false = not allowed, true = allowed
+ */
+export async function hasCommandChannelAccess(
+	pb: Pocketbase,
+	command_name: string,
+	channel_id: string,
+	guild_id: string
+): Promise<boolean> {
+	const server_record = await findThroughCollection<ServerSettings>(
+		pb.collection("server_settings"),
+		"serverid",
+		guild_id
+	);
+	const channel_record = await findThroughCollection<ChannelIDsSettings>(
+		pb.collection("channel_ids"),
+		"channel_id",
+		channel_id
+	);
+
+	if (server_record) {
+		if (!channel_record) {
+			return false;
+		}
+		return checkIfCommandIsAllowed(pb, channel_record, command_name);
+	}
+	return true;
+}
+
+async function checkIfCommandIsAllowed(
+	pb: Pocketbase,
+	channel_record: ChannelIDsSettings,
+	command_name: string
 ) {
-  const server_record = await findThroughCollection<ServerSettings>(
-    pb.collection("server_settings"),
-    "serverid",
-    guild_id
-  )
-  const channel_record = await findThroughCollection<ChannelIDsSettings>(
-    pb.collection("channel_ids"),
-    "channel_id",
-    channel_id
-  )
-
-  if (server_record) {
-    if (!channel_record) {
-      return `The command is not allowed here.`
-    }
-
-    const scopes = pb.collection("command_scopes")
-    const scope = await scopes.getOne<CommandSettings>(
-      channel_record.command_scope
-    )
-    const map = new Map<string, boolean>(Object.entries(scope)) // types aren't exactly right..! it works for now.
-    if (!map.get(command_name)) {
-      return "Command cannot be accessed here."
-    }
-  }
+	const scopes = pb.collection("command_scopes");
+	const command_scope = await scopes.getOne<CommandSettings>(
+		channel_record.command_scope
+	);
+	const command_scope_items = new Map<string, boolean>(
+		Object.entries(command_scope)
+	); // types aren't exactly right..! it works for now.
+	const is_command_allowed = command_scope_items.get(command_name) ?? false;
+	console.log(is_command_allowed);
+	return is_command_allowed;
 }
