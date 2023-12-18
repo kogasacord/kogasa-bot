@@ -16,8 +16,14 @@ export async function execute(client: Client, msg: Message, args: string[]) {
 
 	const parsed_content = await parseQuotes(client, replied.content);
 
-	const avatar_url = replied.author.avatarURL({ size: 1024, extension: "png" }) 
-		?? replied.author.displayAvatarURL({ size: 1024, extension: "png" });
+	const guild = client.guilds.cache.get(replied.guildId)
+		?? await client.guilds.fetch(replied.guildId);
+	const guild_member = guild.members.cache.get(replied.author.id)
+		?? await guild.members.fetch(replied.author.id);
+
+	const avatar_url = guild_member.avatarURL({size: 1024, extension: "png"}) 
+		?? replied.author.avatarURL({size: 1024, extension: "png"})
+		?? replied.author.displayAvatarURL({size: 1024, extension: "png"});
 	const attachments = replied.attachments.at(0)?.url
 		? {
 			url: replied.attachments.at(0)!.url ?? 0,
