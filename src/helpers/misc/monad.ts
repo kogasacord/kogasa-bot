@@ -21,7 +21,7 @@ export function run<K, T>(
 }
 export async function asyncRun<K, T>(
 	input: Option<T>,
-	transform: (_: T, ...args: unknown[]) => Promise<Option<K>>,
+	transform: (_: T, ..._args: unknown[]) => Promise<Option<K>>,
 	none?: () => void,
 	...args: unknown[]
 ): Promise<Option<K>> {

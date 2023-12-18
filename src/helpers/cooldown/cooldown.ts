@@ -89,7 +89,7 @@ async function executeCommandChecker(
 
 async function getDynamicCooldown(
 	args: string[],
-	dyn_cooldown?: (args: string[]) => Promise<number>
+	dyn_cooldown?: (_args: string[]) => Promise<number>
 ): Promise<number> {
 	return dyn_cooldown ? (await dyn_cooldown(args)) * 1000 : 0;
 }

@@ -31,6 +31,7 @@ export async function messageCreate(
 	if (msg.channel.type !== ChannelType.GuildText || msg.author.bot) {
 		return;
 	}
+
 	await pushMessageToBuffer(client, msg, deps.chat_buffer);
 	const prefix = await helpers.getServerPrefix(
 		pb,

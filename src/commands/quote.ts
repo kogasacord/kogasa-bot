@@ -16,20 +16,23 @@ export async function execute(client: Client, msg: Message, args: string[]) {
 
 	const parsed_content = await parseQuotes(client, replied.content);
 
+	const avatar_url = replied.author.avatarURL({ size: 1024, extension: "png" }) 
+		?? replied.author.displayAvatarURL({ size: 1024, extension: "png" });
+	const attachments = replied.attachments.at(0)?.url
+		? {
+			url: replied.attachments.at(0)!.url ?? 0,
+			height: replied.attachments.at(0)!.height ?? 0,
+			width: replied.attachments.at(0)!.width ?? 0,
+		} : undefined;
+
 	try {
 		const recieved_quote = await quote(
 			parsed_content,
 			replied.author.displayName,
-			replied.author.displayAvatarURL({ size: 1024, extension: "png" }),
+			avatar_url,
 			show_boundaries,
 			replied.attachments.at(0)?.contentType,
-			replied.attachments.at(0)?.url
-				? {
-						url: replied.attachments.at(0)!.url ?? 0,
-						height: replied.attachments.at(0)!.height ?? 0,
-						width: replied.attachments.at(0)!.width ?? 0,
-				  }
-				: undefined
+			attachments
 		);
 		msg.reply({
 			files: [{ attachment: recieved_quote }],
@@ -102,7 +105,7 @@ async function extractObjects(
 	str: string,
 	extract: RegExp,
 	replace: RegExp,
-	replacer: (extracted: string) => Promise<string>
+	replacer: (_extracted: string) => Promise<string>
 ) {
 	let string = str.slice();
 	const extracted = str.match(extract);
