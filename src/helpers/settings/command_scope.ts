@@ -26,13 +26,8 @@ export async function hasCommandChannelAccess(
 		channel_id
 	);
 
-	if (server_record) {
-		if (!channel_record) {
-			return false;
-		}
-		return checkIfCommandIsAllowed(pb, channel_record, command_name);
-	}
-	return true;
+	return !server_record || !!channel_record
+		&& await checkIfCommandIsAllowed(pb, channel_record, command_name);
 }
 
 async function checkIfCommandIsAllowed(
@@ -48,6 +43,5 @@ async function checkIfCommandIsAllowed(
 		Object.entries(command_scope)
 	); // types aren't exactly right..! it works for now.
 	const is_command_allowed = command_scope_items.get(command_name) ?? false;
-	console.log(is_command_allowed);
 	return is_command_allowed;
 }

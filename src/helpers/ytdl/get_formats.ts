@@ -1,8 +1,10 @@
 import fetch from "node-fetch";
 import { FormatResponse } from "./types";
 
+import {ytdl_endpoint} from "../../../settings.json";
+
 export async function getFormats(request: string) {
-	const info = await fetch("http://localhost:3000/format", {
+	const info = await fetch(`${ytdl_endpoint}/format`, {
 		method: "POST",
 		body: JSON.stringify({
 			link: request,

@@ -11,6 +11,7 @@ import {
 	Tier,
 	DiscordExternalDependencies,
 } from "../helpers/types.js";
+import settings from "../../settings.json";
 
 const pb = new Pocketbase("http://127.0.0.1:8090");
 const user_cooldowns = new Collection<string, Collection<string, Cooldown>>();
@@ -81,7 +82,7 @@ export async function messageCreate(
 			pb: pb,
 			commands: deps.commands,
 			prefix: prefix,
-			external_data: [deps.websites, tiers, deps.chat_buffer],
+			external_data: [deps.websites, tiers, deps.chat_buffer, settings],
 		};
 		command_module.execute(client, msg, args, ext);
 	} catch (err) {

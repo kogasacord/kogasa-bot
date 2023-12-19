@@ -1,6 +1,7 @@
 import Pocketbase from "pocketbase";
 import { Queue } from "./misc/queue.js";
 import { Client, Message, Collection } from "discord.js";
+import settings from "../../settings.json";
 
 export type CommandModule = {
 	name: string;
@@ -34,7 +35,7 @@ export type ExternalDependencies = {
 	pb: Pocketbase;
 	commands: Collection<string, CommandModule>;
 	prefix: string;
-	external_data: [Website[], Map<string, Tier>, ChatBuffer];
+	external_data: [Website[], Map<string, Tier>, ChatBuffer, typeof settings];
 };
 export type DiscordExternalDependencies = {
 	commands: Collection<string, CommandModule>;

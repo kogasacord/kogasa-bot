@@ -1,8 +1,10 @@
 import fetch from "node-fetch";
 import { InfoResponse } from "./types";
 
+import {ytdl_endpoint} from "../../../settings.json";
+
 export async function getInfo(request: string) {
-	const info = await fetch("http://localhost:3000/info", {
+	const info = await fetch(`${ytdl_endpoint}/info`, {
 		method: "POST",
 		body: JSON.stringify({
 			link: request,

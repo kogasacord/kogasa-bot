@@ -1,5 +1,7 @@
 import fetch from "node-fetch";
 
+import settings from "../../../settings.json";
+
 export async function quoteAttachment(
 	text: string,
 	author: string,
@@ -10,7 +12,7 @@ export async function quoteAttachment(
 	mimetype: string,
 	show_boundaries: boolean
 ) {
-	const check = await fetch("http://localhost:4000/quote/img", {
+	const check = await fetch(`${settings.ytdl_endpoint}/quote/img`, {
 		method: "POST",
 		body: JSON.stringify({
 			text: text,

@@ -1,12 +1,14 @@
 import fetch from "node-fetch";
 
+import {quote_endpoint} from "../../../settings.json";
+
 export async function quoteDefault(
 	text: string,
 	author: string,
 	avatar_url: string,
 	show_boundaries: boolean
 ) {
-	const check = await fetch("http://localhost:4000/quote", {
+	const check = await fetch(`${quote_endpoint}/quote`, {
 		method: "POST",
 		body: JSON.stringify({
 			text: text,

@@ -50,16 +50,16 @@ const other_dependencies: DiscordExternalDependencies = {
 if (!settings.test) await enableAutoDelete();
 
 client.on(
+	"messageCreate",
+	async (msg) => await messageCreate(client, msg, other_dependencies)
+);
+client.on(
 	"messageUpdate",
 	async (msg) => await messageUpdate(client, msg, chat_buffer)
 );
 client.on(
 	"messageDelete",
 	async (msg) => await messageDelete(client, msg, chat_buffer)
-);
-client.on(
-	"messageCreate",
-	async (msg) => await messageCreate(client, msg, other_dependencies)
 );
 client.on("cacheSweep", (message) => {
 	console.log(`Sweeped cache: ${message}`);
