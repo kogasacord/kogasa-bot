@@ -13,7 +13,7 @@ import {
 } from "../helpers/types.js";
 import settings from "../../settings.json" assert { type: "json" };
 
-const pb = new Pocketbase("http://127.0.0.1:8090");
+const pb = new Pocketbase(settings.pocketbase_endpoint);
 const user_cooldowns = new Collection<string, Collection<string, Cooldown>>();
 
 const tiers = new Map<string, Tier>([
@@ -36,7 +36,7 @@ export async function messageCreate(
 	await pushMessageToBuffer(client, msg, deps.chat_buffer);
 	const prefix = await helpers.getServerPrefix(
 		pb,
-		deps.settings.test,
+		settings.test,
 		msg.channel.guildId
 	);
 

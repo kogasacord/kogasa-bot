@@ -3,6 +3,8 @@ import { UploadResponse } from "./types";
 
 import settings from "../../../settings.json" assert { type: "json" };
 
+console.log(`${settings.ytdl_endpoint}/upload`);
+
 export async function uploadVideo(filename: string, mimetype: string) {
 	const upload = await fetch(`${settings.ytdl_endpoint}/upload`, {
 		method: "POST",

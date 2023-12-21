@@ -42,7 +42,6 @@ export type DiscordExternalDependencies = {
 	aliases: Map<string, string>;
 	chat_buffer: ChatBuffer;
 	websites: Website[];
-	settings: { test: boolean };
 };
 export type Cooldown = {
 	cooldown: number;
@@ -53,7 +52,7 @@ export type Website = {
 	site: string;
 };
 // eslint-disable-next-line
-export type JSONObject = { [a: string]: any };
+export type JSONObject = { [a: string]: any }; // i will replace make this a Record<T>, gotta make sure it doesn't break stuff first though
 export type Tier = {
 	chance: number;
 	name: string;

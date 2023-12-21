@@ -43,7 +43,6 @@ const other_dependencies: DiscordExternalDependencies = {
 	commands,
 	aliases,
 	chat_buffer,
-	settings,
 	websites,
 };
 //////////////////////////////////////////////////////////////////////////////////

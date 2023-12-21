@@ -1,5 +1,6 @@
 {
 	"test": true,
 	"ytdl_endpoint": "http://localhost:3000",
-	"quote_endpoint": "http://localhost:4000"
+	"quote_endpoint": "http://localhost:4000",
+	"pocketbase_endpoint": "http://127.0.0.1:8090" 
 }

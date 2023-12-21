@@ -1,5 +1,6 @@
 import { Client, Message } from "discord.js";
 import helpers, { ExternalDependencies } from "../../helpers/helpers.js";
+import settings from "../../../settings.json" assert {type: "json"};
 
 let latency = await getAverageLatency("discord.com", 3);
 setInterval(async () => {
@@ -27,8 +28,8 @@ export async function execute(
 		ytdl: false,
 		canvas: false,
 	};
-	doctor_results.ytdl = await pingServer(ext.external_data[3].ytdl_endpoint);
-	doctor_results.canvas = await pingServer(ext.external_data[3].quote_endpoint);
+	doctor_results.ytdl = await pingServer(`${settings.ytdl_endpoint}/ping`);
+	doctor_results.canvas = await pingServer(`${settings.quote_endpoint}/ping`);
 	msg.reply(
 		"## Eirin's Diagnosis\n\n" +
 			`Latency to discord.com, refreshed every minute: \`${latency}ms\`. \n` +

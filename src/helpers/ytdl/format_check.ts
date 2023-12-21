@@ -20,10 +20,10 @@ export function formatCheckResults(check: CheckResult): string {
 				str += "The video being too long (below 2 hours is allowed).\n";
 				break;
 			case "INVALID_FORMAT_ID":
-				str += "The format ID is invalid.";
+				str += "The format ID is invalid.\n";
 				break;
 			default:
-				str += "Unable to find the reason.";
+				str += "Unable to find the reason.\n";
 				break;
 		}
 	}

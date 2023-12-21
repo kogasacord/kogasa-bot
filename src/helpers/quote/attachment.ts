@@ -12,7 +12,7 @@ export async function quoteAttachment(
 	mimetype: string,
 	show_boundaries: boolean
 ) {
-	const check = await fetch(`${settings.ytdl_endpoint}/quote/img`, {
+	const check = await fetch(`${settings.quote_endpoint}/quote/img`, {
 		method: "POST",
 		body: JSON.stringify({
 			text: text,
