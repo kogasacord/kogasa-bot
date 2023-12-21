@@ -101,27 +101,25 @@ function formatMessage(message: ChatBufferMessage, maxMessageLength: number) {
 		format += `╔═ \`${message.replied.display_name}\` ${deleted}: ${message.replied.content}: ${attachments}`;
 	}
 
-	const attachments = formatAttachments(message);
+	// const attachments = formatAttachments(message);
 	const delete_tag = addDeleteTag(message);
 	const edits = formatEdits(message);
 	const message_content_limited = limitMessageLength(message, maxMessageLength);
 
-	format += `\`${message.display_name}\`${delete_tag}: ${edits} ${message_content_limited}${attachments}`;
+	format += `\`${message.display_name}\`${delete_tag}: ${edits} ${message_content_limited}`;
 
 	return format;
 }
 
 function formatAttachments(message: ChatBufferMessage) {
-	return `${
-		message.attachments.length >= 1 && message.content.length > 0 ? ":" : ""
-	} ${message.attachments
+	const colon = message.attachments.length >= 1 && message.content.length > 0 ? ":" : "";
+	const attachments = message.attachments
 		.map((v, i) => `[Attachment ${i + 1}](${v})`)
-		.join(" ")}`;
+		.join(" ");
+	return `${colon} ${attachments}`;
 }
 function formatEdits(message: ChatBufferMessage) {
-	const newline_edits = `${message.edits.length >= 1 ? "\n" : ""}${
-		message.edits.length
-	}`;
+	const newline_edits = `${message.edits.length >= 1 ? "\n" : ""}`;
 	return newline_edits + message.edits.map((v) => `||${v}||\n`).join("");
 }
 function addDeleteTag(message: ChatBufferMessage) {
