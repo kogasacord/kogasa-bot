@@ -11,7 +11,7 @@ import {
 	Tier,
 	DiscordExternalDependencies,
 } from "../helpers/types.js";
-import settings from "../../settings.json";
+import settings from "../../settings.json" assert { type: "json" };
 
 const pb = new Pocketbase("http://127.0.0.1:8090");
 const user_cooldowns = new Collection<string, Collection<string, Cooldown>>();

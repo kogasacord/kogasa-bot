@@ -1,6 +1,6 @@
 import fetch from "node-fetch";
 
-import {quote_endpoint} from "../../../settings.json";
+import settings from "../../../settings.json" assert { type: "json" };
 
 export async function quoteDefault(
 	text: string,
@@ -8,7 +8,7 @@ export async function quoteDefault(
 	avatar_url: string,
 	show_boundaries: boolean
 ) {
-	const check = await fetch(`${quote_endpoint}/quote`, {
+	const check = await fetch(`${settings.quote_endpoint}/quote`, {
 		method: "POST",
 		body: JSON.stringify({
 			text: text,
