@@ -73,11 +73,6 @@ export function findRepliedBufferMessagewithRealMessage(
 ): ChatBufferMessage | undefined {
 	const replied_buffer_message = buffer_queue
 		.get_internal()
-		.find((buffer_message) => {
-			if (buffer_message.replied) {
-				return buffer_message.replied.id === replied_message_id;
-			}
-			return false;
-		});
+		.find((buffer_message) => buffer_message.replied && buffer_message.replied.id === replied_message_id);
 	return replied_buffer_message;
 }

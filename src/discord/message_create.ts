@@ -1,6 +1,6 @@
 import Pocketbase from "pocketbase";
 import { ChannelType, Client, Collection, Message } from "discord.js";
-import { pushMessageToBuffer } from "../helpers/buffer/buffer.js";
+import { pushMessageToBuffer } from "@helpers/buffer/buffer.js";
 import helpers from "@helpers/helpers.js";
 import { separateCommands } from "@helpers/parser/parser.js";
 import { hasAuthorCooldownPassed } from "@helpers/cooldown/cooldown.js";

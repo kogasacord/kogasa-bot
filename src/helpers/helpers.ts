@@ -1,3 +1,5 @@
+// wrapper for the entire helper folder.
+
 import { checkLink } from "./ytdl/check_link.js";
 import { downloadVideo } from "./ytdl/download.js";
 import { formatCheckResults } from "./ytdl/format_check.js";

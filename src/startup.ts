@@ -1,6 +1,6 @@
 import fetch from "node-fetch";
 
-import settings from "../settings.json" assert { type: "json" };
+import settings from "@settings" assert { type: "json" };
 // scripts to run on startup
 export async function enableAutoDelete() {
 	await fetch(`${settings.ytdl_endpoint}/enableAutoDeletion`, {
