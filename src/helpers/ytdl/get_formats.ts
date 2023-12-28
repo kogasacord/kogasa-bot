@@ -1,7 +1,7 @@
 import fetch from "node-fetch";
 import { FormatResponse } from "./types";
 
-import settings from "../../../settings.json" assert { type: "json" };
+import settings from "@settings" assert { type: "json" };
 
 export async function getFormats(request: string) {
 	const info = await fetch(`${settings.ytdl_endpoint}/format`, {

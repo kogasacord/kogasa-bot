@@ -1,4 +1,4 @@
-import helpers, { ExternalDependencies } from "../../helpers/helpers.js";
+import helpers, { ExternalDependencies } from "@helpers/helpers.js";
 import { Client, Message, EmbedBuilder } from "discord.js";
 
 export const name = "help";

@@ -1,7 +1,7 @@
 import Pocketbase from "pocketbase";
 import { Queue } from "./misc/queue.js";
 import { Client, Message, Collection } from "discord.js";
-import settings from "../../settings.json" assert { type: "json" };
+import settings from "@settings" assert { type: "json" };
 
 export type CommandModule = {
 	name: string;

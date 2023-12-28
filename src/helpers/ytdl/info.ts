@@ -1,7 +1,7 @@
 import fetch from "node-fetch";
 import { InfoResponse } from "./types";
 
-import settings from "../../../settings.json" assert { type: "json" };
+import settings from "@settings" assert { type: "json" };
 
 export async function getInfo(request: string) {
 	const info = await fetch(`${settings.ytdl_endpoint}/info`, {

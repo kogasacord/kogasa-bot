@@ -1,4 +1,4 @@
-import helpers from "../helpers/helpers.js";
+import helpers from "@helpers/helpers.js";
 import { Client, EmbedBuilder, Message } from "discord.js";
 
 export const name = "ytdlf";
@@ -8,12 +8,12 @@ export async function execute(client: Client, msg: Message, args: string[]) {
 	const requested_link = args[0];
 	const f = await helpers.getFormats(requested_link);
 
-	const isOver = false;
+	const is_over = false;
 	let indexer = 0;
 	let embed = new EmbedBuilder()
 		.setTitle("Quality and Format options")
 		.setDescription("~~");
-	while (!isOver) {
+	while (!is_over) {
 		if (Number.isInteger((indexer + 1) / 25)) {
 			msg.channel.send({ embeds: [embed] });
 			embed = new EmbedBuilder();

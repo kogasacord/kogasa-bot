@@ -1,13 +1,13 @@
 import { Client, Message, ChannelType, PermissionsBitField } from "discord.js";
-import { CommandModule, ExternalDependencies } from "../../helpers/types.js";
+import { CommandModule, ExternalDependencies } from "@helpers/types.js";
 import {
 	ChannelIDsSettings,
 	CommandSettings,
 	ServerSettings,
 	ServerSettingsParameters,
-} from "../../helpers/pb/types.js";
+} from "@helpers/pb/types.js";
 import { RecordService } from "pocketbase";
-import { findThroughCollection } from "../../helpers/pb/pb.js";
+import { findThroughCollection } from "@helpers/pb/pb.js";
 
 export const name = "set";
 export const cooldown = 5;
@@ -28,9 +28,7 @@ export async function execute(
 		return;
 	}
 
-	const selector = args.at(0);
-	const channel_id = args.at(1);
-	const isEnabledStr = args.at(2);
+	const [selector, channel_id, is_enabled_str] = args;
 
 	const settings = ext.pb.collection("server_settings");
 	const command_scopes = ext.pb.collection("command_scopes");
@@ -61,12 +59,12 @@ export async function execute(
 		);
 		return;
 	}
-	if (!(channel_id && isEnabledStr)) {
+	if (!(channel_id && is_enabled_str)) {
 		msg.reply("`??set [command_name/'all'] [channel_id/'all'] [true/false]`");
 		return;
 	}
 
-	const isEnabled = isEnabledStr.toLowerCase() === "true";
+	const is_enabled = is_enabled_str.toLowerCase() === "true";
 
 	const commands: CommandModule[] = [];
 	if (selector === "all") {
@@ -84,21 +82,21 @@ export async function execute(
 
 	if (channel_id === "all") {
 		for (const command of commands) {
-			for (const channel of guild.channels.cache) {
+			for (const [_channel_name, channel] of guild.channels.cache) {
 				await createCommandScope(
 					command_scopes,
 					channel_ids,
 					settings,
 					command.name,
-					channel[1].id,
-					isEnabled,
+					channel.id,
+					is_enabled,
 					server_setting.id
 				);
 			}
 		}
 
 		msg.reply(
-			`${isEnabled ? "Activated" : "Disabled"} \`${commands
+			`${is_enabled ? "Activated" : "Disabled"} \`${commands
 				.map((c) => c.name)
 				.join(", ")}\` to every channel here.`
 		);
@@ -120,10 +118,10 @@ export async function execute(
 				settings,
 				command.name,
 				channel_id,
-				isEnabled,
+				is_enabled,
 				server_setting.id
 			);
-			message = `${isEnabled ? "Activated" : "Disabled"} \`${formatScope(
+			message = `${is_enabled ? "Activated" : "Disabled"} \`${formatScope(
 				scope
 			)}\` into this channel.`;
 		}
@@ -137,7 +135,7 @@ async function createCommandScope(
 	settings: RecordService,
 	command_name: string,
 	channel_id: string,
-	isEnabled: boolean,
+	is_enabled: boolean,
 	server_setting_id: string
 ) {
 	const channel = await findThroughCollection<ChannelIDsSettings>(
@@ -152,13 +150,13 @@ async function createCommandScope(
 		const scope = await command_scopes.update(
 			channel_record.expand.command_scope.id,
 			{
-				[command_name]: isEnabled,
+				[command_name]: is_enabled,
 			}
 		);
 		return scope;
 	} else {
 		const scope = await command_scopes.create<CommandSettings>({
-			[command_name]: isEnabled,
+			[command_name]: is_enabled,
 		});
 		const channel_id_record = await channel_ids.create<ChannelIDsSettings>({
 			channel_id: channel_id,
@@ -171,9 +169,9 @@ async function createCommandScope(
 	}
 }
 
-async function initializeSettings(settings: RecordService, guildID: string) {
+async function initializeSettings(settings: RecordService, guild_id: string) {
 	const default_settings: ServerSettingsParameters = {
-		serverid: guildID,
+		serverid: guild_id,
 		nsfw: false,
 		self_quote: true,
 	};

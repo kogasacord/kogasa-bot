@@ -1,4 +1,4 @@
-import helpers from "../helpers/helpers.js";
+import helpers from "@helpers/helpers.js";
 import { ChannelType, Client, Message } from "discord.js";
 
 export const name = "quote";
@@ -24,11 +24,13 @@ export async function execute(client: Client, msg: Message, args: string[]) {
 	const avatar_url = guild_member.avatarURL({size: 1024, extension: "png"}) 
 		?? replied.author.avatarURL({size: 1024, extension: "png"})
 		?? replied.author.displayAvatarURL({size: 1024, extension: "png"});
-	const attachments = replied.attachments.at(0)?.url
+	
+	const first_attachment = replied.attachments.at(0);
+	const attachment_info = first_attachment?.url
 		? {
-			url: replied.attachments.at(0)!.url ?? 0,
-			height: replied.attachments.at(0)!.height ?? 0,
-			width: replied.attachments.at(0)!.width ?? 0,
+			url: first_attachment!.url ?? 0,
+			height: first_attachment!.height ?? 0,
+			width: first_attachment!.width ?? 0,
 		} : undefined;
 
 	try {
@@ -37,8 +39,8 @@ export async function execute(client: Client, msg: Message, args: string[]) {
 			replied.author.displayName,
 			avatar_url,
 			show_boundaries,
-			replied.attachments.at(0)?.contentType,
-			attachments
+			first_attachment?.contentType,
+			attachment_info
 		);
 		msg.reply({
 			files: [{ attachment: recieved_quote }],
@@ -69,8 +71,8 @@ async function quote(
 		width: number;
 	}
 ) {
-	if (attachment !== undefined && mimetype !== null && mimetype !== undefined) {
-		if (mimetype.includes("image/")) {
+	if (attachment) {
+		if (mimetype?.includes("image/")) {
 			return helpers.quoteAttachment(
 				text,
 				author,
@@ -89,7 +91,7 @@ async function quote(
 async function parseQuotes(client: Client, str: string) {
 	const parsed_mentions = await extractObjects(
 		str,
-		/(?<=<@)\d+(?=>)/g,
+		/(?<Id>\d+)/g, // TEST LATER.
 		/<@\d+>/g,
 		async (extracted) => {
 			const user =

@@ -72,5 +72,7 @@ This assumes you have done Base Kogasa.
 ## Misc
 
 Why is there SO MUCH HTTP servers??
-
 - It seemed cool to implement but it got out of hand quickly.
+
+## Incoming
+- Adding unit tests with Chai to make the program a bit safe.

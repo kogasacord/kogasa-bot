@@ -1,4 +1,4 @@
-import helpers, { ExternalDependencies } from "../helpers/helpers.js";
+import helpers, { ExternalDependencies } from "@helpers/helpers.js";
 import { Client, Message } from "discord.js";
 
 // by percentage to 100%

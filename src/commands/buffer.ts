@@ -1,5 +1,5 @@
 import { Client, EmbedBuilder, Message } from "discord.js";
-import { ChatBufferMessage, ExternalDependencies } from "../helpers/types.js";
+import { ChatBufferMessage, ExternalDependencies } from "@helpers/types.js";
 
 export const name = "buffer";
 export const aliases = ["back", "backtrack", "b"];
@@ -86,7 +86,6 @@ function filterChatBuffer(filter: Filter, buffer: ChatBufferMessage[]) {
 		case "normal":
 			return buffer.filter((v) => v.is_deleted === false && v.edits.length < 1);
 		case "none":
-			return buffer;
 		default:
 			return buffer;
 	}

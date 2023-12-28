@@ -1,6 +1,6 @@
 import humanize from "humanize-duration";
 import { Client, Message } from "discord.js";
-import helpers, { DownloadResponse, InfoResponse } from "../helpers/helpers.js";
+import helpers, { DownloadResponse, InfoResponse } from "@helpers/helpers.js";
 
 const processing_users: string[] = [];
 
@@ -16,7 +16,8 @@ export async function execute(client: Client, msg: Message, args: string[]) {
 
 	processing_users.push(msg.author.id);
 
-	const unsafeinfo = helpers.wrapInOption(
+	// performance hit, use JS type stuff instead.
+	const unsafeinfo = helpers.wrapInOption( 
 		await helpers.getInfo(requested_link)
 	);
 	const download = await helpers.asyncRun(

@@ -1,17 +1,17 @@
 import Pocketbase from "pocketbase";
 import { ChannelType, Client, Collection, Message } from "discord.js";
 import { pushMessageToBuffer } from "../helpers/buffer/buffer.js";
-import helpers from "../helpers/helpers.js";
-import { separateCommands } from "../helpers/parser/parser.js";
-import { hasAuthorCooldownPassed } from "../helpers/cooldown/cooldown.js";
+import helpers from "@helpers/helpers.js";
+import { separateCommands } from "@helpers/parser/parser.js";
+import { hasAuthorCooldownPassed } from "@helpers/cooldown/cooldown.js";
 import {
 	CommandModule,
 	Cooldown,
 	ExternalDependencies,
 	Tier,
 	DiscordExternalDependencies,
-} from "../helpers/types.js";
-import settings from "../../settings.json" assert { type: "json" };
+} from "@helpers/types.js";
+import settings from "@settings" assert { type: "json" };
 
 const pb = new Pocketbase(settings.pocketbase_endpoint);
 const user_cooldowns = new Collection<string, Collection<string, Cooldown>>();

@@ -1,7 +1,7 @@
 import fetch from "node-fetch";
 import { CheckResult } from "./types";
 
-import settings from "../../../settings.json" assert { type: "json" };
+import settings from "@settings" assert { type: "json" };
 
 export async function checkLink(link: string, format_id?: string) {
 	const check = await fetch(`${settings.ytdl_endpoint}/checklink`, {

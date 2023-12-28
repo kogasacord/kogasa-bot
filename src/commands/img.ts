@@ -21,12 +21,10 @@ export async function execute(client: Client, msg: Message, args: string[]) {
 			msg.reply(buffered.join("\n"));
 			return;
 		}
-		msg.reply(
-			`Dear ${msg.author.displayName}. Your images could not be found.`
-		);
 	} catch (err) {
-		msg.reply(
-			`Dear ${msg.author.displayName}. Your images could not be found.`
-		);
+		console.log(`[img.ts]: ${err}`);
 	}
+	msg.reply(
+		`Dear ${msg.author.displayName}. Your images could not be found.`
+	);
 }

@@ -1,7 +1,7 @@
 import fetch from "node-fetch";
 import { UploadResponse } from "./types";
 
-import settings from "../../../settings.json" assert { type: "json" };
+import settings from "@settings" assert { type: "json" };
 
 console.log(`${settings.ytdl_endpoint}/upload`);
 

@@ -3,7 +3,7 @@ import { ChatBuffer, ChatBufferMessage } from "../types.js";
 import { Queue } from "../misc/queue.js";
 import { PartialMessage } from "discord.js";
 
-import helpers from "../helpers.js";
+import helpers from "@helpers/helpers.js";
 
 export function makeMessageBuffer(msg: Message): ChatBufferMessage {
 	const attachments = msg.attachments.map((v) => v.url);
