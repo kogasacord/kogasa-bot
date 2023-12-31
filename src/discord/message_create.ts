@@ -84,7 +84,10 @@ export async function messageCreate(
 			return;
 		}
 		if (command_module.checker) {
-			await command_module.checker(msg, args);
+			const has_passed_check = await command_module.checker(msg, args);
+			if (!has_passed_check) { 
+				return; 
+			}
 		}
 		setCooldown(user_cooldowns, command_module, msg.author.id, args);
 
