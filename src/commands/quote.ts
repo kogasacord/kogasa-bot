@@ -1,9 +1,9 @@
-import helpers from "../helpers/helpers.js";
+import helpers from "@helpers/helpers.js";
 import { ChannelType, Client, Message } from "discord.js";
 
 export const name = "quote";
 export const aliases = ["q"];
-export const cooldown = 10;
+export const cooldown = 25;
 export const description =
 	"Reply to someone and capture a.. suspicious message.";
 export async function execute(client: Client, msg: Message, args: string[]) {
@@ -16,20 +16,26 @@ export async function execute(client: Client, msg: Message, args: string[]) {
 
 	const parsed_content = await parseQuotes(client, replied.content);
 
-	const guild = client.guilds.cache.get(replied.guildId)
-		?? await client.guilds.fetch(replied.guildId);
-	const guild_member = guild.members.cache.get(replied.author.id)
-		?? await guild.members.fetch(replied.author.id);
+	const guild =
+		client.guilds.cache.get(replied.guildId) ??
+		(await client.guilds.fetch(replied.guildId));
+	const guild_member =
+		guild.members.cache.get(replied.author.id) ??
+		(await guild.members.fetch(replied.author.id));
 
-	const avatar_url = guild_member.avatarURL({size: 1024, extension: "png"}) 
-		?? replied.author.avatarURL({size: 1024, extension: "png"})
-		?? replied.author.displayAvatarURL({size: 1024, extension: "png"});
-	const attachments = replied.attachments.at(0)?.url
+	const avatar_url =
+		guild_member.avatarURL({ size: 1024, extension: "png" }) ??
+		replied.author.avatarURL({ size: 1024, extension: "png" }) ??
+		replied.author.displayAvatarURL({ size: 1024, extension: "png" });
+
+	const first_attachment = replied.attachments.at(0);
+	const attachment_info = first_attachment
 		? {
-			url: replied.attachments.at(0)!.url ?? 0,
-			height: replied.attachments.at(0)!.height ?? 0,
-			width: replied.attachments.at(0)!.width ?? 0,
-		} : undefined;
+				url: first_attachment.url,
+				height: first_attachment.height ?? 0,
+				width: first_attachment.width ?? 0,
+		  }
+		: undefined;
 
 	try {
 		const recieved_quote = await quote(
@@ -37,8 +43,8 @@ export async function execute(client: Client, msg: Message, args: string[]) {
 			replied.author.displayName,
 			avatar_url,
 			show_boundaries,
-			replied.attachments.at(0)?.contentType,
-			attachments
+			first_attachment?.contentType,
+			attachment_info
 		);
 		msg.reply({
 			files: [{ attachment: recieved_quote }],
@@ -69,8 +75,8 @@ async function quote(
 		width: number;
 	}
 ) {
-	if (attachment !== undefined && mimetype !== null && mimetype !== undefined) {
-		if (mimetype.includes("image/")) {
+	if (attachment) {
+		if (mimetype?.includes("image/")) {
 			return helpers.quoteAttachment(
 				text,
 				author,
@@ -86,37 +92,21 @@ async function quote(
 	return helpers.quoteDefault(text, author, avatar_url, show_boundaries);
 }
 
-async function parseQuotes(client: Client, str: string) {
-	const parsed_mentions = await extractObjects(
-		str,
-		/(?<=<@)\d+(?=>)/g,
-		/<@\d+>/g,
-		async (extracted) => {
-			const user =
-				client.users.cache.get(extracted) ??
-				(await client.users.fetch(extracted));
-			return user.displayName ? user.displayName : user.username;
-		}
-	);
-
-	const parsed_emotes = parsed_mentions.replace(/<a?:[^\s]+:\d+>/g, "");
-
-	return parsed_emotes;
-}
-
-/*
- * Extracts discord's emotes and mentions from the message content.
+/**
+ * parses text to remove/replace mentions or emotes
  */
-async function extractObjects(
-	str: string,
-	extract: RegExp,
-	replace: RegExp,
-	replacer: (_extracted: string) => Promise<string>
-) {
+async function parseQuotes(client: Client, str: string) {
 	let string = str.slice();
-	const extracted = str.match(extract);
+	const extracted = str.match(/(?<Id>\d+)/g);
 	for (const extract of extracted ?? []) {
-		string = string.replace(replace, await replacer(extract));
+		const user =
+			client.users.cache.get(extract) ?? (await client.users.fetch(extract));
+		const username = user.displayName ?? user.username;
+
+		string = string.replace(/(?<Id>\d+)/g, username);
 	}
+
+	string = string.replace(/<a?:[^\s]+:\d+>/g, "");
+
 	return string;
 }

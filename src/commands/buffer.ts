@@ -1,9 +1,9 @@
 import { Client, EmbedBuilder, Message } from "discord.js";
-import { ChatBufferMessage, ExternalDependencies } from "../helpers/types.js";
+import { ChatBufferMessage, ExternalDependencies } from "@helpers/types.js";
 
 export const name = "buffer";
 export const aliases = ["back", "backtrack", "b"];
-export const cooldown = 5;
+export const cooldown = 20;
 export const description =
 	"Backtrack a channel, a command better than Small's implementation. `??buffer (delete | edit | normal | none)`";
 
@@ -86,7 +86,6 @@ function filterChatBuffer(filter: Filter, buffer: ChatBufferMessage[]) {
 		case "normal":
 			return buffer.filter((v) => v.is_deleted === false && v.edits.length < 1);
 		case "none":
-			return buffer;
 		default:
 			return buffer;
 	}
@@ -112,7 +111,8 @@ function formatMessage(message: ChatBufferMessage, maxMessageLength: number) {
 }
 
 function formatAttachments(message: ChatBufferMessage) {
-	const colon = message.attachments.length >= 1 && message.content.length > 0 ? ":" : "";
+	const colon =
+		message.attachments.length >= 1 && message.content.length > 0 ? ":" : "";
 	const attachments = message.attachments
 		.map((v, i) => `[Attachment ${i + 1}](${v})`)
 		.join(" ");

@@ -1,6 +1,6 @@
 import Pocketbase from "pocketbase";
-import { findThroughCollection } from "../pb/pb.js";
-import { ServerSettings } from "../pb/types.js";
+import { findThroughCollection } from "@helpers/pb/pb.js";
+import { ServerSettings } from "@helpers/pb/types.js";
 
 export async function getServerPrefix(
 	pb: Pocketbase,

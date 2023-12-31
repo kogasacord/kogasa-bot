@@ -1,4 +1,4 @@
-import helpers from "../helpers/helpers.js";
+import helpers from "@helpers/helpers.js";
 import { ActivityType, Client } from "discord.js";
 
 const watching_status = [

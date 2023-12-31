@@ -1,12 +1,12 @@
 import { Message, Client } from "discord.js";
 import { PartialMessage } from "discord.js";
-import { ChatBuffer } from "../helpers/types.js";
+import { ChatBuffer } from "@helpers/types.js";
 import {
 	setChatbuffer,
 	findReplied,
 	findChatBufferMessagewithRealMessage,
 	findRepliedBufferMessagewithRealMessage,
-} from "../helpers/buffer/buffer.js";
+} from "@helpers/buffer/buffer.js";
 
 export async function messageDelete(
 	client: Client,

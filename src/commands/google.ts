@@ -31,8 +31,8 @@ export async function execute(client: Client, msg: Message, args: string[]) {
 			msg.reply(buffered.join("\n"));
 			return;
 		}
-		msg.reply(`Sorry ${msg.author.displayName}! I could not find anything...`);
 	} catch (err) {
-		msg.reply(`Sorry ${msg.author.displayName}! I could not find anything...`);
+		console.error(`[google.ts]: ${err}`);
 	}
+	msg.reply(`Sorry ${msg.author.displayName}! I could not find anything...`);
 }

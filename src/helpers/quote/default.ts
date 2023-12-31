@@ -1,6 +1,6 @@
 import fetch from "node-fetch";
 
-import settings from "../../../settings.json" assert { type: "json" };
+import settings from "@root/settings.json" assert { type: "json" };
 
 export async function quoteDefault(
 	text: string,

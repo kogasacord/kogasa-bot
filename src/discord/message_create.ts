@@ -1,20 +1,23 @@
 import Pocketbase from "pocketbase";
 import { ChannelType, Client, Collection, Message } from "discord.js";
-import { pushMessageToBuffer } from "../helpers/buffer/buffer.js";
-import helpers from "../helpers/helpers.js";
-import { separateCommands } from "../helpers/parser/parser.js";
-import { hasAuthorCooldownPassed } from "../helpers/cooldown/cooldown.js";
+import { pushMessageToBuffer } from "@helpers/buffer/buffer.js";
+import helpers from "@helpers/helpers.js";
+import { separateCommands } from "@helpers/parser/parser.js";
 import {
 	CommandModule,
 	Cooldown,
 	ExternalDependencies,
 	Tier,
 	DiscordExternalDependencies,
-} from "../helpers/types.js";
-import settings from "../../settings.json" assert { type: "json" };
+} from "@helpers/types.js";
+import settings from "@root/settings.json" assert { type: "json" };
+import {
+	getExpiredTimestamp,
+	setCooldown,
+} from "@helpers/cooldown/cooldown_single.js";
 
 const pb = new Pocketbase(settings.pocketbase_endpoint);
-const user_cooldowns = new Collection<string, Collection<string, Cooldown>>();
+const user_cooldowns = new Collection<string, Cooldown>();
 
 const tiers = new Map<string, Tier>([
 	["C", { chance: 137, name: "Common", emote: ":cd:" }], // implement low_chance and high_chance to compare together
@@ -68,15 +71,25 @@ export async function messageCreate(
 			}
 		}
 
-		const has_cooldown_passed = await hasAuthorCooldownPassed(
+		const expired_timestamp = getExpiredTimestamp(
 			user_cooldowns,
 			command_module,
-			msg,
-			args
+			msg.author.id
 		);
-		if (!has_cooldown_passed) {
+		if (!expired_timestamp) {
+			msg.reply(
+				`Please wait, you are on a cooldown for \`${command_module.name}\`.` +
+					` You can use it again <t:${expired_timestamp}:R>.`
+			);
 			return;
 		}
+		if (command_module.checker) {
+			const has_passed_check = await command_module.checker(msg, args);
+			if (!has_passed_check) { 
+				return; 
+			}
+		}
+		setCooldown(user_cooldowns, command_module, msg.author.id, args);
 
 		const ext: ExternalDependencies = {
 			pb: pb,

@@ -1,5 +1,5 @@
 import { Client, Message } from "discord.js";
-import { ExternalDependencies } from "../helpers/types";
+import { ExternalDependencies } from "@helpers/types.js";
 
 export const name = "randomwebinfo";
 export const aliases = ["rwebinfo"];
@@ -16,6 +16,7 @@ export async function execute(
 	const tiers = external_data.external_data[1];
 
 	msg.reply(
+		// should I fix this?
 		"```" +
 			`C Websites count: ${websites.filter((v) => v.rarity === "C").length} | ${
 				300 - tiers.get("C")!.chance

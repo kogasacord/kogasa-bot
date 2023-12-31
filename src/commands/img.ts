@@ -16,17 +16,13 @@ export async function execute(client: Client, msg: Message, args: string[]) {
 			for (let i = 0; i < 4; i++) {
 				const result = res.at(i);
 				if (!result) break;
-				buffered.push(result.url);
+				buffered.push(`[${i + 1}](${result.url})`);
 			}
-			msg.reply(buffered.join("\n"));
+			msg.reply(buffered.join(" "));
 			return;
 		}
-		msg.reply(
-			`Dear ${msg.author.displayName}. Your images could not be found.`
-		);
 	} catch (err) {
-		msg.reply(
-			`Dear ${msg.author.displayName}. Your images could not be found.`
-		);
+		console.log(`[img.ts]: ${err}`);
 	}
+	msg.reply(`Dear ${msg.author.displayName}. Your images could not be found.`);
 }

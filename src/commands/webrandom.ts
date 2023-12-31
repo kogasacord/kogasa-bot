@@ -1,4 +1,4 @@
-import helpers, { ExternalDependencies } from "../helpers/helpers.js";
+import helpers, { ExternalDependencies } from "@helpers/helpers.js";
 import { Client, Message } from "discord.js";
 
 // by percentage to 100%
@@ -6,7 +6,7 @@ import { Client, Message } from "discord.js";
 
 export const name = "randomweb";
 export const aliases = ["rweb"];
-export const cooldown = 10;
+export const cooldown = 20;
 export const description =
 	"Sends a random website to you, scaled by rarity. The more rare it is, the more obscure (or goofy) the website is. Goes from Common to Super Rare. Currently using a strong random number generator.";
 export async function execute(

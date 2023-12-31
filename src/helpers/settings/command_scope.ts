@@ -1,10 +1,10 @@
 import Pocketbase from "pocketbase";
-import { findThroughCollection } from "../pb/pb.js";
+import { findThroughCollection } from "@helpers/pb/pb.js";
 import {
 	ChannelIDsSettings,
 	CommandSettings,
 	ServerSettings,
-} from "../pb/types.js";
+} from "@helpers/pb/types.js";
 
 /*
  * checks if a command is allowed in scopes | false = not allowed, true = allowed
@@ -26,8 +26,11 @@ export async function hasCommandChannelAccess(
 		channel_id
 	);
 
-	return !server_record || !!channel_record
-		&& await checkIfCommandIsAllowed(pb, channel_record, command_name);
+	return (
+		!server_record ||
+		(!!channel_record &&
+			(await checkIfCommandIsAllowed(pb, channel_record, command_name)))
+	);
 }
 
 async function checkIfCommandIsAllowed(

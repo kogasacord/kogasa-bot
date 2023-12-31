@@ -1,14 +1,13 @@
-import { Message, Client } from "discord.js";
-import { PartialMessage } from "discord.js";
+import { Message, Client, PartialMessage } from "discord.js";
 import {
 	setChatbuffer,
 	findReplied,
 	findChatBufferMessagewithRealMessage,
 	findRepliedBufferMessagewithRealMessage,
-} from "../helpers/buffer/buffer.js";
+} from "@helpers/buffer/buffer.js";
 
-import helpers from "../helpers/helpers.js";
-import { ChatBuffer } from "../helpers/types.js";
+import helpers from "@helpers/helpers.js";
+import { ChatBuffer } from "@helpers/types.js";
 
 export async function messageUpdate(
 	client: Client,

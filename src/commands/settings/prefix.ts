@@ -1,10 +1,7 @@
 import { RecordService } from "pocketbase";
-import { findThroughCollection } from "../../helpers/pb/pb.js";
-import {
-	ServerSettings,
-	ServerSettingsParameters,
-} from "../../helpers/pb/types.js";
-import { ExternalDependencies } from "../../helpers/types.js";
+import { findThroughCollection } from "@helpers/pb/pb.js";
+import { ServerSettings, ServerSettingsParameters } from "@helpers/pb/types.js";
+import { ExternalDependencies } from "@helpers/types.js";
 import { ChannelType, Client, Message, PermissionsBitField } from "discord.js";
 
 export const name = "prefix";
@@ -47,7 +44,7 @@ async function handlePrefixSettings(
 	id: string,
 	set_prefix: string | undefined
 ) {
-	if (set_prefix && set_prefix.length !== 0) {
+	if (set_prefix?.length !== 0) {
 		const data: ServerSettingsParameters = {
 			prefix: set_prefix,
 		};

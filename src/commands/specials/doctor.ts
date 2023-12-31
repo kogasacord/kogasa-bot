@@ -1,6 +1,6 @@
 import { Client, Message } from "discord.js";
-import helpers, { ExternalDependencies } from "../../helpers/helpers.js";
-import settings from "../../../settings.json" assert {type: "json"};
+import helpers, { ExternalDependencies } from "@helpers/helpers.js";
+import settings from "@root/settings.json" assert { type: "json" };
 
 let latency = await getAverageLatency("discord.com", 3);
 setInterval(async () => {

@@ -9,8 +9,8 @@ import {
 import { enableAutoDelete } from "./src/startup.js";
 import helpers, { CommandModule } from "./src/helpers/helpers.js";
 
-import settings from "./settings.json" assert { type: "json" };
-import config from "./config.json" assert { type: "json" };
+import settings from "@root/settings.json" assert { type: "json" };
+import config from "@root/config.json" assert { type: "json" };
 
 import { messageUpdate } from "./src/discord/message_update.js";
 import { messageDelete } from "./src/discord/message_delete.js";

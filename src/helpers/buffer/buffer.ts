@@ -3,7 +3,7 @@ import { ChatBuffer, ChatBufferMessage } from "../types.js";
 import { Queue } from "../misc/queue.js";
 import { PartialMessage } from "discord.js";
 
-import helpers from "../helpers.js";
+import helpers from "@helpers/helpers.js";
 
 export function makeMessageBuffer(msg: Message): ChatBufferMessage {
 	const attachments = msg.attachments.map((v) => v.url);
@@ -73,11 +73,10 @@ export function findRepliedBufferMessagewithRealMessage(
 ): ChatBufferMessage | undefined {
 	const replied_buffer_message = buffer_queue
 		.get_internal()
-		.find((buffer_message) => {
-			if (buffer_message.replied) {
-				return buffer_message.replied.id === replied_message_id;
-			}
-			return false;
-		});
+		.find(
+			(buffer_message) =>
+				buffer_message.replied &&
+				buffer_message.replied.id === replied_message_id
+		);
 	return replied_buffer_message;
 }
