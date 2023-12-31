@@ -14,46 +14,55 @@ export const description =
 export async function execute(client: Client, msg: Message, args: string[]) {
 	const response = "## Sources found?:\n\n";
 
-	if (args.at(0)) {
-		useLink(response, args.at(0)!);
+	const link = args.at(0);
+	if (link) {
+		useLink(response, link);
 	}
 
 	if (msg.reference?.messageId !== undefined) {
-		useAttachments(msg, msg.reference.messageId, response);
+		const replied = await msg.channel.messages.fetch(msg.reference.messageId);
+		useAttachments(response, replied);
 	}
+	msg.reply(response);
 }
 
 /**
  * if the user's request looks like: `??sauce` [replying to someone's image attachment];
+ *
+ * modifies the response string
  */
 async function useAttachments(
-	msg: Message,
-	messageId: string,
-	response: string
+	response: string,
+	replied: Message,
 ) {
-	const replied = await msg.channel.messages.fetch(messageId);
 	const first_attachment = replied.attachments.at(0);
 	if (first_attachment) {
 		const mime_lookup = mimetype.lookup(first_attachment.url);
 		if (mime_lookup) {
 			const match = mime_lookup.match(/image\/.+/);
 			if (!match?.[0]) {
-				msg.reply("You given me a non-image.");
-				return;
+				response = "You given me a non-image.";
+				return response;
 			}
 		}
 
 		const sources = await sauce(first_attachment.url);
-		for (const source of sources)
-			response += `- \`${source.authorName}\` posted to \`${source.site}\` [<${source.url}>] with a \`${source.similarity}\`pt.\n`;
+		for (const source of sources) {
+			response += `- [\`${source.authorName}\` posted to \`${source.site}\`](<${source.url}>) with a \`${source.similarity}\`pt.\n`;
+		}
+		return response;
 	}
-	msg.reply(response);
 }
 
 /**
- * if the user's request looks like: `??sauce [link]`
+  * if the user's request looks like: `??sauce [link]`
+	*
+	* modifies the response string
  */
-async function useLink(response: string, link: string) {
+async function useLink(
+	response: string, 
+	link: string
+) {
 	const is_link = checkIfLink(link);
 	if (!is_link) {
 		response = "You did not give me a link.";
