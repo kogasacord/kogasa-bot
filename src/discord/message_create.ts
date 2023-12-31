@@ -10,8 +10,11 @@ import {
 	Tier,
 	DiscordExternalDependencies,
 } from "@helpers/types.js";
-import settings from "@settings" assert { type: "json" };
-import { getExpiredTimestamp, setCooldown } from "@helpers/cooldown/cooldown_single";
+import settings from "@root/settings.json" assert { type: "json" };
+import {
+	getExpiredTimestamp,
+	setCooldown,
+} from "@helpers/cooldown/cooldown_single.js";
 
 const pb = new Pocketbase(settings.pocketbase_endpoint);
 const user_cooldowns = new Collection<string, Cooldown>();
@@ -68,11 +71,15 @@ export async function messageCreate(
 			}
 		}
 
-		const expired_timestamp = getExpiredTimestamp(user_cooldowns, command_module, msg.author.id);
+		const expired_timestamp = getExpiredTimestamp(
+			user_cooldowns,
+			command_module,
+			msg.author.id
+		);
 		if (!expired_timestamp) {
 			msg.reply(
 				`Please wait, you are on a cooldown for \`${command_module.name}\`.` +
-				` You can use it again <t:${expired_timestamp}:R>.`
+					` You can use it again <t:${expired_timestamp}:R>.`
 			);
 			return;
 		}

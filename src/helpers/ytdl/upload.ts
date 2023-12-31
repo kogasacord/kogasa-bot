@@ -1,9 +1,7 @@
 import fetch from "node-fetch";
-import { UploadResponse } from "./types";
+import { UploadResponse } from "./types.js";
 
-import settings from "@settings" assert { type: "json" };
-
-console.log(`${settings.ytdl_endpoint}/upload`);
+import settings from "@root/settings.json" assert { type: "json" };
 
 export async function uploadVideo(filename: string, mimetype: string) {
 	const upload = await fetch(`${settings.ytdl_endpoint}/upload`, {

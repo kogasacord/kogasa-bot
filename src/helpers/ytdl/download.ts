@@ -1,7 +1,7 @@
 import fetch from "node-fetch";
-import { DownloadResponse } from "./types";
+import { DownloadResponse } from "./types.js";
 
-import settings from "@settings" assert { type: "json" };
+import settings from "@root/settings.json" assert { type: "json" };
 
 export async function downloadVideo(request: string, format_id?: string) {
 	const download = await fetch(`${settings.ytdl_endpoint}/download`, {

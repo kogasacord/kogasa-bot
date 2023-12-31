@@ -17,7 +17,7 @@ export async function execute(client: Client, msg: Message, args: string[]) {
 	processing_users.push(msg.author.id);
 
 	// performance hit, use JS type stuff instead.
-	const unsafeinfo = helpers.wrapInOption( 
+	const unsafeinfo = helpers.wrapInOption(
 		await helpers.getInfo(requested_link)
 	);
 	const download = await helpers.asyncRun(

@@ -24,7 +24,5 @@ export async function execute(client: Client, msg: Message, args: string[]) {
 	} catch (err) {
 		console.log(`[img.ts]: ${err}`);
 	}
-	msg.reply(
-		`Dear ${msg.author.displayName}. Your images could not be found.`
-	);
+	msg.reply(`Dear ${msg.author.displayName}. Your images could not be found.`);
 }

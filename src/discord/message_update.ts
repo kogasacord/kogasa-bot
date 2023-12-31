@@ -1,5 +1,4 @@
-import { Message, Client } from "discord.js";
-import { PartialMessage } from "discord.js";
+import { Message, Client, PartialMessage } from "discord.js";
 import {
 	setChatbuffer,
 	findReplied,

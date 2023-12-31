@@ -26,8 +26,11 @@ export async function hasCommandChannelAccess(
 		channel_id
 	);
 
-	return !server_record || !!channel_record
-		&& await checkIfCommandIsAllowed(pb, channel_record, command_name);
+	return (
+		!server_record ||
+		(!!channel_record &&
+			(await checkIfCommandIsAllowed(pb, channel_record, command_name)))
+	);
 }
 
 async function checkIfCommandIsAllowed(

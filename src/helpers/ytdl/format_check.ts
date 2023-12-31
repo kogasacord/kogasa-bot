@@ -1,4 +1,4 @@
-import { CheckResult } from "./types";
+import { CheckResult } from "./types.js";
 
 export function formatCheckResults(check: CheckResult): string {
 	let str = "It might have failed because of: \n";

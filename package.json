@@ -5,8 +5,10 @@
 	"main": "index.js",
 	"scripts": {
 		"test": "echo \"Error: no test specified\" && exit 1",
-		"start": "node build/index.js",
-		"format": "npx eslint . --fix & npx prettier . --write --log-level silent"
+		"prestart": "node build/index.js",
+		"format": "npx eslint . --fix & npx prettier . --write --log-level silent",
+		"build": "npx tsc --project tsconfig.json && npx tsc-alias -p tsconfig.json",
+		"poststart": "npx tsc --project tsconfig.json && npx tsc-alias -p tsconfig.json && node build/index.js"
 	},
 	"author": "",
 	"license": "ISC",
@@ -19,6 +21,7 @@
 		"eslint": "^8.56.0",
 		"eslint-config-prettier": "^9.1.0",
 		"prettier": "3.1.0",
+		"tsc-alias": "^1.8.8",
 		"typescript": "^5.3.3"
 	},
 	"dependencies": {

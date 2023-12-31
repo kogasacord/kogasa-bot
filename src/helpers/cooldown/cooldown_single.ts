@@ -1,14 +1,13 @@
-
 import { Collection } from "discord.js";
-import { Cooldown } from "@helpers/types";
-import { CommandModule } from "@helpers/types";
+import { Cooldown } from "@helpers/types.js";
+import { CommandModule } from "@helpers/types.js";
 
 // Collection<"(user_id)(command_name)", Cooldown>
 
 export async function getExpiredTimestamp(
 	cooldowns: Collection<string, Cooldown>,
 	command_module: CommandModule,
-	author_id: string,
+	author_id: string
 ) {
 	const now = Date.now();
 	const cooldown_name = `${author_id}-${command_module.name}`;
@@ -26,14 +25,17 @@ export async function getExpiredTimestamp(
 }
 
 export async function setCooldown(
-	cooldowns: Collection<string, Cooldown>, 
+	cooldowns: Collection<string, Cooldown>,
 	command_module: CommandModule,
 	author_id: string,
-	args: string[],
+	args: string[]
 ) {
 	const now = Date.now();
 	const cooldown_amount = command_module.cooldown * 1000;
-	const cooldown_additional = await getDynamicCooldown(args, command_module.dyn_cooldown);
+	const cooldown_additional = await getDynamicCooldown(
+		args,
+		command_module.dyn_cooldown
+	);
 	const cooldown_combine = cooldown_amount + cooldown_additional;
 	const cooldown_name = `${author_id}-${command_module.name}`;
 
@@ -50,4 +52,3 @@ async function getDynamicCooldown(
 ): Promise<number> {
 	return dyn_cooldown ? (await dyn_cooldown(args)) * 1000 : 0;
 }
-

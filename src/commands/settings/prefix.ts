@@ -1,9 +1,6 @@
 import { RecordService } from "pocketbase";
 import { findThroughCollection } from "@helpers/pb/pb.js";
-import {
-	ServerSettings,
-	ServerSettingsParameters,
-} from "@helpers/pb/types.js";
+import { ServerSettings, ServerSettingsParameters } from "@helpers/pb/types.js";
 import { ExternalDependencies } from "@helpers/types.js";
 import { ChannelType, Client, Message, PermissionsBitField } from "discord.js";
 

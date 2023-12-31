@@ -15,7 +15,8 @@ export async function execute(
 	const websites = external_data.external_data[0];
 	const tiers = external_data.external_data[1];
 
-	msg.reply( // should I fix this?
+	msg.reply(
+		// should I fix this?
 		"```" +
 			`C Websites count: ${websites.filter((v) => v.rarity === "C").length} | ${
 				300 - tiers.get("C")!.chance
