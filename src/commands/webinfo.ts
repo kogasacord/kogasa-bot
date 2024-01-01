@@ -1,5 +1,5 @@
 import { Client, Message } from "discord.js";
-import { ExternalDependencies } from "@helpers/types.js";
+import { ExternalDependencies, Tier, Website } from "@helpers/types.js";
 
 export const name = "randomwebinfo";
 export const aliases = ["rwebinfo"];
@@ -12,28 +12,35 @@ export async function execute(
 	args: string[],
 	external_data: ExternalDependencies
 ) {
-	const websites = external_data.external_data[0];
-	const tiers = external_data.external_data[1];
+	const [websites, tiers] = external_data.external_data;
+
+	const tier_chances = formatTiers(tiers, websites);
 
 	msg.reply(
-		// should I fix this?
-		"```" +
-			`C Websites count: ${websites.filter((v) => v.rarity === "C").length} | ${
-				300 - tiers.get("C")!.chance
-			} out of 300\n` +
-			`UC Websites count: ${
-				websites.filter((v) => v.rarity === "UC").length
-			} | ${tiers.get("UC")!.chance - tiers.get("C")!.chance} out of 300\n` +
-			`R Websites count: ${
-				websites.filter((v) => v.rarity === "R").length
-			}  | ${tiers.get("R")!.chance - tiers.get("UC")!.chance} out of 300\n` +
-			`SR Websites count: ${
-				websites.filter((v) => v.rarity === "SR").length
-			} | ${tiers.get("SR")!.chance - tiers.get("R")!.chance} out of 300\n` +
-			`Q Websites count: ${websites.filter((v) => v.rarity === "Q").length} | ${
-				tiers.get("Q")!.chance - tiers.get("SR")!.chance
-			} out of 300\n` +
-			"```" +
+		"```" + tier_chances + "```" +
 			"Visualization of chances: <https://www.desmos.com/calculator/veqgifgo8z>"
 	);
+}
+
+function formatTiers(tiers: Map<string, Tier>, websites: Website[]) {
+	let previous_tier_chance = 300;
+	let format = "";
+
+	let i = 0;
+	for (const [tier_name, tier_info] of tiers.entries()) {
+		let chance = 0;
+		if (i === 0) {
+			chance = previous_tier_chance - tier_info.chance;
+		} else {
+			chance = tier_info.chance - previous_tier_chance;
+		}
+
+		const website_count = websites.filter(c => c.rarity === tier_name).length;
+		format += `${tier_name} websites (${website_count}) [${chance} out of 300]\n`;
+
+		previous_tier_chance = tier_info.chance;
+		i++;
+	}
+
+	return format;
 }

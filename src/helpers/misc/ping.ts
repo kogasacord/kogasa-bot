@@ -19,18 +19,24 @@ export function pingURL(url: string, ping_count: number = 3) {
 			url,
 		]);
 		proc.stdout.on("data", (chunk: Buffer) => {
-			const regex = [...chunk.toString().matchAll(/\w+=\d+/g)];
-			if (regex.length < 3) {
+			// Gets the "bytes=32 time=11ms TTL=114" from:
+			// 		"Reply from 142.251.220.206: bytes=32 time=11ms TTL=114"
+			const reply_info = [...chunk.toString().matchAll(/\w+=\d+/g)];
+			if (reply_info.length < 3) {
 				return;
 			}
 
 			const ping: Map<string, number> = new Map();
-			for (const results of regex) {
-				const split = results[0].split("=");
-				if (split.length > 0) ping.set(split[0], parseInt(split[1]));
+
+			for (const [category] of reply_info) {
+				const [name, ms] = category.split("=");
+				if (name && ms) {
+					ping.set(name, parseInt(ms));
+				}
 			}
-			// eslint-disable-next-line
-			pings.push(Object.fromEntries(ping) as any);
+
+			// shut up.
+			pings.push(Object.fromEntries(ping) as unknown as Ping);
 		});
 		proc.on("error", (err) => {
 			rej(err);

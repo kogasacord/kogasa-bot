@@ -35,8 +35,8 @@ async function useAttachments(replied: Message) {
 	let response = "## Sources found?:\n\n";
 
 	const first_attachment = replied.attachments.at(0)!;
-	const mime_lookup = first_attachment.contentType 
-		?? mimetype.lookup(first_attachment.name);
+	const mime_lookup =
+		first_attachment.contentType ?? mimetype.lookup(first_attachment.name);
 
 	if (mime_lookup) {
 		const match = mime_lookup.match(/image\/.+/);
@@ -55,9 +55,9 @@ async function useAttachments(replied: Message) {
 }
 
 /**
-  * if the user's request looks like: `??sauce [link]`
-	*
-	* modifies the response string
+ * if the user's request looks like: `??sauce [link]`
+ *
+ * modifies the response string
  */
 async function useLink(link: string) {
 	let response = "## Sources found?:\n\n";
