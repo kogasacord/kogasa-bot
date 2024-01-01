@@ -95,9 +95,9 @@ function formatMessage(message: ChatBufferMessage, maxMessageLength: number) {
 	let format = "";
 
 	if (message.replied) {
-		const attachments = formatAttachments(message.replied);
+		// const attachments = formatAttachments(message.replied);
 		const deleted = addDeleteTag(message.replied);
-		format += `╔═ \`${message.replied.display_name}\` ${deleted}: ${message.replied.content}: ${attachments}`;
+		format += `╔═ \`${message.replied.display_name}\` ${deleted}: ${message.replied.content}\n`;
 	}
 
 	// const attachments = formatAttachments(message);
@@ -110,7 +110,10 @@ function formatMessage(message: ChatBufferMessage, maxMessageLength: number) {
 	return format;
 }
 
-function formatAttachments(message: ChatBufferMessage) {
+/**
+	* Due to issues with privacy, this is disabled for now.
+	*/
+function _formatAttachments(message: ChatBufferMessage) {
 	const colon =
 		message.attachments.length >= 1 && message.content.length > 0 ? ":" : "";
 	const attachments = message.attachments
