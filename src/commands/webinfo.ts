@@ -17,7 +17,9 @@ export async function execute(
 	const tier_chances = formatTiers(tiers, websites);
 
 	msg.reply(
-		"```" + tier_chances + "```" +
+		"```" +
+			tier_chances +
+			"```" +
 			"Visualization of chances: <https://www.desmos.com/calculator/veqgifgo8z>"
 	);
 }
@@ -35,7 +37,7 @@ function formatTiers(tiers: Map<string, Tier>, websites: Website[]) {
 			chance = tier_info.chance - previous_tier_chance;
 		}
 
-		const website_count = websites.filter(c => c.rarity === tier_name).length;
+		const website_count = websites.filter((c) => c.rarity === tier_name).length;
 		format += `${tier_name} websites (${website_count}) [${chance} out of 300]\n`;
 
 		previous_tier_chance = tier_info.chance;
