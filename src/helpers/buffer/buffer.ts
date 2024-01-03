@@ -48,12 +48,12 @@ export async function findReplied(
 	client: Client,
 	msg: Message<boolean> | PartialMessage
 ): Promise<Message<true> | null> {
-	return msg.reference && msg.reference.messageId
+	return msg.reference?.messageId
 		? await helpers.completePartialMessage(
-				client,
-				msg.reference.channelId,
-				msg.reference.messageId
-		  )
+			client,
+			msg.reference.channelId,
+			msg.reference.messageId,
+		) 
 		: null;
 }
 
