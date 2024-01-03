@@ -19,7 +19,7 @@ export class Interpreter {
 			}
 			case "GroupingExpr": {
 				const grouping = expr as Grouping;
-				return this.evaluate(grouping);
+				return this.evaluateGrouping(grouping);
 			}
 			case "BinaryExpr": {
 				const binary = expr as Binary;
