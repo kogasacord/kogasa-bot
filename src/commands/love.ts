@@ -16,6 +16,10 @@ export async function execute(client: Client<true>, msg: Message, _args: string[
 	let res = 0;
 
 	for (const [user_id] of mentions) {
+		if (user_id === bot_id) {
+			msg.reply("You can't date me!");
+			return;
+		}
 		res += Number(user_id);
 	}
 	res /= Number(client.user.id) * 2;
