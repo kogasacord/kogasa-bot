@@ -19,7 +19,7 @@ export async function execute(_client: Client, msg: Message, args: string[]) {
 	if (val) {
 		const error = val.error_res?.split("\n").slice(0, 3).join("\n");
 
-		const has_more_errors = val.error_res && val.error_res.length > 3;
+		const has_more_errors = error && error.length > 3;
 
 		const and_more = (has_more_errors && "\n...and more") || "";
 		const error_message = (error && error + and_more) || error;

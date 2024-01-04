@@ -7,9 +7,15 @@ export interface PocketbaseResult<T> {
 	expand: { [collectionName: string]: T };
 }
 
+/**
+	* @param user_id: discord id
+	* @param love: how much love there was `??love`
+	* @param names: separated by "," | e.g: "komainu, alice, margatroid"
+	*/
 export interface UsersParameters {
 	user_id: string;
-	messages: string[];
+	love: number;
+	names: string;
 }
 
 export interface MessageParameters {

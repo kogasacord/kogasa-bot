@@ -37,6 +37,10 @@ export async function messageCreate(
 	}
 
 	await pushMessageToBuffer(client, msg, deps.chat_buffer);
+	// xp || love here
+	
+
+	////////////////// COMMAND STUFF BELOW //////////////////
 	const prefix = await helpers.getServerPrefix(
 		pb,
 		settings.test,
