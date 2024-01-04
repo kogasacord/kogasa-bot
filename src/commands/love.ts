@@ -7,8 +7,8 @@ export const aliases = ["love"];
 export const cooldown = 5;
 export const description = "Calculate your love~\n`??love [any number of mentions]`";
 export async function execute(client: Client<true>, msg: Message, _args: string[]) {
-	const mentions = msg.mentions.users.entries();
-	if ([...mentions].length <= 1) {
+	const mentions = [...msg.mentions.users.entries()];
+	if (mentions.length <= 1) {
 		msg.reply("You need to mention at least 2 users!");
 		return;
 	}
@@ -16,14 +16,10 @@ export async function execute(client: Client<true>, msg: Message, _args: string[
 	let res = 0;
 
 	for (const [user_id] of mentions) {
-		if (user_id === bot_id) {
-			msg.reply("You can't date me! I'm not in the market.");
-		}
 		res += Number(user_id);
 	}
 	res /= Number(client.user.id) * 2;
 	res *= 100;
-	res = roundByTwo(res);
 
 	msg.reply(`${roundByTwo(res)}%: ${getLoveResponse(res)}`);
 }
