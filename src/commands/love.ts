@@ -22,7 +22,7 @@ export async function execute(client: Client<true>, msg: Message, _args: string[
 		}
 		res += Number(user_id);
 	}
-	res /= Number(client.user.id) * 2;
+	res /= Number(client.user.id) * (mentions.length / 1.1);
 	res *= 100;
 
 	msg.reply(`${roundByTwo(res)}%: ${getLoveResponse(res)}`);
@@ -33,14 +33,14 @@ function roundByTwo(num: number) {
 }
 
 function getLoveResponse(num: number) {
-	if (num < 10) {
+	if (num < 20) {
 		return ":headstone: Enemies.";
 	}
-	if (num < 30) {
-		return ":bomb: Not a good start.";
+	if (num <= 50) {
+		return ":bomb: It's alright.";
 	}
-	if (num < 60) {
-		return ":love_letter: Cute.";
+	if (num <= 75) {
+		return ":love_letter: Cute. It might be a match.";
 	}
 	if (num < 90) {
 		return ":sunrise: :heart: That's a match!";
