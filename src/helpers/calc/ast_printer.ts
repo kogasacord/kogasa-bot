@@ -1,22 +1,22 @@
-import {Binary, Expr, Grouping, Literal, Unary} from "./expr.js";
+import { Binary, Expr, Grouping, Literal, Unary } from "./expr.js";
 
 /**
-	* Doesn't need to be re-initialized every run.
-	*/
+ * Doesn't need to be re-initialized every run.
+ */
 export class ASTPrinter {
 	private str = "";
 	constructor() {}
 	parse(node: Expr) {
 		switch (node.type) {
 			case "BinaryExpr": {
-					const binary_node = node as Binary;
-					this.str += "( [Binary] ";
-					this.parse(binary_node.left);
-					this.str += ` ${binary_node.operator.text} `;
-					this.parse(binary_node.right);
-					this.str += " )";
+				const binary_node = node as Binary;
+				this.str += "( [Binary] ";
+				this.parse(binary_node.left);
+				this.str += ` ${binary_node.operator.text} `;
+				this.parse(binary_node.right);
+				this.str += " )";
 
-					break;
+				break;
 			}
 
 			case "GroupingExpr": {
@@ -52,4 +52,3 @@ export class ASTPrinter {
 		return this.str;
 	}
 }
-

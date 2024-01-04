@@ -1,5 +1,5 @@
 import helpers from "@helpers/helpers.js";
-import { ChannelType, Client, Message } from "discord.js";
+import { ChannelType, Client, GuildMember, Message, User } from "discord.js";
 
 export const name = "quote";
 export const aliases = ["q"];
@@ -23,10 +23,7 @@ export async function execute(client: Client, msg: Message, args: string[]) {
 		guild.members.cache.get(replied.author.id) ??
 		(await guild.members.fetch(replied.author.id));
 
-	const avatar_url =
-		guild_member.avatarURL({ size: 1024, extension: "png" }) ??
-		replied.author.avatarURL({ size: 1024, extension: "png" }) ??
-		replied.author.displayAvatarURL({ size: 1024, extension: "png" });
+	const avatar_url = getAvatarURL(replied.author, guild_member);
 
 	const first_attachment = replied.attachments.at(0);
 	const attachment_info = first_attachment
@@ -63,6 +60,14 @@ export async function checker(msg: Message): Promise<boolean> {
 	return true;
 }
 
+function getAvatarURL(user: User, guild_member: GuildMember) {
+	return (
+		guild_member.avatarURL({ size: 1024, extension: "png" }) ??
+		user.avatarURL({ size: 1024, extension: "png" }) ??
+		user.displayAvatarURL({ size: 1024, extension: "png" })
+	);
+}
+
 async function quote(
 	text: string,
 	author: string,
@@ -97,6 +102,7 @@ async function quote(
  */
 async function parseQuotes(client: Client, str: string) {
 	let string = str.slice();
+
 	const extracted = str.match(/(?<Id>\d+)/g);
 	for (const extract of extracted ?? []) {
 		const user =

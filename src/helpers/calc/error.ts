@@ -1,8 +1,8 @@
-import {Token, TokenType} from "./scanner.js";
+import { Token, TokenType } from "./scanner.js";
 
 /**
-	* Needs to be initialized for every run.
-	*/
+ * Needs to be initialized for every run.
+ */
 export class CalcError {
 	private had_error = false;
 	private had_runtime_error = false;
@@ -14,14 +14,14 @@ export class CalcError {
 		this.report("", message);
 	}
 	/**
-	* Reporting scanner errors
-	*/
+	 * Reporting scanner errors
+	 */
 	public scanError(character: string, message: string) {
 		this.report(character, message);
 	}
 	/**
-	* Reporting tokenizer errors
-	*/
+	 * Reporting tokenizer errors
+	 */
 	public tokenError(token: Token, message: string) {
 		if (token.type === TokenType.EOF) {
 			this.report("at end", message);
@@ -30,8 +30,8 @@ export class CalcError {
 		}
 	}
 	/**
-	* Reporting run time errors
-	*/
+	 * Reporting run time errors
+	 */
 	public runtimeError(error: RuntimeError) {
 		const message = error.getMessage();
 		this.errors += `RuntimeError: ${message}\n`;
@@ -57,7 +57,10 @@ export class ParseError {
 }
 
 export class RuntimeError {
-	constructor(private token: Token, private message: string) {}
+	constructor(
+		private token: Token,
+		private message: string
+	) {}
 	public getMessage() {
 		return `${this.message} at ${this.token.text}`;
 	}

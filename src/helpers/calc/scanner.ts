@@ -1,29 +1,37 @@
-import {CalcError} from "./error.js";
+import { CalcError } from "./error.js";
 
 export type Token = {
-	type: TokenType,
-	text: string,
-	literal: number | undefined,
-}
+	type: TokenType;
+	text: string;
+	literal: number | undefined;
+};
 
 export enum TokenType {
-	LEFT_PAREN, 
+	LEFT_PAREN,
 	RIGHT_PAREN,
-	DOT, MINUS, PLUS, SLASH, STAR, 
+	DOT,
+	MINUS,
+	PLUS,
+	SLASH,
+	STAR,
 
-	NUMBER, 
+	NUMBER,
 
-	EOF
+	EOF,
 }
 
 /**
-	* Needs to be re-initialized every run.
-	*/
-export class Tokenizer { // glorified function, but it follows crafting interpreters' OOP practices ig
+ * Needs to be re-initialized every run.
+ */
+export class Tokenizer {
+	// glorified function, but it follows crafting interpreters' OOP practices ig
 	private start = 0;
 	private current = 0;
 	private tokens: Token[] = [];
-	constructor(private str: string, private calc: CalcError) {}
+	constructor(
+		private str: string,
+		private calc: CalcError
+	) {}
 
 	public parse() {
 		while (!this.is_at_end()) {
@@ -34,18 +42,35 @@ export class Tokenizer { // glorified function, but it follows crafting interpre
 				case "\r":
 				case "\t": // skipping whitespace
 					break;
-				case "(": this.add_token(TokenType.LEFT_PAREN); break;
-				case ")": this.add_token(TokenType.RIGHT_PAREN); break;
-				case ".": this.add_token(TokenType.DOT); break;
-				case "-": this.add_token(TokenType.MINUS); break;
-				case "+": this.add_token(TokenType.PLUS); break;
-				case "*": this.add_token(TokenType.STAR); break;
-				case "/": this.add_token(TokenType.SLASH); break;
+				case "(":
+					this.add_token(TokenType.LEFT_PAREN);
+					break;
+				case ")":
+					this.add_token(TokenType.RIGHT_PAREN);
+					break;
+				case ".":
+					this.add_token(TokenType.DOT);
+					break;
+				case "-":
+					this.add_token(TokenType.MINUS);
+					break;
+				case "+":
+					this.add_token(TokenType.PLUS);
+					break;
+				case "*":
+					this.add_token(TokenType.STAR);
+					break;
+				case "/":
+					this.add_token(TokenType.SLASH);
+					break;
 				default:
 					if (this.is_digit(char)) {
 						this.number();
 					} else {
-						this.calc.scanError(`[${this.start}-${this.current}]`, "Numbers are expected");
+						this.calc.scanError(
+							`[${this.start}-${this.current}]`,
+							"Numbers are expected"
+						);
 					}
 					break;
 			}

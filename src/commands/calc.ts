@@ -17,10 +17,7 @@ export async function execute(_client: Client, msg: Message, args: string[]) {
 	const input = args.join(" ");
 	const val = run_interpreter(printer, interpreter, input);
 	if (val) {
-		const error = val.error_res
-			?.split("\n")
-			.slice(0, 3)
-			.join("\n");
+		const error = val.error_res?.split("\n").slice(0, 3).join("\n");
 
 		const has_more_errors = val.error_res && val.error_res.length > 3;
 
@@ -33,7 +30,11 @@ export async function execute(_client: Client, msg: Message, args: string[]) {
 	}
 }
 
-function run_interpreter(printer: ASTPrinter, interpreter: Interpreter, calc: string) {
+function run_interpreter(
+	printer: ASTPrinter,
+	interpreter: Interpreter,
+	calc: string
+) {
 	const calc_error = new CalcError();
 	const tokenizer = new Tokenizer(calc, calc_error);
 
@@ -51,7 +52,7 @@ function run_interpreter(printer: ASTPrinter, interpreter: Interpreter, calc: st
 			const err = error as Error;
 			error_res = err.message;
 		}
-		return {value, parsed_tokens, tree_look, error_res};
+		return { value, parsed_tokens, tree_look, error_res };
 	}
 	return {
 		error_res: calc_error.getErrorMessage(),

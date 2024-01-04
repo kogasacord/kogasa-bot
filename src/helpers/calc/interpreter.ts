@@ -1,16 +1,13 @@
-import {ASTPrinter} from "./ast_printer.js";
-import {Grouping, Literal, Unary, Expr, Binary} from "./expr.js";
-import {TokenType} from "./scanner.js";
+import { ASTPrinter } from "./ast_printer.js";
+import { Grouping, Literal, Unary, Expr, Binary } from "./expr.js";
+import { TokenType } from "./scanner.js";
 
 /**
-	* Doesn't need to be re-initialized every run
-	*/
+ * Doesn't need to be re-initialized every run
+ */
 export class Interpreter {
 	private printer = new ASTPrinter();
 
-	/**
-		* also used in groupingExpr
-		*/
 	public evaluate(expr: Expr): Expr | number | null {
 		switch (expr.type) {
 			case "UnaryExpr": {
@@ -45,18 +42,21 @@ export class Interpreter {
 
 		switch (expr.operator.type) {
 			case TokenType.MINUS:
-				if (typeof right === "number")
-					return -right;
+				if (typeof right === "number") return -right;
 		}
 
-		throw Error(`Error evaluating Unary expression: ${this.printer.parse(expr)}`);
+		throw Error(
+			`Error evaluating Unary expression: ${this.printer.parse(expr)}`
+		);
 	}
 	public evaluateBinary(expr: Binary) {
 		const left = this.evaluate(expr.left);
 		const right = this.evaluate(expr.right);
 
 		if (typeof left !== "number" || typeof right !== "number")
-			throw Error(`Left or Right in binary was not a number: ${this.printer.parse(expr)}`);
+			throw Error(
+				`Left or Right in binary was not a number: ${this.printer.parse(expr)}`
+			);
 
 		switch (expr.operator.type) {
 			case TokenType.MINUS:
@@ -69,6 +69,8 @@ export class Interpreter {
 				return left + right;
 		}
 
-		throw Error(`Error evaluating Binary expression: ${this.printer.parse(expr)}`);
+		throw Error(
+			`Error evaluating Binary expression: ${this.printer.parse(expr)}`
+		);
 	}
 }

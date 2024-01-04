@@ -111,8 +111,8 @@ function formatMessage(message: ChatBufferMessage, maxMessageLength: number) {
 }
 
 /**
-	* Due to issues with privacy, this is disabled for now.
-	*/
+ * Due to issues with privacy, this is disabled for now.
+ */
 function _formatAttachments(message: ChatBufferMessage) {
 	const colon =
 		message.attachments.length >= 1 && message.content.length > 0 ? ":" : "";
