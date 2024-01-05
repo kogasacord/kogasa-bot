@@ -97,19 +97,24 @@ async function quote(
 	return helpers.quoteDefault(text, author, avatar_url, show_boundaries);
 }
 
+
 /**
  * parses text to remove/replace mentions or emotes
  */
 async function parseQuotes(client: Client, str: string) {
 	let string = str.slice();
 
-	const extracted = str.match(/(?<Id>\d+)/g);
-	for (const extract of extracted ?? []) {
-		const user =
-			client.users.cache.get(extract) ?? (await client.users.fetch(extract));
-		const username = user.displayName ?? user.username;
-
-		string = string.replace(/(?<Id>\d+)/g, username);
+	const uid_regex = /<@(\d+)>/g;
+	const uids = [...string.matchAll(uid_regex)];
+	for (const [entire_mention, uid] of uids ?? []) {
+		try {
+			const user =
+				client.users.cache.get(uid) ?? (await client.users.fetch(uid));
+			const username = user.displayName ?? user.username;
+			string = string.replace(entire_mention, username);
+		} catch (err) {
+			string = string.replace(entire_mention, "");
+		}
 	}
 
 	string = string.replace(/<a?:[^\s]+:\d+>/g, "");
