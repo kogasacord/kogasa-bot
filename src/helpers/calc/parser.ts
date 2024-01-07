@@ -83,7 +83,7 @@ export class RecursiveDescentParser {
 			const grouping: Grouping = { type: "GroupingExpr", expression: expr };
 			return grouping;
 		}
-		throw this.error(this.peek(), "Unable to find primary.");
+		throw this.error(this.peek(), "Unable to find number.");
 	}
 
 	// separate this into a separate class later.

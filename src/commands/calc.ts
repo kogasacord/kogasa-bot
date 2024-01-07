@@ -17,12 +17,11 @@ export async function execute(_client: Client, msg: Message, args: string[]) {
 	const input = args.join(" ");
 	const val = run_interpreter(printer, interpreter, input);
 	if (val) {
-		const error = val.error_res?.split("\n").slice(0, 3).join("\n");
-
-		const has_more_errors = error && error.length > 3;
+		const split_error = val.error_res?.split("\n").slice(0, 3);
+		const has_more_errors = split_error && split_error.length > 3;
 
 		const and_more = (has_more_errors && "\n...and more") || "";
-		const error_message = (error && error + and_more) || error;
+		const error_message = (split_error && split_error.join("\n") + and_more) || split_error?.join("\n");
 
 		msg.reply(error_message ?? `Result: ${val.value}`);
 	} else {

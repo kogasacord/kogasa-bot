@@ -10,7 +10,7 @@ export interface PocketbaseResult<T> {
 /**
 	* @param user_id: discord id
 	* @param love: how much love there was `??love`
-	* @param names: separated by "," | e.g: "komainu, alice, margatroid"
+	* @param names: separated by "-" | e.g: "komainu-alice-margatroid"
 	*/
 export interface UsersParameters {
 	user_id: string;

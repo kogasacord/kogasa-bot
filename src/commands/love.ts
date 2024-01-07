@@ -18,7 +18,13 @@ export async function execute(client: Client<true>, msg: Message, args: string[]
 
 	switch (command) {
 		case "list": {
-			msg.reply(await getLoveList(deps.pb));
+			const love_list = await getLoveList(deps.pb, true);
+			msg.reply(`## Love List \n${love_list}`);
+			break;
+		}
+		case "hatelist": {
+			const hate_list = await getLoveList(deps.pb, false);
+			msg.reply(`## Hate List \n${hate_list}`);
 			break;
 		}
 		default: {
@@ -32,16 +38,6 @@ export async function execute(client: Client<true>, msg: Message, args: string[]
 	}
 }
 
-async function getLoveList(pb: Pocketbase) {
-	const users = pb.collection("users");
-	const list = await users.getList<PBUsers>(1, 5, { sort: "-love" });
-	return list.items
-		.map((item, i) => {
-			const names = item.names.split("-").join(", ");
-			return `${i + 1}: \`${roundByTwo(item.love)}%\` (${names})`;
-		})
-		.join("\n");
-}
 
 async function getLove(bot_id: string, pb: Pocketbase, mentions: [string, User][]): Promise<string> {
 	const {result, users, user_addition} = calculateLove(mentions, bot_id);
@@ -56,14 +52,26 @@ async function getLove(bot_id: string, pb: Pocketbase, mentions: [string, User][
 	return `${roundByTwo(result)}%: ${getLoveResponse(result)}`;
 }
 
+async function getLoveList(pb: Pocketbase, is_ascending: boolean) {
+	const users = pb.collection("users");
+	const ascending = is_ascending ? "-" : "+";
+	const list = await users.getList<PBUsers>(1, 5, { sort: `${ascending}love` });
+	return list.items
+		.map((item, i) => {
+			const names = item.names.split("-").join(", ");
+			return `${i + 1}: \`${roundByTwo(item.love)}%\` (${names})`;
+		})
+		.join("\n");
+}
+
 function calculateLove(
 	mentions: [string, User][],
 	bot_id: string,
 ) {
-	const users: { id: string, username: string }[] = [];
 	let res = 0;
-	let user_addition = 0;
+	const users: { id: string, username: string }[] = [];
 
+	let user_addition = 0;
 	for (const [user_id, user] of mentions) {
 		users.push({
 			id: user_id,
@@ -79,6 +87,9 @@ function calculateLove(
 	};
 }
 
+/**
+	* helper function to set Pocketbase's love value with the user
+	*/
 async function setPBLove(pb: Pocketbase, data: UsersParameters) {
 	const pb_users = pb.collection("users");
 	const pb_user = await findThroughCollection<PBUsers>(pb_users, "user_id", data.user_id);
