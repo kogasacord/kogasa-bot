@@ -13,6 +13,10 @@ export const aliases = ["love"];
 export const cooldown = 5;
 export const description = "Calculate your love~\n`??love [any number of mentions]`";
 export async function execute(client: Client<true>, msg: Message, args: string[], deps: ExternalDependencies) {
+	msg.reply("Disabled due to people pinging.");
+	return;
+
+
 	const command = args[0];
 	const mentions = [...msg.mentions.users.entries()];
 
@@ -37,7 +41,6 @@ export async function execute(client: Client<true>, msg: Message, args: string[]
 		}
 	}
 }
-
 
 async function getLove(bot_id: string, pb: Pocketbase, mentions: [string, User][]): Promise<string> {
 	const {result, users, user_addition} = calculateLove(mentions, bot_id);
@@ -72,16 +75,22 @@ function calculateLove(
 	const users: { id: string, username: string }[] = [];
 
 	let user_addition = 0;
+	let divisor = 0;
+
 	for (const [user_id, user] of mentions) {
+		divisor += (user.username.charCodeAt(0) / 60);
 		users.push({
 			id: user_id,
-			username: user.globalName ?? user.displayName
+			username: user.globalName ?? user.displayName,
 		});
 		user_addition += Number(user_id);
 	}
+	divisor = divisor / mentions.length;
+	console.log(divisor);
 	res += user_addition;
+
 	return {
-		result: (res / (Number(bot_id) * (mentions.length * 1.1))) * 100,
+		result: (res / (Number(bot_id) * (mentions.length * divisor))) * 100,
 		user_addition: user_addition,
 		users: users,
 	};
