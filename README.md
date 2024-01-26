@@ -6,6 +6,10 @@ Prefix: `??`
 
 ## Features
 
+Parenthesis are optional, square brackets are required.
+
+- `buffer ("delete" | "edit")`: Find deleted or edited messages.
+- `love [mentions]`: Calculate the love between two or more people. [Disabled]
 - `quote`: Reply to someone to quote them saying a fire line of text. Includes attachments. Requires [canvas-http-api](https://github.com/DoormatIka/canvas-http-api).
 - `ytdl [link] [format_id]`: Download videos from YouTube. Requires [ytdlp-drive](https://github.com/DoormatIka/ytdlp-drive-https-api).
 - `ytdlf`: Get the quality and format of your video. Can be used with `ytdl` with a `format_id`.
@@ -13,12 +17,11 @@ Prefix: `??`
 - `randomweb`: Sends you a random website with gacha elements snuck in.
 - `sauce`: Reply to an image to find the source of the image relating to anime.
 - `help`: Finally, a help command!
-- `set [command_name/"all"] [channel_id/"all"] [true/false]`: Settings.
 - `doctor`: Check if your servers are working.
 
-**Other features**:
-
-- `??quoter` - Quotes but includes replies.
+### Incoming Features
+- `dm`: A band-aid solution to enable DM-only commands.
+- `confess [server_id] [message]` [DMS ONLY]: Confess something anonymously to servers.
 
 A basic file structure for easy additions to the bot.
 
@@ -39,11 +42,7 @@ The structure of it is like this:
 }
 ```
 
-2. Download [pocketbase](https://pocketbase.io/docs/) and download the [migration folder](https://github.com/kogasacord/kogasa-pb-base).
-   Extract the pocketbase.zip and put the migration folder inside of the pocketbase folder.
-3. Run `pocketbase serve` inside the pocketbase folder.
-4. Run `npm install`.
-5. Run `npx tsc` and go to the `/build` folder and run `node index.js` there.
+2. Run `npm install`, `npm run build`, and `npm run prestart` in that order.
 
 ### Fully Featured Kogasa
 
