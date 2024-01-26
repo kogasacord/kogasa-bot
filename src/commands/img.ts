@@ -4,6 +4,7 @@ import google from "googlethis";
 export const name = "img";
 export const cooldown = 15;
 export const description = "Google Images.";
+export const channel = "Guild";
 export async function execute(client: Client, msg: Message, args: string[]) {
 	if (msg.channel.type !== ChannelType.GuildText) return;
 

@@ -4,6 +4,7 @@ import { ChannelType, Client, GuildMember, Message, User } from "discord.js";
 export const name = "quote";
 export const aliases = ["q"];
 export const cooldown = 25;
+export const channel = "Guild";
 export const description =
 	"Reply to someone and capture a.. suspicious message.";
 export async function execute(client: Client, msg: Message, args: string[]) {

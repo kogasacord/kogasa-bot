@@ -6,6 +6,7 @@ type Filter = "delete" | "edit" | "normal" | "none";
 export const name = "buffer";
 export const aliases = ["back", "backtrack", "b"];
 export const cooldown = 20;
+export const channel = "Guild";
 export const description =
 	"Backtrack a channel, a command better than Small's implementation. `??buffer (delete | edit | normal | none)`";
 export async function execute(

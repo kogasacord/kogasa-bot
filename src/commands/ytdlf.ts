@@ -3,6 +3,7 @@ import { Client, EmbedBuilder, Message } from "discord.js";
 
 export const name = "ytdlf";
 export const cooldown = 20;
+export const channel = "Guild";
 export const description = "Find formats for a specific YouTube video.";
 export async function execute(client: Client, msg: Message, args: string[]) {
 	const requested_link = args[0];
