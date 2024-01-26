@@ -8,13 +8,8 @@ import { getStatus } from "./ytdl/get_status.js";
 import { getInfo } from "./ytdl/info.js";
 import { uploadVideo } from "./ytdl/upload.js";
 
-import { hasCommandChannelAccess } from "./settings/command_scope.js";
-import { getServerPrefix } from "./settings/prefix.js";
-
 import { quoteAttachment } from "./quote/attachment.js";
 import { quoteDefault } from "./quote/default.js";
-
-import { findThroughCollection } from "./pb/pb.js";
 
 import { importDirectories, postProcessAliases } from "./misc/import.js";
 import { completePartialMessage } from "./misc/fetch.js";
@@ -39,19 +34,6 @@ import {
 	Website as Webs,
 } from "./types.js";
 import {
-	PocketbaseResult as PBR,
-	UsersParameters as UP,
-	MessageParameters as MP,
-	ServerSettingsParameters as SSP,
-	ChannelIDsSettings as CID,
-	CommandScopesParameters as CSP,
-	PBMessages as PBM,
-	PBUsers as PBU,
-	ServerSettings as SS,
-	CommandSettings as CS,
-	ChannelIDsParameters as CIDP,
-} from "./pb/types.js";
-import {
 	DownloadResponse as DR,
 	UploadResponse as UR,
 	InfoResponse as IR,
@@ -69,13 +51,9 @@ const mod = {
 	getInfo,
 	uploadVideo,
 
-	hasCommandChannelAccess,
-	getServerPrefix,
-
 	quoteAttachment,
 	quoteDefault,
 
-	findThroughCollection,
 	importDirectories,
 	postProcessAliases,
 	checkIfLink,
@@ -100,18 +78,6 @@ export type Cooldown = Cool;
 export type JSONObject = JSONO;
 export type Tier = Ti;
 export type Website = Webs;
-
-export type PocketbaseResult<T> = PBR<T>;
-export type UsersParameters = UP;
-export type MessageParameters = MP;
-export type ServerSettingsParameters = SSP;
-export type ChannelIDsSettings = CID;
-export type CommandScopesParameters = CSP;
-export type ChannelIDsParameters = CIDP;
-export type PBMessages<T = NonNullable<unknown>> = PBM<T>;
-export type PBUsers<T = NonNullable<unknown>> = PBU<T>;
-export type ServerSettings<T = NonNullable<unknown>> = SS<T>;
-export type CommandSettings<T = NonNullable<unknown>> = CS<T>;
 
 export type DownloadResponse = DR;
 export type UploadResponse = UR;

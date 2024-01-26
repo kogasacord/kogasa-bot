@@ -1,7 +1,5 @@
-import Pocketbase from "pocketbase";
-import { ChannelType, Client, Collection, Message } from "discord.js";
+import { Client, Collection, DMChannel, GuildChannel, Message } from "discord.js";
 import { pushMessageToBuffer } from "@helpers/buffer/buffer.js";
-import helpers from "@helpers/helpers.js";
 import { separateCommands } from "@helpers/parser/parser.js";
 import {
 	CommandModule,
@@ -16,7 +14,6 @@ import {
 	setCooldown,
 } from "@helpers/cooldown/cooldown_single.js";
 
-const pb = new Pocketbase(settings.pocketbase_endpoint);
 const user_cooldowns = new Collection<string, Cooldown>();
 
 const tiers = new Map<string, Tier>([
@@ -30,23 +27,16 @@ const tiers = new Map<string, Tier>([
 export async function messageCreate(
 	client: Client,
 	msg: Message,
-	deps: DiscordExternalDependencies
+	deps: DiscordExternalDependencies,
+	prefix: string,
 ) {
-	if (msg.channel.type !== ChannelType.GuildText || msg.author.bot) {
+	if (msg.author.bot) {
 		return;
 	}
 
 	await pushMessageToBuffer(client, msg, deps.chat_buffer);
-	// xp || love here
-	
 
 	////////////////// COMMAND STUFF BELOW //////////////////
-	const prefix = await helpers.getServerPrefix(
-		pb,
-		settings.test,
-		msg.channel.guildId
-	);
-
 	if (!msg.content.startsWith(prefix)) {
 		return;
 	}
@@ -61,18 +51,6 @@ export async function messageCreate(
 	try {
 		if (!command_module) {
 			return;
-		}
-		if (!command_module.noscope) {
-			const is_command_allowed = await helpers.hasCommandChannelAccess(
-				pb,
-				command_module.name,
-				msg.channel.id,
-				msg.guild!.id
-			);
-			if (!is_command_allowed) {
-				msg.reply("Command can't be accessed here.");
-				return;
-			}
 		}
 
 		const expired_timestamp = getExpiredTimestamp(
@@ -93,15 +71,22 @@ export async function messageCreate(
 				return;
 			}
 		}
-		setCooldown(user_cooldowns, command_module, msg.author.id, args);
+		if (
+			(command_module.channel === "DMs" && msg.channel instanceof DMChannel)
+			|| (command_module.channel === "Guild" && msg.channel instanceof GuildChannel)
+		) {
+			setCooldown(user_cooldowns, command_module, msg.author.id, args);
+			const ext: ExternalDependencies = {
+				db: deps.db,
+				commands: deps.commands,
+				prefix: prefix,
+				external_data: [deps.websites, tiers, deps.chat_buffer, settings],
+			};
+			command_module.execute(client, msg, args, ext);
+		} else {
+			msg.reply(`This command is only allowed for "${command_module.channel}". If you want to enable DM-only commands, use \`??dm\`.`);
+		}
 
-		const ext: ExternalDependencies = {
-			pb: pb,
-			commands: deps.commands,
-			prefix: prefix,
-			external_data: [deps.websites, tiers, deps.chat_buffer, settings],
-		};
-		command_module.execute(client, msg, args, ext);
 	} catch (err) {
 		console.error(err);
 	}

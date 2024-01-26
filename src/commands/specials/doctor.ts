@@ -14,6 +14,7 @@ type DoctorResults = {
 
 export const name = "doctor";
 export const aliases = ["eirinhelpme"];
+export const channel = "Guild";
 export const cooldown = 20;
 export const special = true;
 export const description = "Send me to Eirin and let them check my health.";

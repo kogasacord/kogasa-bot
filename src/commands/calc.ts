@@ -12,6 +12,7 @@ const printer = new ASTPrinter();
 export const name = "calc";
 export const aliases = ["calc"];
 export const cooldown = 5;
+export const channel = "Guild";
 export const description = "Basic calculator. Programming language soon.";
 export async function execute(_client: Client, msg: Message, args: string[]) {
 	const input = args.join(" ");

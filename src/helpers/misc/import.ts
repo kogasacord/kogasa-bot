@@ -1,6 +1,5 @@
 import * as url from "url";
 import path from "path";
-import chalk from "chalk";
 
 import { readdirSync } from "fs";
 import { CommandModule } from "../types.js";
@@ -16,12 +15,36 @@ export async function importDirectories(
 		file.endsWith(".js")
 	);
 	for (const file of specialCommandFiles) {
-		// collect all commandmodules into a Promise<CommandModule>[] so you can resolve all of them at once
+		console.time(`${file}`);
 		const command: CommandModule = await import(`${dir}\\${file}`);
-		commands.set(command.name, command);
-		console.log(`Imported ${chalk.green(file)}`);
+
+		try {
+			recheck_fields(command);
+			commands.set(command.name, command);
+		} catch (err) {
+			console.log(err);
+		}
+		console.timeEnd(`${file}`);
 	}
 	return commands;
+}
+
+function recheck_fields(command: CommandModule) {
+		if (command.name === undefined) {
+			throw new Error("Name missing for a command..");
+		}
+		if (command.channel !== "DMs" && command.channel !== "Guild") {
+			throw new Error(`Channel missing or mispelled for ${command.name}, "${command.channel}"`);
+		}
+		if (command.cooldown === undefined) {
+			throw new Error(`Cooldown missing for ${command.name}`);
+		}
+		if (command.description === undefined) {
+			throw new Error(`Description missing for ${command.name}`);
+		}
+		if (command.execute === undefined) {
+			throw new Error(`Execute function missing for ${command.name}`);
+		}
 }
 
 /*

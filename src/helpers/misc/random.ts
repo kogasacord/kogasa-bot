@@ -10,7 +10,7 @@ const rng = random.clone(seedrandom(seed, { entropy: true }));
 /*
  * min: inclusive, max: inclusive
  *
- * Inpure function.
+ * Impure function.
  */
 export function getRandomInt(min: number, max: number) {
 	return rng.uniformInt(min, max)();
