@@ -1,4 +1,9 @@
 
+import Database from "better-sqlite3";
+const db = new Database(":memory:", {});
+const row = db.prepare("SELECT * FROM users WHERE id = ?").get("10000") as { firstname: string };
+console.log(row.firstname);
+
 /*
 import path from "path";
 import * as url from "url";
