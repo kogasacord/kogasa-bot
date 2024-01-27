@@ -1,13 +1,11 @@
 import path from "path";
 import * as url from "url";
 import { Client, Collection, Options } from "discord.js";
-import { JSONFilePreset } from "lowdb/node";
 
 import {
 	ChatBuffer,
 	DiscordExternalDependencies,
 	Website,
-	DBData,
 } from "./src/helpers/types.js";
 import { enableAutoDelete } from "./src/startup.js";
 import helpers, { CommandModule } from "./src/helpers/helpers.js";
@@ -31,24 +29,6 @@ const client = new Client({
 	}),
 });
 ///////////////////////////////////////////////////////////////////////////////////
-
-const default_db: DBData = {
-	servers: { 
-		"0": {
-			channel: {"0": "confession"},
-		},
-	},
-};
-// [confession command] 
-// 		=> (gets from db what channel it should send to)
-// 		=> [sends the confession on the specified channel]
-const db = await JSONFilePreset<DBData>("db.json", default_db);
-setInterval(() => {
-	db.write(); // writes to file every 3 seconds to avoid major slowdown
-}, 3000);
-
-///////////////////////////////////////////////////////////////////////////////////
-
 const commands = new Collection<string, CommandModule>().concat(
 	await helpers.importDirectories(__dirname, "/src/commands/"),
 	await helpers.importDirectories(__dirname, "/src/commands/specials/"),
@@ -59,7 +39,6 @@ const websites: Website[] = await helpers.grabAllRandomWebsites(
 const aliases = helpers.postProcessAliases(commands);
 const chat_buffer: ChatBuffer = new Map();
 const other_dependencies: DiscordExternalDependencies = {
-	db,
 	commands,
 	aliases,
 	chat_buffer,

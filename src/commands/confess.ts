@@ -14,5 +14,6 @@ export async function execute(client: Client, msg: Message, args: string[], _ext
 	// 			 [confess feat]
 	// 			 		=> (get server & confess channel ID)
 	// 			 		=> (send confession to channel ID)
-	msg.reply(`Confess: ${text}`);
+
+	msg.reply(`Confess: ${text}`); 
 }

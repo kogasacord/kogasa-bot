@@ -77,7 +77,6 @@ export async function messageCreate(
 		) {
 			setCooldown(user_cooldowns, command_module, msg.author.id, args);
 			const ext: ExternalDependencies = {
-				db: deps.db,
 				commands: deps.commands,
 				prefix: prefix,
 				external_data: [deps.websites, tiers, deps.chat_buffer, settings],

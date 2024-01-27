@@ -29,12 +29,12 @@
 		"discord.js": "^14.12.1",
 		"googlethis": "^1.7.1",
 		"humanize-duration": "^3.29.0",
-		"lowdb": "^7.0.1",
 		"mime-types": "^2.1.35",
 		"node-fetch": "^3.3.2",
 		"random": "^4.1.0",
 		"sagiri": "^3.4.0",
-		"seedrandom": "^3.0.5"
+		"seedrandom": "^3.0.5",
+		"sqlite3": "^5.1.7"
 	},
 	"type": "module"
 }
