@@ -29,6 +29,7 @@
 		"discord.js": "^14.12.1",
 		"googlethis": "^1.7.1",
 		"humanize-duration": "^3.29.0",
+		"libsql": "^0.2.0",
 		"mime-types": "^2.1.35",
 		"node-fetch": "^3.3.2",
 		"random": "^4.1.0",

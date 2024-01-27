@@ -1,3 +1,5 @@
+
+/*
 import path from "path";
 import * as url from "url";
 import { Client, Collection, Options } from "discord.js";
@@ -64,3 +66,4 @@ client.on("cacheSweep", (message) => {
 });
 client.on("ready", (client) => ready(client, settings));
 client.login(settings.test ? config.test_token : config.token);
+*/
