@@ -35,7 +35,8 @@
 		"node-fetch": "^3.3.2",
 		"random": "^4.1.0",
 		"sagiri": "^3.4.0",
-		"seedrandom": "^3.0.5"
+		"seedrandom": "^3.0.5",
+		"small-uci": "^1.0.6"
 	},
 	"type": "module"
 }

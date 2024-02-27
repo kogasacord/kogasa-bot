@@ -52,7 +52,6 @@ function calculateLove(
 		user_addition += Number(user_id);
 	}
 	divisor = divisor / mentions.length;
-	console.log(divisor);
 	res += user_addition;
 
 	return {
