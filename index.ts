@@ -63,5 +63,5 @@ client.on(
 client.on("cacheSweep", (message) => {
 	console.log(`Sweeped cache: ${message}`);
 });
-// client.on("ready", (client) => ready(client, settings));
-// client.login(settings.test ? config.test_token : config.token);
+client.on("ready", (client) => ready(client, settings));
+client.login(settings.test ? config.test_token : config.token);

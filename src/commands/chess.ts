@@ -1,7 +1,8 @@
 import {Process} from "@helpers/chess/validator.js";
 import {ExternalDependencies} from "@helpers/types";
 import { Client, Message } from "discord.js";
-import { InviteManager } from "@helpers/session/invite";
+import { InviteManager } from "@helpers/session/invite.js";
+import {SessionManager} from "@helpers/session/session.js";
 
 interface Session {
 	channel_id: string, 
@@ -22,36 +23,7 @@ const sessions = new Map<number, Session>();
 // const uci = new ChessEngineInterface("./media/engines/alice-engine.exe");
 const _checker = new Process("./media/engines/chess-sanity-check.exe");
 
-const invites = new InviteManager<{ id: string, name: string }>();
-
-const send_res = invites.sendInviteTo("aa", "bb", {id: "aa", name: "aa"});
-switch (send_res.msg) {
-	case "SentInvite":
-		console.log("Sent invite");
-		break;
-	case "AlreadySentInvite":
-		console.log("Already send invite");
-		break;
-	default:
-		break;
-}
-console.log(
-	"users: " + JSON.stringify(users, replacer, 4) + users.size + "\n" +
-	"sessions: " + JSON.stringify(sessions, replacer, 4) + sessions.size + "\n" +
-	invites.printAllVariables()
-);
-
-const acc_res = invites.acceptInviteOfSender("bb", 0);
-switch (acc_res.msg) {
-	case "AcceptedInvite":
-		console.log("AcceptedInvite: accepted invite");
-		break;
-	case "NoInvites":
-		console.log("AcceptedInvite: no invites");
-		break;
-	default:
-		break;
-}
+const session = new SessionManager(new InviteManager<{ id: string, name: string }>());
 
 export const name = "chess";
 export const aliases = ["chess"];
@@ -75,7 +47,19 @@ export async function execute(_client: Client, msg: Message<true>, args: string[
 			break;
 		case "play":
 			if (replied_user) {
-				const inv_res = invites.sendInviteTo(author.id, replied_user.id, { id: author.id, name: author.displayName });
+				const users_in_session = session.getUsersInSession([author.id, replied_user.id]);
+				for (const user_in_session of users_in_session) {
+					if (user_in_session === author.id) {
+						msg.reply("You are already in a session!");
+						break;
+					}
+					if (user_in_session === replied_user.id) {
+						msg.reply("The person you're replying to is already in a session!");
+						break;
+					}
+				}
+
+				const inv_res = session.sendInviteTo(author.id, replied_user.id, { id: author.id, name: replied_user.displayName });
 				switch (inv_res.msg) {
 					case "AlreadySentInvite":
 						msg.reply("You already sent an invite!");
@@ -89,7 +73,7 @@ export async function execute(_client: Client, msg: Message<true>, args: string[
 			}
 			break;
 		case "revoke": {
-			const inv_res = invites.revokeInviteFromReciever(author.id, 0);
+			const inv_res = session.revokeInvite(author.id, 0);
 			switch (inv_res.msg) {
 				case "RevokedInvite":
 					msg.reply(`You have revoked an invite to "${inv_res.payload!.name}".`);
@@ -103,9 +87,10 @@ export async function execute(_client: Client, msg: Message<true>, args: string[
 			break;
 		}
 		case "accept": {
-			const inv_res = invites.acceptInviteOfSender(author.id, 0);
+			const inv_res = session.acceptInvite(author.id, 0);
 			switch (inv_res.msg) {
 				case "AcceptedInvite":
+					session.createSession({ players: [inv_res.payload!.sender, inv_res.payload!.reciever] });
 					msg.reply("Accepted the invite.");
 					break;
 				case "NoInvites":
@@ -118,7 +103,7 @@ export async function execute(_client: Client, msg: Message<true>, args: string[
 		}
 		case "decline": {
 			console.log(author.id);
-			const inv_res = invites.declineInviteOfSender(author.id, 0);
+			const inv_res = session.declineInvite(author.id, 0);
 			switch (inv_res.msg) {
 				case "DeclinedInvite":
 					msg.reply("You declined the invite.");
@@ -154,24 +139,14 @@ export async function execute(_client: Client, msg: Message<true>, args: string[
 			break;
 		}
 		case "quit": {
-			/*
-			const user = users.get(author);
-			if (user) {
-				users.delete(user.opponent);
-				users.delete(author);
-				msg.reply("Quit out of the session.");
-			} else {
-				msg.reply("You don't have a current session.");
-			}
-			*/
 			break;
 		}
 		case "print":
 			// print this out properly. Maps don't get JSON.stringified easily.
 			msg.reply(
-				"users: " + JSON.stringify(users, replacer, 4) + users.size + "\n" +
-				"sessions: " + JSON.stringify(sessions, replacer, 4) + sessions.size + "\n" +
-				invites.printAllVariables()
+				"users: " + JSON.stringify(users, map_replacer, 4) + users.size + "\n" +
+				"sessions: " + JSON.stringify(sessions, map_replacer, 4) + sessions.size + "\n" +
+				session.printAllVariables()
 			);
 			break;
 		default:
@@ -180,7 +155,7 @@ export async function execute(_client: Client, msg: Message<true>, args: string[
 
 }
 
-function replacer(key: string, value: unknown) {
+export function map_replacer(key: string, value: unknown) {
 	if (value instanceof Map) {
 		return {
 			dataType: "Map",
