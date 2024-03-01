@@ -8,7 +8,7 @@ interface Session {
 	channel_id: string, 
 	fen: string, 
 	moves: string[], 
-	turn: string,
+	turn_index: number,
 	players: string[]
 }
 interface Invite {
@@ -26,7 +26,7 @@ export const aliases = ["chess"];
 export const channel = "Guild";
 export const cooldown = 25;
 export const description = "Do a chess match.";
-export async function execute(_client: Client, msg: Message<true>, args: string[], _ext: ExternalDependencies) {
+export async function execute(client: Client, msg: Message<true>, args: string[], _ext: ExternalDependencies) {
 	const command = args[0];
 	const author = msg.author;
 	const replied_user = msg.mentions.repliedUser;
@@ -41,36 +41,53 @@ export async function execute(_client: Client, msg: Message<true>, args: string[
 				"\nMoving is done by this notation: `a2a4`, moves a piece from square a2 to square a4."
 			);
 			break;
-		case "play":
-			if (replied_user) {
-				const users_in_session = session.getUsersInSession([author.id, replied_user.id]);
-				for (const user_in_session of users_in_session) {
-					if (user_in_session === author.id) {
-						msg.reply("You are already in a session!");
-						break;
-					}
-					if (user_in_session === replied_user.id) {
-						msg.reply("The person you're replying to is already in a session!");
-						break;
-					}
-				}
+		case "play": {
+			if (!replied_user) {
+				msg.reply("Reply to someone to invite them.");
+				break;
+			}
+			if (author.id === replied_user.id) {
+				msg.reply("You can't play yourself.");
+				break;
+			}
+			if (replied_user.id === client.user?.id) {
+				msg.reply("I haven't been taught to play chess yet.");
+				break;
+			}
+			if (replied_user.bot) {
+				msg.reply("*They* don't know how to play chess.");
+				break;
+			}
 
-				const inv_res = session.sendInviteTo(
-					{ id: author.id, name: author.displayName, channel_id: msg.channel.id },
-					{ id: replied_user.id, name: replied_user.displayName, channel_id: msg.channel.id }
-				);
-				switch (inv_res.msg) {
-					case "AlreadySentInvite":
-						msg.reply("You already sent an invite!");
-						break;
-					case "SentInvite":
-						msg.reply("Sent an invite.");
-						break;
-					default:
-						break;
+			const users_in_session = session.getUsersInSession([author.id, replied_user.id]);
+			for (const user_in_session of users_in_session) {
+				if (user_in_session === author.id) {
+					msg.reply("You are already in a session!");
+					return;
+				}
+				if (user_in_session === replied_user.id) {
+					msg.reply("The person you're replying to is already in a session!");
+					return;
 				}
 			}
+
+			const inv_res = session.sendInviteTo(
+				{ id: author.id, name: author.displayName, channel_id: msg.channel.id },
+				{ id: replied_user.id, name: replied_user.displayName, channel_id: msg.channel.id }
+			);
+			switch (inv_res.msg) {
+				case "AlreadySentInvite":
+					msg.reply("You already sent an invite!");
+					break;
+				case "SentInvite":
+					msg.reply(`Sent an invite to "${replied_user.displayName}"`);
+					break;
+				case "SenderRecieverCycle":
+					msg.reply(`"${replied_user.displayName}" already invited you.`);
+					break;
+			}
 			break;
+		}
 		case "revoke": {
 			const inv_res = session.revokeInvite(author.id, 0);
 			switch (inv_res.msg) {
@@ -91,17 +108,21 @@ export async function execute(_client: Client, msg: Message<true>, args: string[
 				case "AcceptedInvite":
 					session.createSession({
 						players: [inv_res.payload!.sender.id, inv_res.payload!.reciever.id],
+						turn_index: 0,
 						fen: "startpos",
 						channel_id: msg.channel.id,
 						moves: [],
-						turn: inv_res.payload!.sender.id,
+					}, 1 * 60 * 1000);
+					session.on("sessionTimeout", async (info) => {
+						// keeps around msg object, might be a reason for ballooned memory.
+						const player1 = client.users.cache.get(info.players[0]) ?? (await client.users.fetch(info.players[0]));
+						const player2 = client.users.cache.get(info.players[1]) ?? (await client.users.fetch(info.players[1]));
+						msg.channel.send(`Session timed out for ${player1.displayName} and ${player2.displayName}`);
 					});
 					msg.reply("Accepted the invite.");
 					break;
 				case "NoInvites":
 					msg.reply("No invites has been sent to you.");
-					break;
-				default:
 					break;
 			}
 			break;
@@ -115,34 +136,38 @@ export async function execute(_client: Client, msg: Message<true>, args: string[
 				case "NoInvites":
 					msg.reply("You don't have invites.");
 					break;
-				default:
-					break;
 			}
 			break;
 		}
-		case "move": { // after session
-			/*
-			const user = users.get(author);
-			if (user?.session_id) {
-				const session = sessions.get(user.session_id);
-				if (session) {
-					if (session.turn === author) {
-						const _str_moves = session.moves.length <= 0 
-							? "" 
-							: `moves ${session.moves.join(" ")}`;
-						session.turn = user.opponent;
-						msg.reply("Made a move, it's your opponent's turn.");
-					}
-				} else {
-					msg.reply("You're not in a session.");
+		case "move": {
+			const sesh = session.getSessionWithUser(author.id);
+			if (sesh) {
+				console.log(sesh.turn_index);
+				const turn_id = sesh.players[sesh.turn_index];
+				if (turn_id === author.id) {
+					const future_turn_index = (sesh.turn_index + 1) % sesh.players.length; // wrapping 0 - 10 (10 exclusive)
+					const future_turn_id = sesh.players[future_turn_index];
+
+					const player = client.users.cache.get(turn_id) ?? (await client.users.fetch(turn_id));
+					const future_player = client.users.cache.get(future_turn_id) ?? (await client.users.fetch(future_turn_id));
+
+					msg.reply(`${player.displayName} moved. It's now ${future_player.displayName}'s turn.'`);
+
+					sesh.turn_index = future_turn_index;
 				}
 			} else {
 				msg.reply("You're not in a session.");
 			}
-			*/
 			break;
 		}
 		case "quit": {
+			const sesh = session.getSessionWithUser(author.id);
+			if (sesh) {
+				msg.reply(`Destroyed session with "${sesh.players[0]}" and "${sesh.players[1]}"`);
+				session.deleteSession(sesh.hash_id);
+			} else {
+				msg.reply("You don't have a session.");
+			}
 			break;
 		}
 		case "print":

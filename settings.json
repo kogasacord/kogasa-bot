@@ -4,5 +4,5 @@
 	"quote_endpoint": "http://localhost:4000",
 	"pocketbase_endpoint": "http://127.0.0.1:8090",
 	"prefix": "??",
-	"offlineMode": true
+	"offlineMode": false
 }

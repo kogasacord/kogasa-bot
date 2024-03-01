@@ -1,7 +1,7 @@
 
 export type InviteMessages = 
 	"SentInvite" | "RevokedInvite" | "DeclinedInvite" | "AcceptedInvite" | "NoInvites"
-		| "AlreadySentInvite" | "ViewInvites" | "NoReciever" | "InvalidIndex";
+		| "AlreadySentInvite" | "ViewInvites" | "SenderRecieverCycle" | "NoReciever" | "InvalidIndex";
 export type InviteResult<K extends InviteMessages, P = NonNullable<unknown>> = { msg: K, payload: P };
 
 export class InviteManager<T extends {id: string}> {
@@ -11,9 +11,15 @@ export class InviteManager<T extends {id: string}> {
 	private users = new Map<string, T>();
 	constructor() {}
 
-	sendInviteTo(from_user: T, to_user: T): InviteResult<"AlreadySentInvite" | "SentInvite"> {
-		if (this.senders.has(from_user.id)) {
+	sendInviteTo(from_user: T, to_user: T): InviteResult<"AlreadySentInvite" | "SentInvite" | "SenderRecieverCycle"> {
+		// needs multiple people for testing
+		const is_cyclical = this.senders.has(to_user.id) && this.recipients.has(from_user.id);
+		const already_sent = this.senders.has(from_user.id);
+		if (already_sent) {
 			return {msg: "AlreadySentInvite", payload: {}};
+		}
+		if (is_cyclical) {
+			return {msg: "SenderRecieverCycle", payload: {}};
 		}
 
 		const senders_of_recipient = this.recipients.get(to_user.id);

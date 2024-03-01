@@ -13,7 +13,7 @@ export type SessionResult<K extends SessionMessages, P = NonNullable<unknown>> =
 	*/
 export class SessionManager<T extends { players: string[] }, K extends { id: string }> {
 	private sessions = new Map<string, T>();
-	private users_in_session = new Map<string, string>;
+	private users_in_session = new Map<string, string>; // user: session
 	private event_emitter = new events.EventEmitter();
 	
 	constructor(private invites = new InviteManager<K>()) {}
@@ -31,12 +31,12 @@ export class SessionManager<T extends { players: string[] }, K extends { id: str
 	/**
 		* For getting the session with the user so you can modify it.
 		*/
-	getSessionWithUser(player: string): T | undefined {
-		const user_in_session = this.users_in_session.get(player);
-		if (!user_in_session) {
+	getSessionWithUser(player: string): T & { hash_id: string } | undefined {
+		const session_id = this.users_in_session.get(player);
+		if (!session_id) {
 			return undefined;
 		}
-		return this.sessions.get(user_in_session)!;
+		return { hash_id: session_id, ...this.sessions.get(session_id)! };
 	}
 
 	/**
@@ -50,11 +50,15 @@ export class SessionManager<T extends { players: string[] }, K extends { id: str
 		// to create a unique hash.
 		const hash = rehash(...players.map(c => Number(c))).toString();
 		this.sessions.set(hash.toString(), session_info);
+		for (const player of session_info.players) {
+			this.users_in_session.set(player, hash);
+		}
 		setTimeout(() => {
 			const sesh = structuredClone(session_info);
 			if (this.sessions.delete(hash)) {
-				// TODO: put out a custom event that emits this every time this happens.
-				// do it for invites too, to track expiring invites.
+				for (const player of sesh.players) {
+					this.users_in_session.delete(player);
+				}
 				this.event_emitter.emit("sessionTimeout", sesh);
 			}
 		}, ms_expiry);
@@ -62,8 +66,14 @@ export class SessionManager<T extends { players: string[] }, K extends { id: str
 		return {msg: "CreatedSession", payload: {hash, session_info}};
 	}
 
-	deleteSession(session_id: string): boolean {
-		return this.sessions.delete(session_id);
+	deleteSession(session_id: string) {
+		const session = structuredClone(this.sessions.get(session_id));
+		if (session && this.sessions.delete(session_id)) {
+				for (const player of session.players) {
+					this.users_in_session.delete(player);
+				}
+				this.event_emitter.emit("sessionTimeout", session);
+		}
 	}
 	
 	// INVITES
