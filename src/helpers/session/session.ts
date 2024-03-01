@@ -3,15 +3,6 @@ import {map_replacer} from "@root/src/commands/chess.js";
 import {InviteManager} from "./invite.js";
 import events from "events";
 
-/*
-interface Session {
-	channel_id: string, 
-	fen: string, 
-	moves: string[], 
-	turn: number, 
-}
-*/
-
 type SessionEmitters = "sessionTimeout";
 export type SessionMessages = "AlreadyInSession" | "CreatedSession";
 export type SessionResult<K extends SessionMessages, P = NonNullable<unknown>> = { msg: K, payload: P };
@@ -53,7 +44,7 @@ export class SessionManager<T extends { players: string[] }, K extends { id: str
 		* - IDs should be numerical due to hash method.
 		* - This assumes you already checked if the users in session.
 		*/
-	createSession(session_info: T, ms_expiry = 30 * 60 * 1000): SessionResult<"AlreadyInSession" | "CreatedSession"> {
+	createSession(session_info: T, ms_expiry = 30 * 60 * 1000): SessionResult<"AlreadyInSession" | "CreatedSession", { hash: string, session_info: T }> {
 		const {players} = session_info;
 		// check for NaN values.
 		// to create a unique hash.
@@ -68,7 +59,7 @@ export class SessionManager<T extends { players: string[] }, K extends { id: str
 			}
 		}, ms_expiry);
 
-		return {msg: "CreatedSession", payload: {}};
+		return {msg: "CreatedSession", payload: {hash, session_info}};
 	}
 
 	deleteSession(session_id: string): boolean {
@@ -76,8 +67,8 @@ export class SessionManager<T extends { players: string[] }, K extends { id: str
 	}
 	
 	// INVITES
-	sendInviteTo(from_user_id: string, to_user_id: string, payload: K) {
-		return this.invites.sendInviteTo(from_user_id, to_user_id, payload);
+	sendInviteTo(from_user: K, to_user: K) {
+		return this.invites.sendInviteTo(from_user, to_user);
 	}
 	acceptInvite(recipient_id: string, invite_index: number) {
 		return this.invites.acceptInviteOfSender(recipient_id, invite_index);

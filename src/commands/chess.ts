@@ -8,22 +8,18 @@ interface Session {
 	channel_id: string, 
 	fen: string, 
 	moves: string[], 
-	turn: number, 
+	turn: string,
+	players: string[]
 }
-interface User {
-	id: number,
+interface Invite {
+	id: string,
 	name: string,
 	channel_id: string,
-	channel_name: string,
 }
-
-const users = new Map<number, { opponent: number, session_id: number }>();
-const sessions = new Map<number, Session>();
 
 // const uci = new ChessEngineInterface("./media/engines/alice-engine.exe");
 const _checker = new Process("./media/engines/chess-sanity-check.exe");
-
-const session = new SessionManager(new InviteManager<{ id: string, name: string }>());
+const session = new SessionManager<Session, Invite>(new InviteManager<Invite>());
 
 export const name = "chess";
 export const aliases = ["chess"];
@@ -59,7 +55,10 @@ export async function execute(_client: Client, msg: Message<true>, args: string[
 					}
 				}
 
-				const inv_res = session.sendInviteTo(author.id, replied_user.id, { id: author.id, name: replied_user.displayName });
+				const inv_res = session.sendInviteTo(
+					{ id: author.id, name: author.displayName, channel_id: msg.channel.id },
+					{ id: replied_user.id, name: replied_user.displayName, channel_id: msg.channel.id }
+				);
 				switch (inv_res.msg) {
 					case "AlreadySentInvite":
 						msg.reply("You already sent an invite!");
@@ -76,7 +75,7 @@ export async function execute(_client: Client, msg: Message<true>, args: string[
 			const inv_res = session.revokeInvite(author.id, 0);
 			switch (inv_res.msg) {
 				case "RevokedInvite":
-					msg.reply(`You have revoked an invite to "${inv_res.payload!.name}".`);
+					msg.reply(`You have revoked an invite to "${inv_res.payload!.reciever.name}".`);
 					break;
 				case "NoInvites":
 					msg.reply("No invites have been sent to you.");
@@ -90,7 +89,13 @@ export async function execute(_client: Client, msg: Message<true>, args: string[
 			const inv_res = session.acceptInvite(author.id, 0);
 			switch (inv_res.msg) {
 				case "AcceptedInvite":
-					session.createSession({ players: [inv_res.payload!.sender, inv_res.payload!.reciever] });
+					session.createSession({
+						players: [inv_res.payload!.sender.id, inv_res.payload!.reciever.id],
+						fen: "startpos",
+						channel_id: msg.channel.id,
+						moves: [],
+						turn: inv_res.payload!.sender.id,
+					});
 					msg.reply("Accepted the invite.");
 					break;
 				case "NoInvites":
@@ -102,7 +107,6 @@ export async function execute(_client: Client, msg: Message<true>, args: string[
 			break;
 		}
 		case "decline": {
-			console.log(author.id);
 			const inv_res = session.declineInvite(author.id, 0);
 			switch (inv_res.msg) {
 				case "DeclinedInvite":
@@ -143,11 +147,7 @@ export async function execute(_client: Client, msg: Message<true>, args: string[
 		}
 		case "print":
 			// print this out properly. Maps don't get JSON.stringified easily.
-			msg.reply(
-				"users: " + JSON.stringify(users, map_replacer, 4) + users.size + "\n" +
-				"sessions: " + JSON.stringify(sessions, map_replacer, 4) + sessions.size + "\n" +
-				session.printAllVariables()
-			);
+			msg.reply(session.printAllVariables());
 			break;
 		default:
 			break;

@@ -5,28 +5,33 @@ export type InviteMessages =
 export type InviteResult<K extends InviteMessages, P = NonNullable<unknown>> = { msg: K, payload: P };
 
 export class InviteManager<T extends {id: string}> {
-	private recipients = new Map<string, T[]>();
+	// how would you reduce the amount of maps needed?
+	private recipients = new Map<string, string[]>();
 	private senders = new Map<string, string>();
+	private users = new Map<string, T>();
 	constructor() {}
 
-	sendInviteTo(from_user_id: string, to_user_id: string, payload: T): InviteResult<"AlreadySentInvite" | "SentInvite"> {
-		if (this.senders.has(from_user_id)) {
+	sendInviteTo(from_user: T, to_user: T): InviteResult<"AlreadySentInvite" | "SentInvite"> {
+		if (this.senders.has(from_user.id)) {
 			return {msg: "AlreadySentInvite", payload: {}};
 		}
-		this.senders.set(from_user_id, to_user_id);
 
-		const senders_of_recipient = this.recipients.get(to_user_id);
+		const senders_of_recipient = this.recipients.get(to_user.id);
 		if (senders_of_recipient) {
-			senders_of_recipient.push(payload);
+			senders_of_recipient.push(from_user.id);
 		} else {
-			this.recipients.set(to_user_id, [payload]);
+			this.recipients.set(to_user.id, [from_user.id]);
 		}
+		this.senders.set(from_user.id, to_user.id);
+		this.users.set(from_user.id, from_user);
+		this.users.set(to_user.id, to_user);
+
 		return {msg: "SentInvite", payload: {}};
 	}
 	/**
 		* Returns a list of senders who sent the reciever an invite.
 		*/
-	viewInvitesOfReciever(recipient_id: string): InviteResult<"ViewInvites" | "NoReciever", ({id: string} & T)[]> {
+	viewInvitesOfReciever(recipient_id: string): InviteResult<"ViewInvites" | "NoReciever", string[]> {
 		const senders_of_recipient = this.recipients.get(recipient_id);
 		if (senders_of_recipient) {
 			return {msg: "ViewInvites", payload: senders_of_recipient};
@@ -38,20 +43,27 @@ export class InviteManager<T extends {id: string}> {
 		* Accepts the invite of the sender.
 		* It should be invoked by the person accepting the invite.
 		*/
-	acceptInviteOfSender(recipient_id: string, invite_index: number): InviteResult<"AcceptedInvite" | "NoInvites" | "InvalidIndex", {sender: string, reciever: string} | undefined> {
+	acceptInviteOfSender(recipient_id: string, invite_index: number): InviteResult<"AcceptedInvite" | "NoInvites" | "InvalidIndex", {sender: T, reciever: T} | undefined> {
 		const senders_of_recipient = this.recipients.get(recipient_id);
 		if (senders_of_recipient && senders_of_recipient.length !== 0) {
-			const sender = structuredClone(senders_of_recipient.at(invite_index));
-			if (!sender) {
+			const sender = structuredClone(this.users.get(senders_of_recipient.at(invite_index)!));
+			const reciever = structuredClone(this.users.get(recipient_id));
+			if (!sender || !reciever) {
 				return {msg: "InvalidIndex", payload: undefined};
 			}
-			const reciever = structuredClone(recipient_id);
 			// when someone accepts an invite, it removes everyone that invited the person
-			for (const sender_of_recipient of senders_of_recipient) {
-				this.senders.delete(sender_of_recipient.id);
+			// might have issues with stuff like:
+			// 		p1 invites p2, p1 invites p3
+			// 		p3 accepts p1's invite, p3 and p1's data gets deleted
+			// 		p2 accepts p1's invite, ??? what happens ???
+			for (const sender_of_recipient_id of senders_of_recipient) {
+				this.senders.delete(sender_of_recipient_id);
+				this.users.delete(sender_of_recipient_id);
 			}
 			this.recipients.delete(recipient_id);
-			return {msg: "AcceptedInvite", payload: {sender: sender.id, reciever}};
+			this.users.delete(recipient_id);
+
+			return {msg: "AcceptedInvite", payload: {sender, reciever}};
 		} else {
 			return {msg: "NoInvites", payload: undefined};
 		}
@@ -60,45 +72,47 @@ export class InviteManager<T extends {id: string}> {
 	/**
 		* It should be invoked by the reciever.
 		*/
-	declineInviteOfSender(recipient_id: string, invite_index: number): InviteResult<"DeclinedInvite" | "NoInvites" | "InvalidIndex"> {
+	declineInviteOfSender(recipient_id: string, invite_index: number): InviteResult<"DeclinedInvite" | "NoInvites" | "InvalidIndex", {sender: T, reciever: T} | undefined> {
 		const senders_of_recipient = this.recipients.get(recipient_id);
 		if (senders_of_recipient && senders_of_recipient.length !== 0) {
-			const sender = structuredClone(senders_of_recipient.at(invite_index));
-			if (!sender) {
-				return {msg: "InvalidIndex", payload: {}};
+			const sender = structuredClone(this.users.get(senders_of_recipient.at(invite_index)!));
+			const reciever = structuredClone(this.users.get(recipient_id)!);
+			if (!sender || !reciever) {
+				return {msg: "InvalidIndex", payload: undefined};
 			}
-			this.senders.delete(sender.id);
 			senders_of_recipient.splice(invite_index, 1);
 
 			if (senders_of_recipient.length <= 0) {
 				this.recipients.delete(recipient_id);
 			}
-			return {msg: "DeclinedInvite", payload: {}};
+			this.senders.delete(sender.id);
+
+			return {msg: "DeclinedInvite", payload: {reciever, sender}};
 		}
-		return {msg: "NoInvites", payload: {}};
+		return {msg: "NoInvites", payload: undefined};
 	}
 
-	revokeInviteFromReciever(sender_id: string, invite_index: number): InviteResult<"RevokedInvite" | "NoInvites" | "InvalidIndex", T | undefined> {
+	revokeInviteFromReciever(sender_id: string, invite_index: number): InviteResult<"RevokedInvite" | "NoInvites" | "InvalidIndex", {reciever: T, sender: T} | undefined> {
 		const recipient_id = this.senders.get(sender_id);
 		if (!recipient_id) {
 			return {msg: "NoInvites", payload: undefined};
 		}
-		const sender_ids_of_recipient = this.recipients.get(recipient_id);
-		if (sender_ids_of_recipient) {
-			// dangerous not checking invite_index's value
-			const sender = structuredClone(sender_ids_of_recipient.at(invite_index));
-			if (!sender) {
+		const senders_of_recipient = this.recipients.get(recipient_id);
+		if (senders_of_recipient && senders_of_recipient.length !== 0) {
+			const sender = structuredClone(this.users.get(senders_of_recipient.at(invite_index)!));
+			const reciever = structuredClone(this.users.get(recipient_id)!);
+			if (!sender || !reciever) {
 				return {msg: "InvalidIndex", payload: undefined};
 			}
-			this.senders.delete(sender.id);
-			sender_ids_of_recipient.splice(invite_index, 1);
+			senders_of_recipient.splice(invite_index, 1);
 
-			if (sender_ids_of_recipient.length <= 0) {
+			if (senders_of_recipient.length <= 0) {
 				this.recipients.delete(recipient_id);
 			}
-			return {msg: "RevokedInvite", payload: sender};
-		}
+			this.senders.delete(sender.id);
 
+			return {msg: "RevokedInvite", payload: {reciever, sender}};
+		}
 		return {msg: "NoInvites", payload: undefined};
 	}
 
