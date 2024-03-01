@@ -64,4 +64,9 @@ client.on("cacheSweep", (message) => {
 	console.log(`Sweeped cache: ${message}`);
 });
 client.on("ready", (client) => ready(client, settings));
-client.login(settings.test ? config.test_token : config.token);
+if (settings.offlineMode) {
+	console.log("Running in offline mode. Exiting...");
+	process.exit(0);
+} else {
+	client.login(settings.test ? config.test_token : config.token);
+}
