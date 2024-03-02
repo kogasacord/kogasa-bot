@@ -34,8 +34,7 @@ export async function execute(client: Client, msg: Message<true>, args: string[]
 	switch (command) {
 		case "help":
 			msg.reply(
-				"- `chess play @user` - Play against someone.\n" +
-				"- `chess play bot` - Play against the bot.\n" +
+				"- `chess play` - Reply to someone to play against them.\n" +
 				"- `chess quit` - Quit out of your current game.\n" +
 				"- `chess move [move]` - Moves a piece.\n" +
 				"\nMoving is done by this notation: `a2a4`, moves a piece from square a2 to square a4."
@@ -73,13 +72,18 @@ export async function execute(client: Client, msg: Message<true>, args: string[]
 
 			const inv_res = session.sendInviteTo(
 				{ id: author.id, name: author.displayName, channel_id: msg.channel.id },
-				{ id: replied_user.id, name: replied_user.displayName, channel_id: msg.channel.id }
+				{ id: replied_user.id, name: replied_user.displayName, channel_id: msg.channel.id },
+				30 * 1000,
 			);
+
 			switch (inv_res.msg) {
 				case "AlreadySentInvite":
 					msg.reply("You already sent an invite!");
 					break;
 				case "SentInvite":
+					session.once_invite("inviteTimeout", info => {
+						msg.channel.send(`${info.sender.name}'s invite for ${info.recipient.name} has expired.`);
+					});
 					msg.reply(`Sent an invite to "${replied_user.displayName}"`);
 					break;
 				case "SenderRecieverCycle":
@@ -113,7 +117,7 @@ export async function execute(client: Client, msg: Message<true>, args: string[]
 						channel_id: msg.channel.id,
 						moves: [],
 					}, 1 * 60 * 1000);
-					session.on("sessionTimeout", async (info) => {
+					session.once("sessionTimeout", async (info) => {
 						// keeps around msg object, might be a reason for ballooned memory.
 						const player1 = client.users.cache.get(info.players[0]) ?? (await client.users.fetch(info.players[0]));
 						const player2 = client.users.cache.get(info.players[1]) ?? (await client.users.fetch(info.players[1]));
@@ -142,18 +146,17 @@ export async function execute(client: Client, msg: Message<true>, args: string[]
 		case "move": {
 			const sesh = session.getSessionWithUser(author.id);
 			if (sesh) {
-				console.log(sesh.turn_index);
-				const turn_id = sesh.players[sesh.turn_index];
+				const turn_id = sesh.session.players[sesh.session.turn_index];
 				if (turn_id === author.id) {
-					const future_turn_index = (sesh.turn_index + 1) % sesh.players.length; // wrapping 0 - 10 (10 exclusive)
-					const future_turn_id = sesh.players[future_turn_index];
+					const future_turn_index = (sesh.session.turn_index + 1) % sesh.session.players.length; // wrapping 0 - 10 (10 exclusive)
+					const future_turn_id = sesh.session.players[future_turn_index];
 
 					const player = client.users.cache.get(turn_id) ?? (await client.users.fetch(turn_id));
 					const future_player = client.users.cache.get(future_turn_id) ?? (await client.users.fetch(future_turn_id));
 
 					msg.reply(`${player.displayName} moved. It's now ${future_player.displayName}'s turn.'`);
 
-					sesh.turn_index = future_turn_index;
+					sesh.session.turn_index = future_turn_index;
 				}
 			} else {
 				msg.reply("You're not in a session.");
@@ -163,7 +166,7 @@ export async function execute(client: Client, msg: Message<true>, args: string[]
 		case "quit": {
 			const sesh = session.getSessionWithUser(author.id);
 			if (sesh) {
-				msg.reply(`Destroyed session with "${sesh.players[0]}" and "${sesh.players[1]}"`);
+				msg.reply(`Destroyed session with "${sesh.session.players[0]}" and "${sesh.session.players[1]}"`);
 				session.deleteSession(sesh.hash_id);
 			} else {
 				msg.reply("You don't have a session.");

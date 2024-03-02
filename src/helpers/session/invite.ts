@@ -1,4 +1,7 @@
 
+import events from "events";
+
+export type InviteEmitters = "inviteTimeout";
 export type InviteMessages = 
 	"SentInvite" | "RevokedInvite" | "DeclinedInvite" | "AcceptedInvite" | "NoInvites"
 		| "AlreadySentInvite" | "ViewInvites" | "SenderRecieverCycle" | "NoReciever" | "InvalidIndex";
@@ -9,9 +12,15 @@ export class InviteManager<T extends {id: string}> {
 	private recipients = new Map<string, string[]>();
 	private senders = new Map<string, string>();
 	private users = new Map<string, T>();
+	private event_emitter = new events.EventEmitter();
+
 	constructor() {}
 
-	sendInviteTo(from_user: T, to_user: T): InviteResult<"AlreadySentInvite" | "SentInvite" | "SenderRecieverCycle"> {
+	once(event: InviteEmitters, listener: (info: {sender: T, recipient: T}) => void) {
+		this.event_emitter.once(event, listener);
+	}
+
+	sendInviteTo(from_user: T, to_user: T, ms_expiry = 1 * 60 * 1000): InviteResult<"AlreadySentInvite" | "SentInvite" | "SenderRecieverCycle"> {
 		// needs multiple people for testing
 		const is_cyclical = this.senders.has(to_user.id) && this.recipients.has(from_user.id);
 		const already_sent = this.senders.has(from_user.id);
@@ -31,6 +40,27 @@ export class InviteManager<T extends {id: string}> {
 		this.senders.set(from_user.id, to_user.id);
 		this.users.set(from_user.id, from_user);
 		this.users.set(to_user.id, to_user);
+
+		setTimeout(() => {
+			const senders_of_recipient = this.recipients.get(to_user.id);
+			const recipient_id = this.senders.get(from_user.id);
+
+			const index_of_sender = senders_of_recipient?.findIndex(v => v === recipient_id);
+			if (senders_of_recipient && index_of_sender && recipient_id) {
+				const deleted_sender = senders_of_recipient.splice(index_of_sender, 1);
+				if (senders_of_recipient.length <= 0) {
+					this.recipients.delete(recipient_id);
+				}
+				this.senders.delete(deleted_sender[0]);
+
+				const recipient = structuredClone(this.users.get(recipient_id))!;
+				const sender = structuredClone(this.users.get(deleted_sender[0]))!;
+				this.event_emitter.emit("inviteTimeout", {sender, recipient});
+
+				this.users.delete(recipient_id);
+				this.users.delete(deleted_sender[0]);
+			}
+		}, ms_expiry);
 
 		return {msg: "SentInvite", payload: {}};
 	}

@@ -1,6 +1,6 @@
 
 import {map_replacer} from "@root/src/commands/chess.js";
-import {InviteManager} from "./invite.js";
+import {InviteEmitters, InviteManager} from "./invite.js";
 import events from "events";
 
 type SessionEmitters = "sessionTimeout";
@@ -18,8 +18,11 @@ export class SessionManager<T extends { players: string[] }, K extends { id: str
 	
 	constructor(private invites = new InviteManager<K>()) {}
 	
-	on(event: SessionEmitters, listener: (session_info: T) => void) {
-		this.event_emitter.addListener(event, listener);
+	once(event: SessionEmitters, listener: (session_info: T) => void) {
+		this.event_emitter.once(event, listener);
+	}
+	once_invite(event: InviteEmitters, listener: (info: {sender: K, recipient: K}) => void) {
+		this.invites.once(event, listener);
 	}
 
 	/**
@@ -31,12 +34,12 @@ export class SessionManager<T extends { players: string[] }, K extends { id: str
 	/**
 		* For getting the session with the user so you can modify it.
 		*/
-	getSessionWithUser(player: string): T & { hash_id: string } | undefined {
+	getSessionWithUser(player: string): { hash_id: string, session: T } | undefined {
 		const session_id = this.users_in_session.get(player);
 		if (!session_id) {
 			return undefined;
 		}
-		return { hash_id: session_id, ...this.sessions.get(session_id)! };
+		return { hash_id: session_id, session: this.sessions.get(session_id)! };
 	}
 
 	/**
@@ -77,8 +80,8 @@ export class SessionManager<T extends { players: string[] }, K extends { id: str
 	}
 	
 	// INVITES
-	sendInviteTo(from_user: K, to_user: K) {
-		return this.invites.sendInviteTo(from_user, to_user);
+	sendInviteTo(from_user: K, to_user: K, ms_expiry = 1 * 60 * 1000) {
+		return this.invites.sendInviteTo(from_user, to_user, ms_expiry);
 	}
 	acceptInvite(recipient_id: string, invite_index: number) {
 		return this.invites.acceptInviteOfSender(recipient_id, invite_index);
