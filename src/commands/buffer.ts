@@ -24,7 +24,7 @@ export async function execute(
 		}
 	}
 
-	const queue_collection = external_data.external_data[2];
+	const queue_collection = external_data.chat_buffer;
 	const queue = queue_collection.get(msg.channelId);
 	const embed = new EmbedBuilder().setTitle("Backtracked.").setColor("Navy");
 	if (queue) {

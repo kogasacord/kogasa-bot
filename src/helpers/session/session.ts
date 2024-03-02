@@ -7,6 +7,18 @@ type SessionEmitters = "sessionTimeout";
 export type SessionMessages = "AlreadyInSession" | "CreatedSession";
 export type SessionResult<K extends SessionMessages, P = NonNullable<unknown>> = { msg: K, payload: P };
 
+export interface Session {
+	channel_id: string, 
+	fen: string, 
+	moves: string[], 
+	turn_index: number,
+	players: string[]
+}
+export interface Invite {
+	id: string,
+	name: string,
+	channel_id: string,
+}
 
 /**
 	* Manages the lifecycle of a session.
@@ -18,11 +30,12 @@ export class SessionManager<T extends { players: string[] }, K extends { id: str
 	
 	constructor(private invites = new InviteManager<K>()) {}
 	
-	once(event: SessionEmitters, listener: (session_info: T) => void) {
-		this.event_emitter.once(event, listener);
+	on(event: SessionEmitters, listener: (session_info: T) => void) {
+		this.event_emitter.on(event, listener);
 	}
-	once_invite(event: InviteEmitters, listener: (info: {sender: K, recipient: K}) => void) {
-		this.invites.once(event, listener);
+	on_invite(event: InviteEmitters, listener: (info: {sender: K, recipient: K}) => void) {
+		// very annoying.
+		this.invites.on(event, listener);
 	}
 
 	/**

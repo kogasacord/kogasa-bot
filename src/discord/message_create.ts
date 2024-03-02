@@ -79,7 +79,11 @@ export async function messageCreate(
 			const ext: ExternalDependencies = {
 				commands: deps.commands,
 				prefix: prefix,
-				external_data: [deps.websites, tiers, deps.chat_buffer, settings],
+				websites: deps.websites,
+				tiers: tiers,
+				chat_buffer: deps.chat_buffer,
+				settings: settings,
+				session: deps.session
 			};
 			command_module.execute(client, msg, args, ext);
 		} else {

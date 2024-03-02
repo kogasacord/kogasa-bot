@@ -19,6 +19,9 @@ import { messageDelete } from "./src/discord/message_delete.js";
 import { messageCreate } from "./src/discord/message_create.js";
 import { ready } from "./src/discord/ready.js";
 
+import { InviteManager } from "@helpers/session/invite.js";
+import { SessionManager, Session, Invite } from "@helpers/session/session.js";
+
 ///////////////////////////////////////////////////////////////////////////////////
 const __dirname = url.fileURLToPath(new URL(".", import.meta.url));
 const client = new Client({
@@ -29,6 +32,28 @@ const client = new Client({
 		UserManager: 100,
 	}),
 });
+const session = new SessionManager<Session, Invite>(new InviteManager<Invite>());
+session.on("sessionTimeout", async (info) => {
+	if (!info) {
+		return;
+	}
+	const channel = await client.channels.fetch(info.channel_id);
+	const player1 = client.users.cache.get(info.players[0]) ?? (await client.users.fetch(info.players[0]));
+	const player2 = client.users.cache.get(info.players[1]) ?? (await client.users.fetch(info.players[1]));
+	if (channel?.isTextBased()) {
+		channel.send(`Session timed out for ${player1.displayName} and ${player2.displayName}`);
+	}
+});
+session.on_invite("inviteTimeout", async (info) => {
+	if (!info || !info.recipient || !info.sender) {
+		return;
+	}
+	const channel = await client.channels.fetch(info.recipient.channel_id);
+	if (channel?.isTextBased()) {
+		channel.send(`${info.sender.name}'s invite for ${info.recipient.name} has expired.`);
+	}
+});
+
 ///////////////////////////////////////////////////////////////////////////////////
 const commands = new Collection<string, CommandModule>().concat(
 	await helpers.importDirectories(__dirname, "/src/commands/"),
@@ -44,6 +69,7 @@ const other_dependencies: DiscordExternalDependencies = {
 	aliases,
 	chat_buffer,
 	websites,
+	session
 };
 //////////////////////////////////////////////////////////////////////////////////
 if (!settings.test) await enableAutoDelete();

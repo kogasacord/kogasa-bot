@@ -13,7 +13,8 @@ export async function execute(
 	args: string[],
 	external_data: ExternalDependencies
 ) {
-	const [websites, tiers] = external_data.external_data;
+	const websites = external_data.websites;
+	const tiers = external_data.tiers;
 
 	const tier_chances = formatTiers(tiers, websites);
 

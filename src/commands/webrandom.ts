@@ -16,8 +16,8 @@ export async function execute(
 	args: string[],
 	external_data: ExternalDependencies
 ) {
-	const websites = external_data.external_data[0];
-	const tiers = external_data.external_data[1];
+	const websites = external_data.websites;
+	const tiers = external_data.tiers;
 	const gacha = helpers.gachaSpecificWebsite(websites, tiers);
 	if (gacha && gacha.website) {
 		msg.reply(

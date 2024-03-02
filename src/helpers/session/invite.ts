@@ -16,13 +16,13 @@ export class InviteManager<T extends {id: string}> {
 
 	constructor() {}
 
-	once(event: InviteEmitters, listener: (info: {sender: T, recipient: T}) => void) {
-		this.event_emitter.once(event, listener);
+	on(event: InviteEmitters, listener: (info: {sender: T, recipient: T}) => void) {
+		this.event_emitter.on(event, listener);
 	}
 
 	sendInviteTo(from_user: T, to_user: T, ms_expiry = 1 * 60 * 1000): InviteResult<"AlreadySentInvite" | "SentInvite" | "SenderRecieverCycle"> {
 		// needs multiple people for testing
-		const is_cyclical = this.senders.has(to_user.id) && this.recipients.has(from_user.id);
+		const is_cyclical = this.recipients.get(from_user.id)?.find(sender_id => sender_id === to_user.id);
 		const already_sent = this.senders.has(from_user.id);
 		if (already_sent) {
 			return {msg: "AlreadySentInvite", payload: {}};
