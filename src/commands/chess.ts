@@ -4,7 +4,7 @@ import { Client, Message } from "discord.js";
 
 
 // const uci = new ChessEngineInterface("./media/engines/alice-engine.exe");
-const _checker = new Process("./media/engines/chess-sanity-check.exe");
+const checker = new Process("./media/engines/chess-sanity-check.exe");
 
 export const name = "chess";
 export const aliases = ["chess"];
@@ -95,7 +95,7 @@ export async function execute(client: Client, msg: Message<true>, args: string[]
 					ext.session.createSession({
 						players: [inv_res.payload!.sender.id, inv_res.payload!.reciever.id],
 						turn_index: 0,
-						fen: "startpos",
+						fen: "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1",
 						channel_id: msg.channel.id,
 						moves: [],
 					}, 1 * 60 * 1000);
@@ -122,17 +122,53 @@ export async function execute(client: Client, msg: Message<true>, args: string[]
 		case "move": {
 			const sesh = ext.session.getSessionWithUser(author.id);
 			if (sesh) {
+				const move = args.at(1);
+				if (!move) {
+					msg.reply("You must make a move! e.g: `e2e4 - movement, e2e4Q - promotion`");
+					return;
+				}
+
 				const turn_id = sesh.session.players[sesh.session.turn_index];
 				if (turn_id === author.id) {
 					const future_turn_index = (sesh.session.turn_index + 1) % sesh.session.players.length; // wrapping 0 - 10 (10 exclusive)
 					const future_turn_id = sesh.session.players[future_turn_index];
 
-					const player = client.users.cache.get(turn_id) ?? (await client.users.fetch(turn_id));
-					const future_player = client.users.cache.get(future_turn_id) ?? (await client.users.fetch(future_turn_id));
+					const player = await client.users.fetch(turn_id);
+					const future_player = await client.users.fetch(future_turn_id);
 
-					msg.reply(`${player.displayName} moved. It's now ${future_player.displayName}'s turn.'`);
+					const move_list = `${sesh.session.moves.length > 0 ? `moves ${sesh.session.moves.join(" ")}` : ""}`;
 
-					sesh.session.turn_index = future_turn_index;
+					const command_res = await checker.sendCommand(`fen ${sesh.session.fen} ${move_list} verifymove ${move}`, /res/g);
+					const [move_status, status] = command_res.split("\n");
+					console.log(command_res);
+
+					switch (move_status) {
+						case "move legal":
+							msg.reply(`${player.displayName} moved. It's now ${future_player.displayName}'s turn. `);
+							switch (status) {
+								case "res white checkmate":
+									msg.reply("White has been checkmated.");
+									break;
+								case "res black checkmate":
+									msg.reply("Black has been checkmated.");
+									break;
+								case "res stalemate":
+									msg.reply("Stalemate!");
+									break;
+								case "res ongoing":
+									sesh.session.turn_index = future_turn_index;
+									sesh.session.moves.push(move);
+									msg.reply(`Ongoing. fen ${sesh.session.fen}, moves ${sesh.session.moves.join(" ")}`);
+									break;
+							}
+							break;
+						case "move illegal":
+							msg.reply("That's an illegal move.");
+							break;
+						case "move unknown":
+							msg.reply("I don't know what that move is...");
+							break;
+					}
 				}
 			} else {
 				msg.reply("You're not in a session.");

@@ -14,14 +14,24 @@ export class Process {
 		}
 	}
 
-	sendCommand(command: string): Promise<string> {
-		return new Promise<string>((res, rej) => {
+	async sendCommand(command: string, endSignal: RegExp): Promise<string> {
+		return new Promise<string>((resolve, reject) => {
+			let dataBuffer = "";
+
 			this.process.stdin.write(command + "\n");
-			this.process.stdout.once("data", data => {
-				const response: string = data.toString();
-				res(response);
+			const dataListener = (data:Buffer) => {
+				dataBuffer += data.toString();
+				if (endSignal.test(dataBuffer)) {
+					this.process.stdout.off("data", dataListener);
+					resolve(dataBuffer);
+				}
+			};
+
+			this.process.stdout.on("data", dataListener);
+			this.process.stdout.once("error", (err) => {
+				this.process.stdout.off("data", dataListener);
+				reject(err);
 			});
-			this.process.stdout.once("error", rej);
 		});
 	}
 }
