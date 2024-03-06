@@ -1,3 +1,6 @@
+import fetch from "node-fetch";
+import settings from "@root/settings.json" assert { type: "json" };
+
 import {Process} from "@helpers/chess/validator.js";
 import {ExternalDependencies} from "@helpers/types";
 import { Client, Message } from "discord.js";
@@ -91,16 +94,19 @@ export async function execute(client: Client, msg: Message<true>, args: string[]
 		case "accept": {
 			const inv_res = ext.session.acceptInvite(author.id, 0);
 			switch (inv_res.msg) {
-				case "AcceptedInvite":
+				case "AcceptedInvite": {
+					const fen = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
 					ext.session.createSession({
 						players: [inv_res.payload!.sender.id, inv_res.payload!.reciever.id],
 						turn_index: 0,
-						fen: "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1",
+						fen,
 						channel_id: msg.channel.id,
 						moves: [],
 					}, 1 * 60 * 1000);
-					msg.reply("Accepted the invite.");
+					const image = await createChessImage(fen);
+					msg.reply({ content: `Accepted invite, <@${inv_res.payload!.sender.id}>'s turn.`, files: [{ attachment: image }] });
 					break;
+				}
 				case "NoInvites":
 					msg.reply("No invites has been sent to you.");
 					break;
@@ -140,7 +146,6 @@ export async function execute(client: Client, msg: Message<true>, args: string[]
 
 					const command_res = await checker.sendCommand(`fen ${sesh.session.fen} ${move_list} verifymove ${move}`, /res/g);
 					const [move_status, status] = command_res.split("\n");
-					console.log(command_res);
 
 					switch (move_status) {
 						case "move legal":
@@ -193,6 +198,18 @@ export async function execute(client: Client, msg: Message<true>, args: string[]
 			break;
 	}
 
+}
+
+export async function createChessImage(fen: string) {
+	const check = await fetch(`${settings.canvas_endpoint}/quote_fn`, {
+		method: "POST",
+		body: JSON.stringify({ fen }),
+		headers: {
+			"Content-Type": "application/json",
+			Accept: "application/json",
+		},
+	});
+	return Buffer.from(await check.arrayBuffer());
 }
 
 export function map_replacer(key: string, value: unknown) {

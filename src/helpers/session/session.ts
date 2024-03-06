@@ -116,6 +116,9 @@ export class SessionManager<T extends { players: string[] }, K extends { id: str
 	}
 }
 
+/**
+	* Dangerous due to XOR and number overflows.
+	*/
 function rehash(...ids: number[]): number {
 	let hash = 0;
 	for (const id of ids) {

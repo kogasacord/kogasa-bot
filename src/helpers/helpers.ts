@@ -8,7 +8,6 @@ import { getStatus } from "./ytdl/get_status.js";
 import { getInfo } from "./ytdl/info.js";
 import { uploadVideo } from "./ytdl/upload.js";
 
-import { quoteAttachment } from "./quote/attachment.js";
 import { quoteDefault } from "./quote/default.js";
 
 import { importDirectories, postProcessAliases } from "./misc/import.js";
@@ -51,7 +50,6 @@ const mod = {
 	getInfo,
 	uploadVideo,
 
-	quoteAttachment,
 	quoteDefault,
 
 	importDirectories,

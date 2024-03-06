@@ -30,7 +30,7 @@ export async function execute(
 		canvas: false,
 	};
 	doctor_results.ytdl = await pingServer(`${settings.ytdl_endpoint}/ping`);
-	doctor_results.canvas = await pingServer(`${settings.quote_endpoint}/ping`);
+	doctor_results.canvas = await pingServer(`${settings.canvas_endpoint}/ping`);
 	msg.reply(
 		"## Eirin's Diagnosis\n\n" +
 			`Latency to discord.com, refreshed every minute: \`${latency}ms\`. \n` +
