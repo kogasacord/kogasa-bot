@@ -1,7 +1,7 @@
 
 import path from "path";
 import * as url from "url";
-import { Client, Collection, Options } from "discord.js";
+import { Channel, Client, Collection, Options, User } from "discord.js";
 
 import {
 	ChatBuffer,
@@ -37,18 +37,33 @@ session.on("sessionTimeout", async (info) => {
 	if (!info) {
 		return;
 	}
-	const channel = await client.channels.fetch(info.channel_id);
-	const player1 = client.users.cache.get(info.players[0]) ?? (await client.users.fetch(info.players[0]));
-	const player2 = client.users.cache.get(info.players[1]) ?? (await client.users.fetch(info.players[1]));
-	if (channel?.isTextBased()) {
+	let channel: Channel | null = null;
+	let player1: User | null = null;
+	let player2: User | null = null;
+	try {
+		channel = await client.channels.fetch(info.channel_id);
+		player1 = client.users.cache.get(info.players[0]) ?? (await client.users.fetch(info.players[0]));
+		player2 = client.users.cache.get(info.players[1]) ?? (await client.users.fetch(info.players[1]));
+	} catch (error) {
+		console.log(error);
+	}
+	if (channel?.isTextBased() && player1 && player2) {
 		channel.send(`Session timed out for ${player1.displayName} and ${player2.displayName}`);
+		setTimeout(() => {
+			channel?.delete();
+		}, 10 * 1000);
 	}
 });
 session.on_invite("inviteTimeout", async (info) => {
 	if (!info || !info.recipient || !info.sender) {
 		return;
 	}
-	const channel = await client.channels.fetch(info.recipient.channel_id);
+	let channel: Channel | null = null;
+	try {
+		channel = await client.channels.fetch(info.recipient.channel_id);
+	} catch (error) {
+		console.log(error);
+	}
 	if (channel?.isTextBased()) {
 		channel.send(`${info.sender.name}'s invite for ${info.recipient.name} has expired.`);
 	}

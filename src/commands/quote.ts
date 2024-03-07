@@ -1,5 +1,5 @@
 import helpers from "@helpers/helpers.js";
-import { ChannelType, Client, GuildMember, Message, User } from "discord.js";
+import { Client, GuildChannel, GuildMember, Message, ThreadChannel, User } from "discord.js";
 
 export const name = "quote";
 export const aliases = ["q"];
@@ -7,8 +7,8 @@ export const cooldown = 25;
 export const channel = "GuildandThread";
 export const description =
 	"Reply to someone and capture a.. suspicious message.";
-export async function execute(client: Client, msg: Message, _args: string[]) {
-	if (msg.channel.type !== (ChannelType.GuildText || ChannelType.PublicThread)) return;
+export async function execute(client: Client, msg: Message<true>, _args: string[]) {
+	if (!(msg.channel instanceof GuildChannel || msg.channel instanceof ThreadChannel)) return;
 
 	const replied =
 		msg.channel.messages.cache.get(msg.reference!.messageId!) ??

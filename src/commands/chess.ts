@@ -11,7 +11,7 @@ const checker = new Process("./media/engines/chess-sanity-check.exe");
 
 export const name = "chess";
 export const aliases = ["chess"];
-export const channel = "Guild";
+export const channel = "GuildandThread";
 export const cooldown = 25;
 export const description = "Do a chess match.";
 export async function execute(client: Client, msg: Message<true>, args: string[], ext: ExternalDependencies) {
@@ -45,6 +45,7 @@ export async function execute(client: Client, msg: Message<true>, args: string[]
 				msg.reply("*They* don't know how to play chess.");
 				break;
 			}
+
 
 			const users_in_session = ext.session.getUsersInSession([author.id, replied_user.id]);
 			for (const user_in_session of users_in_session) {
@@ -94,14 +95,22 @@ export async function execute(client: Client, msg: Message<true>, args: string[]
 		}
 		case "accept": {
 			const inv_res = ext.session.acceptInvite(author.id, 0);
+			//
+			// make chess games run on threads.
+			// make invites run on channels or threads.
+			//
+			// create a thread after the invite gets accepted.
 			switch (inv_res.msg) {
 				case "AcceptedInvite": {
+					const thread = await msg.startThread({
+						name: `${inv_res.payload!.sender.name} vs ${inv_res.payload!.reciever.name}`
+					});
 					const fen = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
 					ext.session.createSession({
 						players: [inv_res.payload!.sender.id, inv_res.payload!.reciever.id],
 						turn_index: 0,
 						fen,
-						channel_id: msg.channelId,
+						channel_id: thread.id,
 						moves: [],
 					}, 5 * 60 * 1000);
 					const image = await createChessImage(fen);
@@ -128,10 +137,22 @@ export async function execute(client: Client, msg: Message<true>, args: string[]
 		}
 		case "move": {
 			const sesh = ext.session.getSessionWithUser(author.id);
+			if (sesh?.session.channel_id !== msg.channelId) {
+				console.log("not not");
+				return;
+			}
+
 			if (sesh) {
 				const move = args.at(1);
 				if (!move) {
 					msg.reply("You must make a move! e.g: `e2e4 - movement, e2e4Q - promotion`");
+					return;
+				}
+				const { threads } = await msg.guild.channels.fetchActiveThreads();
+				const thread = threads.find((_, key) => key === sesh.session.channel_id);
+				if (!thread) {
+					// if someone deleted the thread...
+					ext.session.deleteSession(sesh.hash_id);
 					return;
 				}
 
@@ -154,13 +175,13 @@ export async function execute(client: Client, msg: Message<true>, args: string[]
 							msg.reply(`${player.displayName} moved.`);
 							switch (status) {
 								case "res white checkmate":
-									msg.reply("White has been checkmated.");
+									thread.send("White has been checkmated.");
 									break;
 								case "res black checkmate":
-									msg.reply("Black has been checkmated.");
+									thread.send("Black has been checkmated.");
 									break;
 								case "res stalemate":
-									msg.reply("Stalemate!");
+									thread.send("Stalemate!");
 									break;
 								case "res ongoing": {
 									sesh.session.turn_index = future_turn_index;
@@ -173,16 +194,16 @@ export async function execute(client: Client, msg: Message<true>, args: string[]
 									const fen_string = fen.replace("fen ", "");
 
 									const img = await createChessImage(fen_string);
-									msg.reply({ content: `It's now ${future_player.displayName}'s turn.\nTime left: <t:${unix_time_left}:R>`, files: [{ attachment: img }] });
+									thread.send({ content: `It's now ${future_player.displayName}'s turn.\nTime left: <t:${unix_time_left}:R>`, files: [{ attachment: img }] });
 									break;
 								}
 							}
 							break;
 						case "move illegal":
-							msg.reply("That's an illegal move.");
+							thread.send("That's an illegal move.");
 							break;
 						case "move unknown":
-							msg.reply("I don't know what that move is...");
+							thread.send("I don't know what that move is...");
 							break;
 					}
 				}
@@ -194,7 +215,9 @@ export async function execute(client: Client, msg: Message<true>, args: string[]
 		case "quit": {
 			const sesh = ext.session.getSessionWithUser(author.id);
 			if (sesh) {
-				msg.reply(`Destroyed session with "${sesh.session.players[0]}" and "${sesh.session.players[1]}"`);
+				const player1 = client.users.cache.get(sesh.session.players[0]) ?? (await client.users.fetch(sesh.session.players[0]));
+				const player2 = client.users.cache.get(sesh.session.players[1]) ?? (await client.users.fetch(sesh.session.players[1]));
+				msg.reply(`Destroyed session with "${player1.displayName}" and "${player2.displayName}"`);
 				ext.session.deleteSession(sesh.hash_id);
 			} else {
 				msg.reply("You don't have a session.");
