@@ -4,7 +4,7 @@ import { Client, Message, EmbedBuilder } from "discord.js";
 export const name = "help";
 export const cooldown = 20;
 export const special = true;
-export const channel = "Guild";
+export const channel = "GuildandThread";
 export const description = "Check what I can do.";
 export const noscope = true;
 export async function execute(

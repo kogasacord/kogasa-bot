@@ -63,6 +63,7 @@ export async function execute(client: Client, msg: Message<true>, args: string[]
 				{ id: replied_user.id, name: replied_user.displayName, channel_id: msg.channel.id },
 				30 * 1000,
 			);
+			// <t:1709783400:R>
 
 			switch (inv_res.msg) {
 				case "AlreadySentInvite":
@@ -100,9 +101,9 @@ export async function execute(client: Client, msg: Message<true>, args: string[]
 						players: [inv_res.payload!.sender.id, inv_res.payload!.reciever.id],
 						turn_index: 0,
 						fen,
-						channel_id: msg.channel.id,
+						channel_id: msg.channelId,
 						moves: [],
-					}, 1 * 60 * 1000);
+					}, 5 * 60 * 1000);
 					const image = await createChessImage(fen);
 					msg.reply({ content: `Accepted invite, <@${inv_res.payload!.sender.id}>'s turn.`, files: [{ attachment: image }] });
 					break;
@@ -144,12 +145,13 @@ export async function execute(client: Client, msg: Message<true>, args: string[]
 
 					const move_list = `${sesh.session.moves.length > 0 ? `moves ${sesh.session.moves.join(" ")}` : ""}`;
 
-					const command_res = await checker.sendCommand(`fen ${sesh.session.fen} ${move_list} verifymove ${move}`, /res/g);
-					const [move_status, status] = command_res.split("\n");
+
+					const command_res = await checker.sendCommand(`fen ${sesh.session.fen} ${move_list} verifymove ${move} movestofen`, /res/g);
+					const [move_status, status, _] = command_res.split("\n");
 
 					switch (move_status) {
 						case "move legal":
-							msg.reply(`${player.displayName} moved. It's now ${future_player.displayName}'s turn. `);
+							msg.reply(`${player.displayName} moved.`);
 							switch (status) {
 								case "res white checkmate":
 									msg.reply("White has been checkmated.");
@@ -160,11 +162,20 @@ export async function execute(client: Client, msg: Message<true>, args: string[]
 								case "res stalemate":
 									msg.reply("Stalemate!");
 									break;
-								case "res ongoing":
+								case "res ongoing": {
 									sesh.session.turn_index = future_turn_index;
 									sesh.session.moves.push(move);
-									msg.reply(`Ongoing. fen ${sesh.session.fen}, moves ${sesh.session.moves.join(" ")}`);
+
+									const unix_time_left = ext.session.getTimeLeft(sesh.hash_id);
+
+									const command_res = await checker.sendCommand(`fen ${sesh.session.fen} moves ${sesh.session.moves.join(" ")} movestofen`, /res/g);
+									const [_, fen] = command_res.split("\n");
+									const fen_string = fen.replace("fen ", "");
+
+									const img = await createChessImage(fen_string);
+									msg.reply({ content: `It's now ${future_player.displayName}'s turn.\nTime left: <t:${unix_time_left}:R>`, files: [{ attachment: img }] });
 									break;
+								}
 							}
 							break;
 						case "move illegal":
@@ -201,7 +212,7 @@ export async function execute(client: Client, msg: Message<true>, args: string[]
 }
 
 export async function createChessImage(fen: string) {
-	const check = await fetch(`${settings.canvas_endpoint}/quote_fn`, {
+	const check = await fetch(`${settings.canvas_endpoint}/chess`, {
 		method: "POST",
 		body: JSON.stringify({ fen }),
 		headers: {

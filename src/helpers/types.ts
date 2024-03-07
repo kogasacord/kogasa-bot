@@ -13,7 +13,7 @@ export type CommandModule = {
 		args: string[],
 		deps: ExternalDependencies
 	) => void;
-	channel: "DMs" | "Guild";
+	channel: "DMs" | "Guild" | "GuildandThread";
 
 	dyn_cooldown?: (args: string[]) => Promise<number>;
 	aliases?: string[];

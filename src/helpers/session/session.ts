@@ -24,7 +24,7 @@ export interface Invite {
 	* Manages the lifecycle of a session.
 	*/
 export class SessionManager<T extends { players: string[] }, K extends { id: string }> {
-	private sessions = new Map<string, T>();
+	private sessions = new Map<string, T & { time_created: Date, time_end: Date }>();
 	private users_in_session = new Map<string, string>; // user: session
 	private event_emitter = new events.EventEmitter();
 	
@@ -65,10 +65,13 @@ export class SessionManager<T extends { players: string[] }, K extends { id: str
 		// check for NaN values.
 		// to create a unique hash.
 		const hash = rehash(...players.map(c => Number(c))).toString();
-		this.sessions.set(hash.toString(), session_info);
 		for (const player of session_info.players) {
 			this.users_in_session.set(player, hash);
 		}
+
+		const date = new Date();
+		const end_date = new Date(date.getTime() + ms_expiry);
+
 		setTimeout(() => {
 			const sesh = structuredClone(session_info);
 			if (this.sessions.delete(hash)) {
@@ -78,8 +81,21 @@ export class SessionManager<T extends { players: string[] }, K extends { id: str
 				this.event_emitter.emit("sessionTimeout", sesh);
 			}
 		}, ms_expiry);
+		// somehow get unix time for <t:1709783400:R> discord timestamp
+		// so we prolly need Date.now() to get the start and subtract the getTimeLeft fn
+
+		this.sessions.set(hash.toString(), { time_created: date, time_end: end_date, ...session_info });
 
 		return {msg: "CreatedSession", payload: {hash, session_info}};
+	}
+
+	/**
+		* returns unix timestamp
+		*/
+	getTimeLeft(session_id: string): number {
+		const session = this.sessions.get(session_id)!;
+		// prolly works now.
+		return session.time_end.getTime() - (session.time_created.getTime() - new Date().getTime());
 	}
 
 	deleteSession(session_id: string) {

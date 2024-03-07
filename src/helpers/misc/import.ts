@@ -33,7 +33,7 @@ function recheck_fields(command: CommandModule) {
 		if (command.name === undefined) {
 			throw new Error("Name missing for a command..");
 		}
-		if (command.channel !== "DMs" && command.channel !== "Guild") {
+		if ( command.channel !== "DMs" && command.channel !== "Guild" && command.channel !== "GuildandThread") {
 			throw new Error(`Channel missing or mispelled for ${command.name}, "${command.channel}"`);
 		}
 		if (command.cooldown === undefined) {

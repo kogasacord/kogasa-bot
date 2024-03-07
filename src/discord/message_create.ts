@@ -1,4 +1,4 @@
-import { Client, Collection, DMChannel, GuildChannel, Message } from "discord.js";
+import { Client, Collection, DMChannel, GuildChannel, Message, ThreadChannel } from "discord.js";
 import { pushMessageToBuffer } from "@helpers/buffer/buffer.js";
 import { separateCommands } from "@helpers/parser/parser.js";
 import {
@@ -30,6 +30,7 @@ export async function messageCreate(
 	deps: DiscordExternalDependencies,
 	prefix: string,
 ) {
+	// make it support threads.
 	if (msg.author.bot) {
 		return;
 	}
@@ -74,6 +75,7 @@ export async function messageCreate(
 		if (
 			(command_module.channel === "DMs" && msg.channel instanceof DMChannel)
 			|| (command_module.channel === "Guild" && msg.channel instanceof GuildChannel)
+			|| (command_module.channel === "GuildandThread" && (msg.channel instanceof GuildChannel || msg.channel instanceof ThreadChannel))
 		) {
 			setCooldown(user_cooldowns, command_module, msg.author.id, args);
 			const ext: ExternalDependencies = {
