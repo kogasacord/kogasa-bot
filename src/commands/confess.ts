@@ -1,9 +1,10 @@
 import {ExternalDependencies} from "@helpers/types";
 import { Client, Message } from "discord.js";
+import { ChannelScope } from "@helpers/types";
 
 export const name = "confess";
 export const aliases = [];
-export const channel = "DMs";
+export const channel: ChannelScope[] = ["DMs"];
 export const cooldown = 25;
 export const description = "Secretly send a message. [in progress]";
 export async function execute(client: Client, msg: Message, _args: string[], _ext: ExternalDependencies) {

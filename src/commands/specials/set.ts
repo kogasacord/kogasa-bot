@@ -1,11 +1,12 @@
 
 import { ExternalDependencies } from "@helpers/helpers.js";
+import {ChannelScope} from "@helpers/types";
 import { Client, GuildChannel, Message } from "discord.js";
 
 export const name = "set";
 export const cooldown = 10;
 export const special = true;
-export const channel = "Guild";
+export const channel: ChannelScope[] = ["Guild"];
 export const description = "Settings.";
 export const noscope = true;
 export async function execute(

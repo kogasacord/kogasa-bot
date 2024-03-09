@@ -5,6 +5,7 @@ import { CalcError } from "@helpers/calc/error.js";
 import { RecursiveDescentParser } from "@helpers/calc/parser.js";
 
 import { Client, Message } from "discord.js";
+import { ChannelScope } from "@helpers/types";
 
 const interpreter = new Interpreter();
 const printer = new ASTPrinter();
@@ -12,7 +13,7 @@ const printer = new ASTPrinter();
 export const name = "calc";
 export const aliases = ["calc"];
 export const cooldown = 5;
-export const channel = "Guild";
+export const channel: ChannelScope[] = ["Guild"];
 export const description = "Basic calculator. Programming language soon.";
 export async function execute(_client: Client, msg: Message, args: string[]) {
 	const input = args.join(" ");

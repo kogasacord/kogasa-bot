@@ -1,9 +1,10 @@
 import helpers from "@helpers/helpers.js";
 import { Client, EmbedBuilder, Message } from "discord.js";
+import { ChannelScope } from "@helpers/types";
 
 export const name = "ytdlf";
 export const cooldown = 20;
-export const channel = "Guild";
+export const channel: ChannelScope[] = ["Guild"];
 export const description = "Find formats for a specific YouTube video.";
 export async function execute(client: Client, msg: Message, args: string[]) {
 	const requested_link = args[0];

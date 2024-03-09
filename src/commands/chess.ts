@@ -2,8 +2,8 @@ import fetch from "node-fetch";
 import settings from "@root/settings.json" assert { type: "json" };
 
 import {Process} from "@helpers/chess/validator.js";
-import {ExternalDependencies} from "@helpers/types";
-import { Client, Message } from "discord.js";
+import {ChannelScope, ExternalDependencies} from "@helpers/types";
+import { ChannelType, Client, Message, PermissionsBitField } from "discord.js";
 
 
 // const uci = new ChessEngineInterface("./media/engines/alice-engine.exe");
@@ -11,13 +11,20 @@ const checker = new Process("./media/engines/chess-sanity-check.exe");
 
 export const name = "chess";
 export const aliases = ["chess"];
-export const channel = "GuildandThread";
+export const channel: ChannelScope[] = ["Guild", "Thread"];
 export const cooldown = 25;
 export const description = "Do a chess match.";
-export async function execute(client: Client, msg: Message<true>, args: string[], ext: ExternalDependencies) {
+export async function execute(client: Client<true>, msg: Message<true>, args: string[], ext: ExternalDependencies) {
 	const command = args[0];
 	const author = msg.author;
 	const replied_user = msg.mentions.repliedUser;
+	const guild = await client.guilds.fetch(msg.guildId);
+	const member = await guild.members.fetch(msg.author.id);
+	const has_thread_perms = member.permissions.has([PermissionsBitField.Flags.CreatePublicThreads, PermissionsBitField.Flags.SendMessagesInThreads]);
+	if (!has_thread_perms) {
+		msg.reply("I need the `CreatePublicThreads` and `SendMessagesInThreads` permission.");
+		return;
+	}
 
 	switch (command) {
 		case "help":
@@ -29,6 +36,10 @@ export async function execute(client: Client, msg: Message<true>, args: string[]
 			);
 			break;
 		case "play": {
+			if (msg.channel.type !== ChannelType.GuildText) {
+				msg.reply("Playing is only allowed in channels.");
+				return;
+			}
 			if (!replied_user) {
 				msg.reply("Reply to someone to invite them.");
 				break;
@@ -64,7 +75,6 @@ export async function execute(client: Client, msg: Message<true>, args: string[]
 				{ id: replied_user.id, name: replied_user.displayName, channel_id: msg.channel.id },
 				30 * 1000,
 			);
-			// <t:1709783400:R>
 
 			switch (inv_res.msg) {
 				case "AlreadySentInvite":
@@ -94,27 +104,37 @@ export async function execute(client: Client, msg: Message<true>, args: string[]
 			break;
 		}
 		case "accept": {
+			if (msg.channel.type !== ChannelType.GuildText) {
+				msg.reply("Accepting invites is only allowed in channels.");
+				return;
+			}
 			const inv_res = ext.session.acceptInvite(author.id, 0);
 			//
 			// make chess games run on threads.
 			// make invites run on channels or threads.
 			//
 			// create a thread after the invite gets accepted.
+			//
+			// enum aaa { AcceptedInvite(sender, reciever) }
 			switch (inv_res.msg) {
 				case "AcceptedInvite": {
 					const thread = await msg.startThread({
 						name: `${inv_res.payload!.sender.name} vs ${inv_res.payload!.reciever.name}`
 					});
+					const time = 5 * 60 * 1000;
 					const fen = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
 					ext.session.createSession({
-						players: [inv_res.payload!.sender.id, inv_res.payload!.reciever.id],
+						players: [
+							{ id: inv_res.payload!.sender.id, end_date: new Date(new Date().getTime() + (time / 2)), offset: 0 }, 
+							{ id: inv_res.payload!.reciever.id, end_date: new Date(new Date().getTime() + (time / 2)), offset: 0 }
+						],
 						turn_index: 0,
 						fen,
 						channel_id: thread.id,
 						moves: [],
-					}, 5 * 60 * 1000);
+					}, time);
 					const image = await createChessImage(fen);
-					msg.reply({ content: `Accepted invite, <@${inv_res.payload!.sender.id}>'s turn.`, files: [{ attachment: image }] });
+					thread.send({ content: `Accepted invite, <@${inv_res.payload!.sender.id}>'s turn.`, files: [{ attachment: image }] });
 					break;
 				}
 				case "NoInvites":
@@ -138,7 +158,6 @@ export async function execute(client: Client, msg: Message<true>, args: string[]
 		case "move": {
 			const sesh = ext.session.getSessionWithUser(author.id);
 			if (sesh?.session.channel_id !== msg.channelId) {
-				console.log("not not");
 				return;
 			}
 
@@ -156,16 +175,22 @@ export async function execute(client: Client, msg: Message<true>, args: string[]
 					return;
 				}
 
-				const turn_id = sesh.session.players[sesh.session.turn_index];
-				if (turn_id === author.id) {
-					const future_turn_index = (sesh.session.turn_index + 1) % sesh.session.players.length; // wrapping 0 - 10 (10 exclusive)
-					const future_turn_id = sesh.session.players[future_turn_index];
+				const turn = sesh.session.players.at(sesh.session.turn_index)!;
+				if (turn.id === author.id) {
+					const previous_turn_index = (sesh.session.turn_index % sesh.session.players.length + sesh.session.players.length) % sesh.session.players.length;
+					const previous_turn = sesh.session.players.at(previous_turn_index)!;
+					const next_turn_index = (sesh.session.turn_index + 1) % sesh.session.players.length; // wrapping 0 - 10 (10 exclusive)
+					const next_turn = sesh.session.players.at(next_turn_index)!;
 
-					const player = await client.users.fetch(turn_id);
-					const future_player = await client.users.fetch(future_turn_id);
+					// #kogasa-dev-logs for this.
+					const time = sesh.session.time_created.getTime() + turn.offset;
+					const time_remaining = turn.end_date.getTime() - time;
+					previous_turn.offset;
+
+					const player = await client.users.fetch(turn.id);
+					const next_player = await client.users.fetch(next_turn.id);
 
 					const move_list = `${sesh.session.moves.length > 0 ? `moves ${sesh.session.moves.join(" ")}` : ""}`;
-
 
 					const command_res = await checker.sendCommand(`fen ${sesh.session.fen} ${move_list} verifymove ${move} movestofen`, /res/g);
 					const [move_status, status, _] = command_res.split("\n");
@@ -176,15 +201,18 @@ export async function execute(client: Client, msg: Message<true>, args: string[]
 							switch (status) {
 								case "res white checkmate":
 									thread.send("White has been checkmated.");
+									ext.session.deleteSession(sesh.hash_id);
 									break;
 								case "res black checkmate":
 									thread.send("Black has been checkmated.");
+									ext.session.deleteSession(sesh.hash_id);
 									break;
 								case "res stalemate":
 									thread.send("Stalemate!");
+									ext.session.deleteSession(sesh.hash_id);
 									break;
 								case "res ongoing": {
-									sesh.session.turn_index = future_turn_index;
+									sesh.session.turn_index = next_turn_index;
 									sesh.session.moves.push(move);
 
 									const unix_time_left = ext.session.getTimeLeft(sesh.hash_id);
@@ -194,7 +222,10 @@ export async function execute(client: Client, msg: Message<true>, args: string[]
 									const fen_string = fen.replace("fen ", "");
 
 									const img = await createChessImage(fen_string);
-									thread.send({ content: `It's now ${future_player.displayName}'s turn.\nTime left: <t:${unix_time_left}:R>`, files: [{ attachment: img }] });
+									thread.send({ 
+										content: `It's now ${next_player.displayName}'s turn.\nSession time left: <t:${unix_time_left}:R>, time left: <t:${unix_turn_time_remaining}:R>`, 
+										files: [{ attachment: img }] 
+									});
 									break;
 								}
 							}
@@ -215,8 +246,8 @@ export async function execute(client: Client, msg: Message<true>, args: string[]
 		case "quit": {
 			const sesh = ext.session.getSessionWithUser(author.id);
 			if (sesh) {
-				const player1 = client.users.cache.get(sesh.session.players[0]) ?? (await client.users.fetch(sesh.session.players[0]));
-				const player2 = client.users.cache.get(sesh.session.players[1]) ?? (await client.users.fetch(sesh.session.players[1]));
+				const player1 = client.users.cache.get(sesh.session.players[0].id) ?? (await client.users.fetch(sesh.session.players[0].id));
+				const player2 = client.users.cache.get(sesh.session.players[1].id) ?? (await client.users.fetch(sesh.session.players[1].id));
 				msg.reply(`Destroyed session with "${player1.displayName}" and "${player2.displayName}"`);
 				ext.session.deleteSession(sesh.hash_id);
 			} else {

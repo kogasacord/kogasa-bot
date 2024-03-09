@@ -1,9 +1,10 @@
 
 import { Client, Message } from "discord.js";
+import { ChannelScope } from "@helpers/types";
 
 export const name = "dm";
 export const aliases = [];
-export const channel = "Guild";
+export const channel: ChannelScope[] = ["Guild"];
 export const cooldown = 120;
 export const description = "Enable DM-only commands.";
 export async function execute(_client: Client, msg: Message) {

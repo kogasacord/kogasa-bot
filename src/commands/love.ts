@@ -1,10 +1,11 @@
 
 import { Client, Message, User } from "discord.js";
+import { ChannelScope } from "@helpers/types";
 
 export const name = "love";
 export const aliases = ["love"];
 export const cooldown = 5;
-export const channel = "Guild";
+export const channel: ChannelScope[] = ["Guild"];
 export const description = "Calculate your love~\n`??love [any number of mentions]`";
 export async function execute(client: Client<true>, msg: Message, args: string[]) {
 	const command = args[0];

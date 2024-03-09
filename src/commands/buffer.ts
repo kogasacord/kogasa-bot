@@ -1,12 +1,13 @@
 import { Client, EmbedBuilder, Message } from "discord.js";
 import { ChatBufferMessage, ExternalDependencies } from "@helpers/types.js";
+import { ChannelScope } from "@helpers/types.js";
 
 type Filter = "delete" | "edit" | "normal" | "none";
 
 export const name = "buffer";
 export const aliases = ["back", "backtrack", "b"];
 export const cooldown = 20;
-export const channel = "Guild";
+export const channel: ChannelScope[] = ["Guild", "Thread"];
 export const description =
 	"Backtrack a channel, a command better than Small's implementation. `??buffer (delete | edit | normal | none)`";
 export async function execute(

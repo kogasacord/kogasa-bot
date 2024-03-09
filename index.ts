@@ -42,8 +42,8 @@ session.on("sessionTimeout", async (info) => {
 	let player2: User | null = null;
 	try {
 		channel = await client.channels.fetch(info.channel_id);
-		player1 = client.users.cache.get(info.players[0]) ?? (await client.users.fetch(info.players[0]));
-		player2 = client.users.cache.get(info.players[1]) ?? (await client.users.fetch(info.players[1]));
+		player1 = client.users.cache.get(info.players[0].id) ?? (await client.users.fetch(info.players[0].id));
+		player2 = client.users.cache.get(info.players[1].id) ?? (await client.users.fetch(info.players[1].id));
 	} catch (error) {
 		console.log(error);
 	}

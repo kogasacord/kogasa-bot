@@ -1,12 +1,13 @@
 import humanize from "humanize-duration";
 import { Client, Message } from "discord.js";
 import helpers, { DownloadResponse, InfoResponse } from "@helpers/helpers.js";
+import { ChannelScope } from "@helpers/types";
 
 const processing_users: string[] = [];
 
 export const name = "ytdl";
 export const cooldown = 30;
-export const channel = "Guild";
+export const channel: ChannelScope[] = ["Guild"];
 export const description = "Download videos from YouTube. Might be illegal.";
 export async function execute(client: Client, msg: Message, args: string[]) {
 	const index_of_processing_user = processing_users.findIndex(

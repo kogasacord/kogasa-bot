@@ -1,10 +1,11 @@
 import { Client, Message } from "discord.js";
 import { ExternalDependencies, Tier, Website } from "@helpers/types.js";
+import { ChannelScope } from "@helpers/types.js";
 
 export const name = "randomwebinfo";
 export const aliases = ["rwebinfo"];
 export const cooldown = 15;
-export const channel = "Guild";
+export const channel: ChannelScope[] = ["Guild"];
 export const description =
 	"Information about randomweb. It will come with tracking your collected websites soon.";
 export async function execute(

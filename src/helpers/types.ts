@@ -3,6 +3,7 @@ import { Client, Message, Collection } from "discord.js";
 import settings from "@root/settings.json" assert { type: "json" };
 import { SessionManager, Session, Invite } from "@helpers/session/session.js";
 
+export type ChannelScope = "DMs" | "Guild" | "Thread";
 export type CommandModule = {
 	name: string;
 	description: string;
@@ -13,7 +14,7 @@ export type CommandModule = {
 		args: string[],
 		deps: ExternalDependencies
 	) => void;
-	channel: "DMs" | "Guild" | "GuildandThread";
+	channel: ChannelScope[];
 
 	dyn_cooldown?: (args: string[]) => Promise<number>;
 	aliases?: string[];

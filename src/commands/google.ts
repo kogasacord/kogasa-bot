@@ -1,10 +1,11 @@
 import { ChannelType, Client, Message } from "discord.js";
 import google from "googlethis";
+import { ChannelScope } from "@helpers/types";
 
 export const name = "google";
 export const cooldown = 15;
 export const description = "Google.";
-export const channel = "Guild";
+export const channel: ChannelScope[] = ["Guild"];
 export async function execute(client: Client, msg: Message, args: string[]) {
 	if (msg.channel.type !== ChannelType.GuildText) return;
 

@@ -7,12 +7,17 @@ type SessionEmitters = "sessionTimeout";
 export type SessionMessages = "AlreadyInSession" | "CreatedSession";
 export type SessionResult<K extends SessionMessages, P = NonNullable<unknown>> = { msg: K, payload: P };
 
+export interface Player {
+	id: string,
+	offset: number,
+	end_date: Date,
+}
 export interface Session {
 	channel_id: string, 
 	fen: string, 
 	moves: string[], 
 	turn_index: number,
-	players: string[]
+	players: Player[],
 }
 export interface Invite {
 	id: string,
@@ -23,7 +28,7 @@ export interface Invite {
 /**
 	* Manages the lifecycle of a session.
 	*/
-export class SessionManager<T extends { players: string[] }, K extends { id: string }> {
+export class SessionManager<T extends { players: { id: string }[] }, K extends { id: string }> {
 	private sessions = new Map<string, T & { time_created: Date, time_end: Date }>();
 	private users_in_session = new Map<string, string>; // user: session
 	private event_emitter = new events.EventEmitter();
@@ -47,7 +52,7 @@ export class SessionManager<T extends { players: string[] }, K extends { id: str
 	/**
 		* For getting the session with the user so you can modify it.
 		*/
-	getSessionWithUser(player: string): { hash_id: string, session: T } | undefined {
+	getSessionWithUser(player: string): { hash_id: string, session: T & { time_created: Date, time_end: Date } } | undefined {
 		const session_id = this.users_in_session.get(player);
 		if (!session_id) {
 			return undefined;
@@ -66,7 +71,7 @@ export class SessionManager<T extends { players: string[] }, K extends { id: str
 		// to create a unique hash.
 		const hash = rehash(...players.map(c => Number(c))).toString();
 		for (const player of session_info.players) {
-			this.users_in_session.set(player, hash);
+			this.users_in_session.set(player.id, hash);
 		}
 
 		const date = new Date();
@@ -76,7 +81,7 @@ export class SessionManager<T extends { players: string[] }, K extends { id: str
 			const sesh = structuredClone(session_info);
 			if (this.sessions.delete(hash)) {
 				for (const player of sesh.players) {
-					this.users_in_session.delete(player);
+					this.users_in_session.delete(player.id);
 				}
 				this.event_emitter.emit("sessionTimeout", sesh);
 			}
@@ -95,14 +100,14 @@ export class SessionManager<T extends { players: string[] }, K extends { id: str
 	getTimeLeft(session_id: string): number {
 		const session = this.sessions.get(session_id)!;
 		// prolly works now.
-		return session.time_end.getTime() - (session.time_created.getTime() - new Date().getTime());
+		return Math.floor((session.time_end.getTime() - (session.time_created.getTime() - new Date().getTime())) / 1000);
 	}
 
 	deleteSession(session_id: string) {
 		const session = structuredClone(this.sessions.get(session_id));
 		if (session && this.sessions.delete(session_id)) {
 				for (const player of session.players) {
-					this.users_in_session.delete(player);
+					this.users_in_session.delete(player.id);
 				}
 				this.event_emitter.emit("sessionTimeout", session);
 		}

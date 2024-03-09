@@ -1,6 +1,7 @@
 import { Client, Message } from "discord.js";
 import helpers, { ExternalDependencies } from "@helpers/helpers.js";
 import settings from "@root/settings.json" assert { type: "json" };
+import { ChannelScope } from "@helpers/types";
 
 let latency = await getAverageLatency("discord.com", 3);
 setInterval(async () => {
@@ -14,7 +15,7 @@ type DoctorResults = {
 
 export const name = "doctor";
 export const aliases = ["eirinhelpme"];
-export const channel = "Guild";
+export const channel: ChannelScope[] = ["Guild"];
 export const cooldown = 20;
 export const special = true;
 export const description = "Send me to Eirin and let them check my health.";

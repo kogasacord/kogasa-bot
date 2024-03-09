@@ -4,12 +4,13 @@ import { Client, Message } from "discord.js";
 
 import config from "@root/config.json" assert { type: "json" };
 import { checkIfLink } from "@helpers/misc/link.js";
+import { ChannelScope } from "@helpers/types";
 
 const sauce = sagiri(config.saucenao_token, { results: 2 });
 
 export const name = "sauce";
 export const cooldown = 60;
-export const channel = "Guild";
+export const channel: ChannelScope[] = ["Guild", "Thread"];
 export const description =
 	"Find the sauce. Reply or send a link/attachment to me.";
 export async function execute(client: Client, msg: Message, args: string[]) {

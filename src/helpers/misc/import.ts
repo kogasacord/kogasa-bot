@@ -2,7 +2,7 @@ import * as url from "url";
 import path from "path";
 
 import { readdirSync } from "fs";
-import { CommandModule } from "../types.js";
+import { ChannelScope, CommandModule } from "../types.js";
 import { Collection } from "discord.js";
 
 export async function importDirectories(
@@ -30,21 +30,22 @@ export async function importDirectories(
 }
 
 function recheck_fields(command: CommandModule) {
-		if (command.name === undefined) {
-			throw new Error("Name missing for a command..");
-		}
-		if ( command.channel !== "DMs" && command.channel !== "Guild" && command.channel !== "GuildandThread") {
-			throw new Error(`Channel missing or mispelled for ${command.name}, "${command.channel}"`);
-		}
-		if (command.cooldown === undefined) {
-			throw new Error(`Cooldown missing for ${command.name}`);
-		}
-		if (command.description === undefined) {
-			throw new Error(`Description missing for ${command.name}`);
-		}
-		if (command.execute === undefined) {
-			throw new Error(`Execute function missing for ${command.name}`);
-		}
+	const dm: ChannelScope[] = ["DMs", "Guild", "Thread"];
+	if (command.name === undefined) {
+		throw new Error("Name missing for a command..");
+	}
+	if (!command.channel.every(v => dm.includes(v))) {
+		throw new Error(`Channel missing or mispelled for ${command.name}, "${command.channel}"`);
+	}
+	if (command.cooldown === undefined) {
+		throw new Error(`Cooldown missing for ${command.name}`);
+	}
+	if (command.description === undefined) {
+		throw new Error(`Description missing for ${command.name}`);
+	}
+	if (command.execute === undefined) {
+		throw new Error(`Execute function missing for ${command.name}`);
+	}
 }
 
 /*

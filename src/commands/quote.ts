@@ -1,10 +1,11 @@
 import helpers from "@helpers/helpers.js";
 import { Client, GuildChannel, GuildMember, Message, ThreadChannel, User } from "discord.js";
+import { ChannelScope } from "@helpers/types";
 
 export const name = "quote";
 export const aliases = ["q"];
 export const cooldown = 25;
-export const channel = "GuildandThread";
+export const channel: ChannelScope[] = ["Guild", "Thread"];
 export const description =
 	"Reply to someone and capture a.. suspicious message.";
 export async function execute(client: Client, msg: Message<true>, _args: string[]) {
