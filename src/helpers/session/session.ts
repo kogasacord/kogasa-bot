@@ -10,7 +10,7 @@ export type SessionResult<K extends SessionMessages, P = NonNullable<unknown>> =
 export interface Player {
 	id: string,
 	offset: number,
-	end_date: Date | null,
+	end_date: Date,
 }
 export interface Session {
 	channel_id: string, 
