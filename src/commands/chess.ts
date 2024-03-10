@@ -125,8 +125,8 @@ export async function execute(client: Client<true>, msg: Message<true>, args: st
 					const fen = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
 					ext.session.createSession({
 						players: [
-							{ id: inv_res.payload!.sender.id, end_date: new Date(new Date().getTime() + (time / 2)), offset: 0 }, 
-							{ id: inv_res.payload!.reciever.id, end_date: new Date(new Date().getTime() + (time / 2)), offset: 0 }
+							{ id: inv_res.payload!.sender.id, end_date: new Date(new Date().getTime() + time), offset: 0 }, 
+							{ id: inv_res.payload!.reciever.id, end_date: null, offset: 0 }
 						],
 						turn_index: 0,
 						fen,
@@ -184,7 +184,10 @@ export async function execute(client: Client<true>, msg: Message<true>, args: st
 
 					// #kogasa-dev-logs for this.
 					const time = sesh.session.time_created.getTime() + turn.offset;
-					const time_remaining = turn.end_date.getTime() - time;
+					let time_remaining = 0;
+					if (turn.end_date) {
+						time_remaining = turn.end_date.getTime() - time;
+					}
 					previous_turn.offset;
 
 					const player = await client.users.fetch(turn.id);
@@ -212,11 +215,16 @@ export async function execute(client: Client<true>, msg: Message<true>, args: st
 									ext.session.deleteSession(sesh.hash_id);
 									break;
 								case "res ongoing": {
+									const now = new Date().getTime();
+									turn.end_date = new Date(now + time_remaining);
+									next_turn.end_date = new Date(now + time);
+
 									sesh.session.turn_index = next_turn_index;
 									sesh.session.moves.push(move);
 
 									const unix_time_left = ext.session.getTimeLeft(sesh.hash_id);
-
+									const unix_turn_time_remaining = Math.floor(next_turn.end_date.getTime() / 1000);
+								
 									const command_res = await checker.sendCommand(`fen ${sesh.session.fen} moves ${sesh.session.moves.join(" ")} movestofen`, /res/g);
 									const [_, fen] = command_res.split("\n");
 									const fen_string = fen.replace("fen ", "");
