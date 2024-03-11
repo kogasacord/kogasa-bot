@@ -23,15 +23,18 @@ export class Process {
 				dataBuffer += data.toString();
 				if (endSignal.test(dataBuffer)) {
 					this.process.stdout.off("data", dataListener);
+					this.process.stdout.off("error", errorListener);
 					resolve(dataBuffer);
 				}
 			};
+			const errorListener = (err:Error) => {
+				this.process.stdout.off("data", dataListener);
+				this.process.stdout.off("error", errorListener);
+				reject(err);
+			};
 
 			this.process.stdout.on("data", dataListener);
-			this.process.stdout.once("error", (err) => {
-				this.process.stdout.off("data", dataListener);
-				reject(err);
-			});
+			this.process.stdout.once("error", errorListener);
 		});
 	}
 }

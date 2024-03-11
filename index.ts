@@ -38,17 +38,16 @@ session.on("sessionTimeout", async (info) => {
 		return;
 	}
 	let channel: Channel | null = null;
-	let player1: User | null = null;
-	let player2: User | null = null;
+	let players: User[] = [];
 	try {
 		channel = await client.channels.fetch(info.channel_id);
-		player1 = client.users.cache.get(info.players[0].id) ?? (await client.users.fetch(info.players[0].id));
-		player2 = client.users.cache.get(info.players[1].id) ?? (await client.users.fetch(info.players[1].id));
+		players = await Promise.all(info.players.map(async (v) => await client.users.fetch(v.id)));
 	} catch (error) {
 		console.log(error);
 	}
-	if (channel?.isTextBased() && player1 && player2) {
-		channel.send(`Session timed out for ${player1.displayName} and ${player2.displayName}`);
+	if (channel?.isTextBased()) {
+		// make stockfish analyze the game.
+		channel.send(`\`${players[info.turn_index].displayName}\`'s potato blew up on them!`);
 		setTimeout(() => {
 			channel?.delete();
 		}, 10 * 1000);

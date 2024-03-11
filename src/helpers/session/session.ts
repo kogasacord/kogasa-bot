@@ -9,8 +9,6 @@ export type SessionResult<K extends SessionMessages, P = NonNullable<unknown>> =
 
 export interface Player {
 	id: string,
-	offset: number,
-	end_date: Date,
 }
 export interface Session {
 	channel_id: string, 
@@ -18,6 +16,8 @@ export interface Session {
 	moves: string[], 
 	turn_index: number,
 	players: Player[],
+	move_start_time: Date,
+	move_end_time: Date,
 }
 export interface Invite {
 	id: string,
@@ -100,7 +100,7 @@ export class SessionManager<T extends { players: { id: string }[] }, K extends {
 	getTimeLeft(session_id: string): number {
 		const session = this.sessions.get(session_id)!;
 		// prolly works now.
-		return Math.floor((session.time_end.getTime() - (session.time_created.getTime() - new Date().getTime())) / 1000);
+		return Math.floor((session.time_end.getTime() + (session.time_created.getTime() - new Date().getTime())) / 1000);
 	}
 
 	deleteSession(session_id: string) {

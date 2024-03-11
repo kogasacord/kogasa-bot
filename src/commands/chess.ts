@@ -4,6 +4,7 @@ import settings from "@root/settings.json" assert { type: "json" };
 import {Process} from "@helpers/chess/validator.js";
 import {ChannelScope, ExternalDependencies} from "@helpers/types";
 import { ChannelType, Client, Message, PermissionsBitField } from "discord.js";
+import {getRandomInt} from "@helpers/misc/random.js";
 
 
 // const uci = new ChessEngineInterface("./media/engines/alice-engine.exe");
@@ -109,32 +110,40 @@ export async function execute(client: Client<true>, msg: Message<true>, args: st
 				return;
 			}
 			const inv_res = ext.session.acceptInvite(author.id, 0);
-			//
-			// make chess games run on threads.
-			// make invites run on channels or threads.
-			//
-			// create a thread after the invite gets accepted.
-			//
-			// enum aaa { AcceptedInvite(sender, reciever) }
 			switch (inv_res.msg) {
 				case "AcceptedInvite": {
 					const thread = await msg.startThread({
 						name: `${inv_res.payload!.sender.name} vs ${inv_res.payload!.reciever.name}`
 					});
-					const time = 5 * 60 * 1000;
+					const time = 2 * 60 * 1000;
 					const fen = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
+					const start_time = new Date();
+					const end_time = new Date(new Date().getTime() + time);
 					ext.session.createSession({
 						players: [
-							{ id: inv_res.payload!.sender.id, end_date: new Date(new Date().getTime() + (time / 2)), offset: 0 }, 
-							{ id: inv_res.payload!.reciever.id, end_date: new Date(new Date().getTime() + (time / 2)), offset: 0 }
+							{ id: inv_res.payload!.sender.id },
+							{ id: inv_res.payload!.reciever.id }
 						],
 						turn_index: 0,
 						fen,
 						channel_id: thread.id,
 						moves: [],
+						move_start_time: start_time,
+						move_end_time: end_time,
 					}, time);
-					const image = await createChessImage(fen);
-					thread.send({ content: `Accepted invite, <@${inv_res.payload!.sender.id}>'s turn.`, files: [{ attachment: image }] });
+
+					let image = undefined;
+					try {
+						// does an http GET request.
+						image = await createChessImage(fen);
+					} catch (error) {
+						image = await createChessImage(fen);
+					}
+					const turn_time_left = Math.floor(new Date(new Date().getTime() + (1 * 60 * 1000)).getTime() / 1000);
+					await thread.send({ 
+						content: `Accepted invite, <@${inv_res.payload!.sender.id}>'s turn. Turn time left: <t:${turn_time_left}:R>`, 
+						files: [{ attachment: image }] 
+					});
 					break;
 				}
 				case "NoInvites":
@@ -175,25 +184,26 @@ export async function execute(client: Client<true>, msg: Message<true>, args: st
 					return;
 				}
 
-				const turn = sesh.session.players.at(sesh.session.turn_index)!;
-				if (turn.id === author.id) {
-					const previous_turn_index = (sesh.session.turn_index % sesh.session.players.length + sesh.session.players.length) % sesh.session.players.length;
-					const previous_turn = sesh.session.players.at(previous_turn_index)!;
+				const current_turn = sesh.session.players.at(sesh.session.turn_index)!;
+				if (current_turn.id === author.id) {
+					if (sesh.session.move_end_time < new Date()) {
+						thread.send("The session should've ended here, but I haven't implemented it~");
+					}
+
 					const next_turn_index = (sesh.session.turn_index + 1) % sesh.session.players.length; // wrapping 0 - 10 (10 exclusive)
 					const next_turn = sesh.session.players.at(next_turn_index)!;
 
-					// #kogasa-dev-logs for this.
-					const time = sesh.session.time_created.getTime() + turn.offset;
-					const time_remaining = turn.end_date.getTime() - time;
-					previous_turn.offset;
-
-					const player = await client.users.fetch(turn.id);
+					const player = await client.users.fetch(current_turn.id);
 					const next_player = await client.users.fetch(next_turn.id);
 
 					const move_list = `${sesh.session.moves.length > 0 ? `moves ${sesh.session.moves.join(" ")}` : ""}`;
 
 					const command_res = await checker.sendCommand(`fen ${sesh.session.fen} ${move_list} verifymove ${move} movestofen`, /res/g);
 					const [move_status, status, _] = command_res.split("\n");
+
+					const difference = sesh.session.move_end_time.getTime() - new Date().getTime();
+					sesh.session.move_start_time = new Date(sesh.session.move_end_time.getTime() - difference);
+					sesh.session.move_end_time = new Date(sesh.session.move_start_time.getTime() + 1 * 60 * 1000);
 
 					switch (move_status) {
 						case "move legal":
@@ -221,10 +231,17 @@ export async function execute(client: Client<true>, msg: Message<true>, args: st
 									const [_, fen] = command_res.split("\n");
 									const fen_string = fen.replace("fen ", "");
 
-									const img = await createChessImage(fen_string);
-									thread.send({ 
-										content: `It's now ${next_player.displayName}'s turn.\nSession time left: <t:${unix_time_left}:R>, time left: <t:${unix_turn_time_remaining}:R>`, 
-										files: [{ attachment: img }] 
+									let image = undefined;
+									try {
+										// does an http GET request.
+										image = await createChessImage(fen_string);
+									} catch (error) {
+										image = await createChessImage(fen_string);
+									}
+									const turn_time = Math.floor(sesh.session.move_end_time.getTime() / 1000);
+									await thread.send({ 
+										content: `It's now ${next_player.displayName}'s turn.\nSession time left: <t:${unix_time_left}:R>, turn time left: <t:${turn_time}:R>`,
+										files: [{ attachment: image }] 
 									});
 									break;
 								}
