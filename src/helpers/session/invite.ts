@@ -80,24 +80,28 @@ export class InviteManager<T extends {id: string}> {
 		* It should be invoked by the person accepting the invite.
 		*/
 	acceptInviteOfSender(recipient_id: string, invite_index: number): InviteResult<"AcceptedInvite" | "NoInvites" | "InvalidIndex", {sender: T, reciever: T} | undefined> {
-		const senders_of_recipient = this.recipients.get(recipient_id);
-		if (senders_of_recipient && senders_of_recipient.length !== 0) {
+		const senders_of_recipient = this.recipients.get(recipient_id)!;
+		if (senders_of_recipient && senders_of_recipient.length > 0) {
 			const sender = structuredClone(this.users.get(senders_of_recipient.at(invite_index)!));
 			const reciever = structuredClone(this.users.get(recipient_id));
 			if (!sender || !reciever) {
 				return {msg: "InvalidIndex", payload: undefined};
 			}
-			// when someone accepts an invite, it removes everyone that invited the person
-			// might have issues with stuff like:
-			// 		p1 invites p2, p1 invites p3
-			// 		p3 accepts p1's invite, p3 and p1's data gets deleted
-			// 		p2 accepts p1's invite, ??? what happens ???
-			for (const sender_of_recipient_id of senders_of_recipient) {
-				this.senders.delete(sender_of_recipient_id);
-				this.users.delete(sender_of_recipient_id);
+
+			for (const sender_of_recipient of senders_of_recipient) {
+				// is the sender of the original recipient.. recieving any invite?
+				const recipients_of_sender_of_recipient = this.recipients.get(sender_of_recipient);
+				if (recipients_of_sender_of_recipient?.length 
+						&& recipients_of_sender_of_recipient.length <= 0) {
+					// if they don't have any, delete everything in the "invite box"
+					this.senders.delete(sender_of_recipient);
+					this.recipients.delete(sender_of_recipient);
+					this.users.delete(sender_of_recipient);
+				} else {
+					// if they have one, remove their send invite, but not the recievers
+					this.senders.delete(sender_of_recipient);
+				}
 			}
-			this.recipients.delete(recipient_id);
-			this.users.delete(recipient_id);
 
 			return {msg: "AcceptedInvite", payload: {sender, reciever}};
 		} else {
@@ -107,6 +111,8 @@ export class InviteManager<T extends {id: string}> {
 
 	/**
 		* It should be invoked by the reciever.
+		*
+		* Deletes all invites the recipient recieved.
 		*/
 	declineInviteOfSender(recipient_id: string, invite_index: number): InviteResult<"DeclinedInvite" | "NoInvites" | "InvalidIndex", {sender: T, reciever: T} | undefined> {
 		const senders_of_recipient = this.recipients.get(recipient_id);

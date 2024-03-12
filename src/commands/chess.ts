@@ -115,10 +115,10 @@ export async function execute(client: Client<true>, msg: Message<true>, args: st
 					const thread = await msg.startThread({
 						name: `${inv_res.payload!.sender.name} vs ${inv_res.payload!.reciever.name}`
 					});
-					const time = 2 * 60 * 1000;
+					const time = 10 * 60 * 1000;
 					const fen = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
 					const start_time = new Date();
-					const end_time = new Date(new Date().getTime() + time);
+					const end_time = new Date(start_time.getTime() + time);
 					ext.session.createSession({
 						players: [
 							{ id: inv_res.payload!.sender.id },
@@ -164,6 +164,27 @@ export async function execute(client: Client<true>, msg: Message<true>, args: st
 			}
 			break;
 		}
+		case "clock": {
+			const sesh = ext.session.getSessionWithUser(author.id);
+			if (sesh?.session.channel_id !== msg.channelId) {
+				return;
+			}
+			const { threads } = await msg.guild.channels.fetchActiveThreads();
+			const thread = threads.find((_, key) => key === sesh.session.channel_id);
+			if (!thread) {
+				// if someone deleted the thread...
+				ext.session.deleteSession(sesh.hash_id);
+				return;
+			}
+			const current_turn = sesh.session.players.at(sesh.session.turn_index)!;
+			const current_player = await client.users.fetch(current_turn.id);
+			if (sesh.session.move_end_time < new Date()) {
+				thread.send(`:boom: "${current_player.displayName}" ran out of time!`);
+				ext.session.deleteSession(sesh.hash_id);
+			}
+
+			break;
+		}
 		case "move": {
 			const sesh = ext.session.getSessionWithUser(author.id);
 			if (sesh?.session.channel_id !== msg.channelId) {
@@ -187,7 +208,7 @@ export async function execute(client: Client<true>, msg: Message<true>, args: st
 				const current_turn = sesh.session.players.at(sesh.session.turn_index)!;
 				if (current_turn.id === author.id) {
 					if (sesh.session.move_end_time < new Date()) {
-						thread.send("The session should've ended here, but I haven't implemented it~");
+						ext.session.deleteSession(sesh.hash_id);
 					}
 
 					const next_turn_index = (sesh.session.turn_index + 1) % sesh.session.players.length; // wrapping 0 - 10 (10 exclusive)
@@ -203,7 +224,7 @@ export async function execute(client: Client<true>, msg: Message<true>, args: st
 
 					const difference = sesh.session.move_end_time.getTime() - new Date().getTime();
 					sesh.session.move_start_time = new Date(sesh.session.move_end_time.getTime() - difference);
-					sesh.session.move_end_time = new Date(sesh.session.move_start_time.getTime() + 1 * 60 * 1000);
+					sesh.session.move_end_time = new Date(sesh.session.move_start_time.getTime() + (1 * 60 * 1000));
 
 					switch (move_status) {
 						case "move legal":
