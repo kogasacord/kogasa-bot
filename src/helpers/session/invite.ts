@@ -126,8 +126,10 @@ export class InviteManager<T extends {id: string}> {
 
 			if (recipient_senders.length <= 0) {
 				this.invite_recipients.delete(recipient_id);
+				this.user_map.delete(recipient_id); // assuming the recipient isn't connected to anything.
 			}
 			this.invite_senders.delete(sender.id);
+			this.user_map.delete(sender.id); // assuming senders only have one invite.
 
 			return {msg: "DeclinedInvite", payload: {reciever, sender}};
 		}
@@ -150,8 +152,10 @@ export class InviteManager<T extends {id: string}> {
 
 			if (recipient_senders.length <= 0) {
 				this.invite_recipients.delete(recipient_id);
+				this.user_map.delete(recipient_id); // assuming the recipient isn't connected to anything.
 			}
 			this.invite_senders.delete(sender.id);
+			this.user_map.delete(sender.id); // assuming senders only have one invite.
 
 			return {msg: "RevokedInvite", payload: {reciever, sender}};
 		}
