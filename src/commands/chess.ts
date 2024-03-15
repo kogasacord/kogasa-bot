@@ -139,7 +139,7 @@ export async function execute(client: Client<true>, msg: Message<true>, args: st
 					} catch (error) {
 						image = await createChessImage(fen);
 					}
-					const turn_time_left = Math.floor(new Date(new Date().getTime() + (1 * 60 * 1000)).getTime() / 1000);
+					const turn_time_left = Math.ceil(new Date(new Date().getTime() + (1 * 60 * 1000)).getTime() / 1000);
 					await thread.send({ 
 						content: `Accepted invite, <@${inv_res.payload!.sender.id}>'s turn. Turn time left: <t:${turn_time_left}:R>`, 
 						files: [{ attachment: image }] 
@@ -181,6 +181,8 @@ export async function execute(client: Client<true>, msg: Message<true>, args: st
 			if (sesh.session.move_end_time < new Date()) {
 				thread.send(`:boom: "${current_player.displayName}" ran out of time!`);
 				ext.session.deleteSession(sesh.hash_id);
+			} else {
+				thread.send(`The timer hasn't ran out yet! <t:${Math.ceil(sesh.session.move_end_time.getTime() / 1000)}:R>`);
 			}
 
 			break;
@@ -222,9 +224,6 @@ export async function execute(client: Client<true>, msg: Message<true>, args: st
 					const command_res = await checker.sendCommand(`fen ${sesh.session.fen} ${move_list} verifymove ${move} movestofen`, /res/g);
 					const [move_status, status, _] = command_res.split("\n");
 
-					const difference = sesh.session.move_end_time.getTime() - new Date().getTime();
-					sesh.session.move_start_time = new Date(sesh.session.move_end_time.getTime() - difference);
-					sesh.session.move_end_time = new Date(sesh.session.move_start_time.getTime() + (1 * 60 * 1000));
 
 					switch (move_status) {
 						case "move legal":
@@ -259,7 +258,12 @@ export async function execute(client: Client<true>, msg: Message<true>, args: st
 									} catch (error) {
 										image = await createChessImage(fen_string);
 									}
-									const turn_time = Math.floor(sesh.session.move_end_time.getTime() / 1000);
+
+									const difference = sesh.session.move_end_time.getTime() - new Date().getTime();
+									sesh.session.move_start_time = new Date(sesh.session.move_end_time.getTime() - difference);
+									sesh.session.move_end_time = new Date(sesh.session.move_start_time.getTime() + (1 * 60 * 1000));
+
+									const turn_time = Math.ceil(sesh.session.move_end_time.getTime() / 1000);
 									await thread.send({ 
 										content: `It's now ${next_player.displayName}'s turn.\nSession time left: <t:${unix_time_left}:R>, turn time left: <t:${turn_time}:R>`,
 										files: [{ attachment: image }] 
