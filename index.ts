@@ -20,7 +20,7 @@ import { messageCreate } from "./src/discord/message_create.js";
 import { ready } from "./src/discord/ready.js";
 
 import { InviteManager } from "@helpers/session/invite.js";
-import { SessionManager, Session, Invite } from "@helpers/session/session.js";
+import { SessionManager, Session, InviteK } from "@helpers/session/session.js";
 
 ///////////////////////////////////////////////////////////////////////////////////
 const __dirname = url.fileURLToPath(new URL(".", import.meta.url));
@@ -32,7 +32,7 @@ const client = new Client({
 		UserManager: 100,
 	}),
 });
-const session = new SessionManager<Session, Invite>(new InviteManager<Invite>());
+const session = new SessionManager<Session, InviteK>(new InviteManager<InviteK>());
 session.on("sessionTimeout", async (info) => {
 	if (!info) {
 		return;

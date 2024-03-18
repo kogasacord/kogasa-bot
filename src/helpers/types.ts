@@ -1,7 +1,7 @@
 import { Queue } from "./misc/queue.js";
 import { Client, Message, Collection } from "discord.js";
 import settings from "@root/settings.json" assert { type: "json" };
-import { SessionManager, Session, Invite } from "@helpers/session/session.js";
+import { SessionManager, Session, InviteK } from "@helpers/session/session.js";
 
 export type ChannelScope = "DMs" | "Guild" | "Thread";
 export type CommandModule = {
@@ -43,14 +43,14 @@ export type ExternalDependencies = {
 	tiers: Map<string, Tier>,
 	chat_buffer: ChatBuffer,
 	settings: typeof settings,
-	session: SessionManager<Session, Invite>,
+	session: SessionManager<Session, InviteK>,
 };
 export type DiscordExternalDependencies = {
 	commands: Collection<string, CommandModule>;
 	aliases: Map<string, string>;
 	chat_buffer: ChatBuffer;
 	websites: Website[];
-	session: SessionManager<Session, Invite>;
+	session: SessionManager<Session, InviteK>;
 };
 
 export type Cooldown = {

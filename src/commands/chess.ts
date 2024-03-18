@@ -4,11 +4,12 @@ import settings from "@root/settings.json" assert { type: "json" };
 import {Process} from "@helpers/chess/validator.js";
 import {ChannelScope, ExternalDependencies} from "@helpers/types";
 import { ChannelType, Client, Message, PermissionsBitField } from "discord.js";
-import {getRandomInt} from "@helpers/misc/random.js";
+import {InviteK} from "@helpers/session/session";
 
 
 // const uci = new ChessEngineInterface("./media/engines/alice-engine.exe");
 const checker = new Process("./media/engines/chess-sanity-check.exe");
+const turn_time = 1 * 60 * 1000;
 
 export const name = "chess";
 export const aliases = ["chess"];
@@ -17,6 +18,8 @@ export const cooldown = 25;
 export const description = "Do a chess match.";
 export async function execute(client: Client<true>, msg: Message<true>, args: string[], ext: ExternalDependencies) {
 	const command = args[0];
+	const selection = Number(args[1]);
+
 	const author = msg.author;
 	const replied_user = msg.mentions.repliedUser;
 	const guild = await client.guilds.fetch(msg.guildId);
@@ -33,6 +36,8 @@ export async function execute(client: Client<true>, msg: Message<true>, args: st
 				"- `chess play` - Reply to someone to play against them.\n" +
 				"- `chess quit` - Quit out of your current game.\n" +
 				"- `chess move [move]` - Moves a piece.\n" +
+				"- `chess accept/decline` - Accept or decline an invite.\n" +
+				"- `chess revoke` - Revoke an invite.\n" +
 				"\nMoving is done by this notation: `a2a4`, moves a piece from square a2 to square a4."
 			);
 			break;
@@ -109,16 +114,42 @@ export async function execute(client: Client<true>, msg: Message<true>, args: st
 				msg.reply("Accepting invites is only allowed in channels.");
 				return;
 			}
-			const inv_res = ext.session.acceptInvite(author.id, 0);
+			if (isNaN(selection)) {
+				const inv_view = ext.session.viewInvitesOfReciever(author.id);
+				switch (inv_view.msg) {
+					case "ViewInvites": {
+						const sender_users: InviteK[] = [];
+						for (const sender_id of inv_view.payload) {
+							if (sender_id) {
+								const user = ext.session.getUser(sender_id);
+								if (user) {
+									sender_users.push(user);
+								}
+							}
+						}
+						const users = sender_users.map((user, i) => `[${i}]: ${user.name}`).join("\n");
+						msg.reply(`Invites: \n${users}`);
+						break;
+					}
+					case "NoReciever": 
+						msg.reply("No invites has been sent to you.");
+						break;
+					default:
+						break;
+				}
+				return;
+			}
+
+			const inv_res = ext.session.acceptInvite(author.id, selection);
 			switch (inv_res.msg) {
 				case "AcceptedInvite": {
 					const thread = await msg.startThread({
 						name: `${inv_res.payload!.sender.name} vs ${inv_res.payload!.reciever.name}`
 					});
-					const time = 10 * 60 * 1000;
+					const session_time = 10 * 60 * 1000;
 					const fen = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
-					const start_time = new Date();
-					const end_time = new Date(start_time.getTime() + time);
+					const move_start_time = new Date();
+					const move_end_time = new Date(move_start_time.getTime() + turn_time);
 					ext.session.createSession({
 						players: [
 							{ id: inv_res.payload!.sender.id },
@@ -128,9 +159,9 @@ export async function execute(client: Client<true>, msg: Message<true>, args: st
 						fen,
 						channel_id: thread.id,
 						moves: [],
-						move_start_time: start_time,
-						move_end_time: end_time,
-					}, time);
+						move_start_time: move_start_time,
+						move_end_time: move_end_time,
+					}, session_time);
 
 					let image = undefined;
 					try {
@@ -139,13 +170,16 @@ export async function execute(client: Client<true>, msg: Message<true>, args: st
 					} catch (error) {
 						image = await createChessImage(fen);
 					}
-					const turn_time_left = Math.ceil(new Date(new Date().getTime() + (1 * 60 * 1000)).getTime() / 1000);
+					const turn_time_left = Math.ceil(move_end_time.getTime() / 1000);
 					await thread.send({ 
 						content: `Accepted invite, <@${inv_res.payload!.sender.id}>'s turn. Turn time left: <t:${turn_time_left}:R>`, 
 						files: [{ attachment: image }] 
 					});
 					break;
 				}
+				case "InvalidIndex": 
+					msg.reply("Invalid user! Please choose a number, `??chess accept 1`");
+					break;
 				case "NoInvites":
 					msg.reply("No invites has been sent to you.");
 					break;
@@ -153,13 +187,42 @@ export async function execute(client: Client<true>, msg: Message<true>, args: st
 			break;
 		}
 		case "decline": {
-			const inv_res = ext.session.declineInvite(author.id, 0);
+			if (isNaN(selection)) {
+				const inv_view = ext.session.viewInvitesOfReciever(author.id);
+				switch (inv_view.msg) {
+					case "ViewInvites": {
+						const sender_users: InviteK[] = [];
+						for (const sender_id of inv_view.payload) {
+							if (sender_id) {
+								const user = ext.session.getUser(sender_id);
+								if (user) {
+									sender_users.push(user);
+								}
+							}
+						}
+						const users = sender_users.map((user, i) => `[${i}]: ${user.name}`).join("\n");
+						msg.reply(`Invites: \n${users}`);
+						break;
+					}
+					case "NoReciever": 
+						msg.reply("No invites has been sent to you.");
+						break;
+					default:
+						break;
+				}
+				return;
+			}
+
+			const inv_res = ext.session.declineInvite(author.id, selection);
 			switch (inv_res.msg) {
 				case "DeclinedInvite":
 					msg.reply("You declined the invite.");
 					break;
 				case "NoInvites":
 					msg.reply("You don't have invites.");
+					break;
+				case "InvalidIndex":
+					msg.reply("Invalid user! Please choose a number, `??chess decline 1`");
 					break;
 			}
 			break;
@@ -178,11 +241,13 @@ export async function execute(client: Client<true>, msg: Message<true>, args: st
 			}
 			const current_turn = sesh.session.players.at(sesh.session.turn_index)!;
 			const current_player = await client.users.fetch(current_turn.id);
+			const resulting_time = Math.ceil(sesh.session.move_end_time.getTime() / 1000);
+
 			if (sesh.session.move_end_time < new Date()) {
 				thread.send(`:boom: "${current_player.displayName}" ran out of time!`);
 				ext.session.deleteSession(sesh.hash_id);
 			} else {
-				thread.send(`The timer hasn't ran out yet! <t:${Math.ceil(sesh.session.move_end_time.getTime() / 1000)}:R>`);
+				thread.send(`The timer hasn't ran out yet! <t:${resulting_time}:R>`);
 			}
 
 			break;
@@ -261,11 +326,11 @@ export async function execute(client: Client<true>, msg: Message<true>, args: st
 
 									const difference = sesh.session.move_end_time.getTime() - new Date().getTime();
 									sesh.session.move_start_time = new Date(sesh.session.move_end_time.getTime() - difference);
-									sesh.session.move_end_time = new Date(sesh.session.move_start_time.getTime() + (1 * 60 * 1000));
+									sesh.session.move_end_time = new Date(sesh.session.move_start_time.getTime() + turn_time);
 
-									const turn_time = Math.ceil(sesh.session.move_end_time.getTime() / 1000);
+									const resulting_time = Math.ceil(sesh.session.move_end_time.getTime() / 1000);
 									await thread.send({ 
-										content: `It's now ${next_player.displayName}'s turn.\nSession time left: <t:${unix_time_left}:R>, turn time left: <t:${turn_time}:R>`,
+										content: `It's now ${next_player.displayName}'s turn.\nSession time left: <t:${unix_time_left}:R>, turn time left: <t:${resulting_time}:R>`,
 										files: [{ attachment: image }] 
 									});
 									break;

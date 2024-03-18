@@ -20,6 +20,9 @@ export class InviteManager<T extends {id: string}> {
 		this.event_emitter.on(event, listener);
 	}
 
+	getUser(id: string): T | undefined {
+		return this.user_map.get(id);
+	}
 	sendInviteTo(from_user: T, to_user: T, expiry_in_ms = 1 * 60 * 1000): InviteResult<"AlreadySentInvite" | "SentInvite" | "SenderRecieverCycle"> {
 		// needs multiple people for testing
 		const is_cyclical_invite = this.invite_recipients.get(from_user.id)?.find(sender_id => sender_id === to_user.id);
@@ -87,21 +90,21 @@ export class InviteManager<T extends {id: string}> {
 			if (!sender || !reciever) {
 				return {msg: "InvalidIndex", payload: undefined};
 			}
+			recipient_senders.splice(invite_index, 1);
 
 			for (const recipient_sender of recipient_senders) {
 				// is the sender of the original recipient.. recieving any invite?
 				const recipients_of_recipient_sender = this.invite_recipients.get(recipient_sender);
-				if (recipients_of_recipient_sender?.length 
-						&& recipients_of_recipient_sender.length <= 0) {
+				if (!recipients_of_recipient_sender || recipients_of_recipient_sender.length <= 0) {
 					// if they don't have any, delete everything in the "invite box"
 					this.invite_senders.delete(recipient_sender);
-					this.invite_recipients.delete(recipient_sender);
 					this.user_map.delete(recipient_sender);
 				} else {
-					// if they have one, remove their send invite, but not the recievers
+					// if they have one, remove their send invite, but not their recievers
 					this.invite_senders.delete(recipient_sender);
 				}
 			}
+			this.invite_recipients.delete(recipient_id);
 
 			return {msg: "AcceptedInvite", payload: {sender, reciever}};
 		} else {
@@ -172,7 +175,8 @@ export class InviteManager<T extends {id: string}> {
 
 	printAllVariables(): string {
 		return "recipients: " + JSON.stringify(this.invite_recipients, replacer, 4) + this.invite_recipients.size + "\n" +
-		"senders: " + JSON.stringify(this.invite_senders, replacer, 4) + this.invite_senders.size + "\n";
+		"senders: " + JSON.stringify(this.invite_senders, replacer, 4) + this.invite_senders.size + "\n" +
+		"users: " + JSON.stringify(this.user_map, replacer, 4) + this.user_map.size + "\n";
 	}
 	declineAllInvites() {}
 }
