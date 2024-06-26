@@ -47,7 +47,10 @@ export async function execute(
 	} else {
 		embed.setDescription("No messages found.");
 	}
-	msg.reply({ embeds: [embed] });
+	const r = await msg.reply({ embeds: [embed] });
+	setTimeout(async () => {
+		r.delete().catch(() => {});
+	}, 5 * 1000);
 }
 
 function limitMessageLength(message: ChatBufferMessage, maxLength: number) {
