@@ -1,5 +1,5 @@
 import {ExternalDependencies} from "@helpers/types";
-import { ChannelType, Client, Message } from "discord.js";
+import { ChannelType, Client, Message, PermissionsBitField } from "discord.js";
 import { ChannelScope } from "@helpers/types";
 import Pocketbase, { RecordModel, RecordService } from "pocketbase";
 import { createHash } from "node:crypto";
@@ -63,7 +63,13 @@ export async function execute(client: Client, msg: Message, args: string[], ext:
 		// the main.
 	}
 	if (msg.channel.type === ChannelType.GuildText) {
-		setup(msg, ext.pb);
+		const has_perms = msg.member?.permissions.has(PermissionsBitField.Flags.ManageChannels);
+		if (!has_perms) {
+			msg.reply("You need to have the Manage Channels permission before setting up the confess channel.");
+			return;
+		}
+		await setup(msg, ext.pb);
+		msg.reply(`You set up the confess channel on #${msg.channel.name}`);
 	}
 	// TODO: [confess set up]
 	// 					=> (get confess channel ID)
