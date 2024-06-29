@@ -6,7 +6,7 @@ export const name = "dm";
 export const aliases = [];
 export const channel: ChannelScope[] = ["Guild"];
 export const cooldown = 120;
-export const description = "Enable DM-only commands.";
+export const description = "Enable DM-only commands, like ??confess.";
 export async function execute(_client: Client, msg: Message) {
 	const dm = await msg.author.createDM();
 	const message = "Hello! Sorry for this but this is a band-aid solution for discord.js behaviour."
