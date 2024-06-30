@@ -153,8 +153,7 @@ export const aliases = [];
 export const channel: ChannelScope[] = ["DMs", "Guild"];
 export const cooldown = 15;
 export const description = "Secretly send a message.";
-export const extended_description = "Do `??dm` if you're running this command for the first time."
-	+ "\nTo confess, you must do `??confess` in DMs first and follow the instructions listed there."
+export const extended_description = "To confess, you must do `??confess` in DMs first and follow the instructions listed there."
 	+ "\nFor server owners, `??confess ban (confession number)` and `??confess ban @User` to moderate it."
 	+ "\n`??confess` in a channel to set it up.";
 // to do: the ability to remove the confess feature entirely.
