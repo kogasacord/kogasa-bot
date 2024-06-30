@@ -159,13 +159,10 @@ export const extended_description = "Do `??dm` if you're running this command fo
 	+ "\n`??confess` in a channel to set it up.";
 // to do: the ability to remove the confess feature entirely.
 export async function execute(client: Client<true>, msg: Message, args: string[], ext: ExternalDependencies) {
-	const index = Number(args.at(0));
-	const text = args.slice(1).join(" ");
-
-	const selection = args.at(0);
-	const confession_index = Number(args.at(1));
-
 	if (msg.channel.type === ChannelType.DM) {
+		const index = Number(args.at(0));
+		const text = args.slice(1).join(" ");
+
 		const confess_activated_guilds = await listConfessServers(client, msg, ext.pb);
 		if (!isNaN(index) && text.length !== 0) {
 			const confess_guild = confess_activated_guilds.at(index);
@@ -184,6 +181,9 @@ export async function execute(client: Client<true>, msg: Message, args: string[]
 	}
 
 	if (msg.channel.type === ChannelType.GuildText) {
+		const selection = args.at(0);
+		const confession_index = Number(args.at(1));
+
 		switch (selection) {
 			case "ban": {
 				if (isNaN(confession_index)) {
@@ -210,7 +210,7 @@ export async function execute(client: Client<true>, msg: Message, args: string[]
 			default: {
 				const has_perms = msg.member?.permissions.has(PermissionsBitField.Flags.ManageChannels);
 				if (!has_perms) {
-					msg.reply("You need to have the Manage Channels permission before setting up the confess channel.");
+					msg.reply("Please DM me if you want to confess, and do `??help confess` there.");
 					return;
 				}
 				await setup(msg, ext.pb);
