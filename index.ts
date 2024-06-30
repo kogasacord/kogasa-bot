@@ -1,7 +1,7 @@
 
 import path from "path";
 import * as url from "url";
-import { Client, Collection, Options, User } from "discord.js";
+import { Client, Collection, Options, Partials, User } from "discord.js";
 import Pocketbase from "pocketbase";
 
 import {
@@ -24,6 +24,7 @@ import { ready } from "./src/discord/ready.js";
 const __dirname = url.fileURLToPath(new URL(".", import.meta.url));
 const client = new Client({
 	intents: ["Guilds", "GuildMessages", "MessageContent", "GuildIntegrations", "DirectMessages"],
+	partials: [Partials.Channel],
 	makeCache: Options.cacheWithLimits({
 		...Options.DefaultMakeCacheSettings,
 		MessageManager: 2000,
