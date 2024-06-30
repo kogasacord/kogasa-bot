@@ -1,6 +1,8 @@
+
 import path from "path";
 import * as url from "url";
-import { Client, Collection, Options } from "discord.js";
+import { Client, Collection, Options, User } from "discord.js";
+import Pocketbase from "pocketbase";
 
 import {
 	ChatBuffer,
@@ -28,6 +30,7 @@ const client = new Client({
 		UserManager: 100,
 	}),
 });
+const pb = new Pocketbase("http://127.0.0.1:8090");
 ///////////////////////////////////////////////////////////////////////////////////
 const commands = new Collection<string, CommandModule>().concat(
 	await helpers.importDirectories(__dirname, "/src/commands/"),
@@ -43,6 +46,7 @@ const other_dependencies: DiscordExternalDependencies = {
 	aliases,
 	chat_buffer,
 	websites,
+	pb,
 };
 //////////////////////////////////////////////////////////////////////////////////
 if (!settings.test) await enableAutoDelete();
@@ -63,4 +67,9 @@ client.on("cacheSweep", (message) => {
 	console.log(`Sweeped cache: ${message}`);
 });
 client.on("ready", (client) => ready(client, settings));
-client.login(settings.test ? config.test_token : config.token);
+if (settings.offlineMode) {
+	console.log("Running in offline mode. Exiting...");
+	process.exit(0);
+} else {
+	client.login(settings.test ? config.test_token : config.token);
+}

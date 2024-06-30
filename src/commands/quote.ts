@@ -1,15 +1,15 @@
 import helpers from "@helpers/helpers.js";
-import { ChannelType, Client, GuildMember, Message, User } from "discord.js";
+import { Client, GuildChannel, GuildMember, Message, ThreadChannel, User } from "discord.js";
+import { ChannelScope } from "@helpers/types";
 
 export const name = "quote";
 export const aliases = ["q"];
 export const cooldown = 25;
-export const channel = "Guild";
+export const channel: ChannelScope[] = ["Guild", "Thread"];
 export const description =
 	"Reply to someone and capture a.. suspicious message.";
-export async function execute(client: Client, msg: Message, args: string[]) {
-	if (msg.channel.type !== ChannelType.GuildText) return;
-	const show_boundaries = args[0] === "boundary";
+export async function execute(client: Client, msg: Message<true>, _args: string[]) {
+	if (!(msg.channel instanceof GuildChannel || msg.channel instanceof ThreadChannel)) return;
 
 	const replied =
 		msg.channel.messages.cache.get(msg.reference!.messageId!) ??
@@ -26,24 +26,8 @@ export async function execute(client: Client, msg: Message, args: string[]) {
 
 	const avatar_url = getAvatarURL(replied.author, guild_member);
 
-	const first_attachment = replied.attachments.at(0);
-	const attachment_info = first_attachment
-		? {
-				url: first_attachment.url,
-				height: first_attachment.height ?? 0,
-				width: first_attachment.width ?? 0,
-		  }
-		: undefined;
-
 	try {
-		const recieved_quote = await quote(
-			parsed_content,
-			replied.author.displayName,
-			avatar_url,
-			show_boundaries,
-			first_attachment?.contentType,
-			attachment_info
-		);
+		const recieved_quote = await helpers.quoteDefault(parsed_content, replied.author.displayName, avatar_url);
 		msg.reply({
 			files: [{ attachment: recieved_quote }],
 		});
@@ -69,36 +53,6 @@ function getAvatarURL(user: User, guild_member: GuildMember) {
 	);
 }
 
-async function quote(
-	text: string,
-	author: string,
-	avatar_url: string,
-	show_boundaries: boolean,
-	mimetype: string | null | undefined,
-	attachment?: {
-		url: string;
-		height: number;
-		width: number;
-	}
-) {
-	if (attachment) {
-		if (mimetype?.includes("image/")) {
-			return helpers.quoteAttachment(
-				text,
-				author,
-				avatar_url,
-				attachment.url,
-				attachment.height,
-				attachment.width,
-				mimetype,
-				show_boundaries
-			);
-		}
-	}
-	return helpers.quoteDefault(text, author, avatar_url, show_boundaries);
-}
-
-
 /**
  * parses text to remove/replace mentions or emotes
  */
@@ -107,7 +61,7 @@ async function parseQuotes(client: Client, str: string) {
 
 	const uid_regex = /<@(\d+)>/g;
 	const uids = [...string.matchAll(uid_regex)];
-	for (const [entire_mention, uid] of uids ?? []) {
+	for (const [entire_mention, uid] of uids) {
 		try {
 			const user =
 				client.users.cache.get(uid) ?? (await client.users.fetch(uid));

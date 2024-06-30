@@ -13,11 +13,16 @@ interface Ping {
 export function pingURL(url: string, ping_count: number = 3) {
 	return new Promise<Ping[]>((res, rej) => {
 		const pings: Ping[] = [];
+
+		// spawns the child_process/terminal
+		// 		with the command e.g: "ping -n 3 google.com"
 		const proc = child_process.spawn("ping", [
 			optionforOS(),
 			`${ping_count}`,
 			url,
 		]);
+
+		// gets the outputs/printed data from the terminal
 		proc.stdout.on("data", (chunk: Buffer) => {
 			// Gets the "bytes=32 time=11ms TTL=114" from:
 			// 		"Reply from 142.251.220.206: bytes=32 time=11ms TTL=114"

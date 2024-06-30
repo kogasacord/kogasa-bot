@@ -7,12 +7,14 @@
 		"test": "echo \"Error: no test specified\" && exit 1",
 		"prestart": "node build/index.js",
 		"format": "npx eslint . --fix & npx prettier . --write --log-level silent",
-		"build": "npx tsc --project tsconfig.json && npx tsc-alias -p tsconfig.json",
-		"poststart": "npx tsc --project tsconfig.json && npx tsc-alias -p tsconfig.json && node build/index.js"
+		"build": "npx tsc && npx tsc-alias -p tsconfig.json",
+		"poststart": "npx tsc --project tsconfig.json && npx tsc-alias -p tsconfig.json && npm run copy-windows && node build/index.js",
+		"copy-windows": "xcopy /E /I /Y \".\\media\" \".\\build\\media\" "
 	},
 	"author": "",
 	"license": "ISC",
 	"devDependencies": {
+		"@types/better-sqlite3": "^7.6.9",
 		"@types/humanize-duration": "^3.27.1",
 		"@types/mime-types": "^2.1.1",
 		"@types/seedrandom": "^3.0.7",
@@ -31,10 +33,10 @@
 		"humanize-duration": "^3.29.0",
 		"mime-types": "^2.1.35",
 		"node-fetch": "^3.3.2",
+		"pocketbase": "^0.21.3",
 		"random": "^4.1.0",
 		"sagiri": "^3.4.0",
-		"seedrandom": "^3.0.5",
-		"sqlite3": "^5.1.7"
+		"seedrandom": "^3.0.5"
 	},
 	"type": "module"
 }

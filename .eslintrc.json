@@ -17,13 +17,13 @@
 	"plugins": ["@typescript-eslint"],
 	"ignorePatterns": ["/ecosystem.config.js", "build/**/*.js"],
 	"rules": {
-		"semi": ["error", "always"],
-		"quotes": ["error", "double"],
-		"eqeqeq": "error",
+		"semi": ["warn", "always"],
+		"quotes": ["warn", "double"],
+		"eqeqeq": "warn",
 
 		"no-unused-vars": "off",
 		"@typescript-eslint/no-unused-vars": [
-			"error",
+			"warn",
 			{
 				"argsIgnorePattern": "^_",
 				"varsIgnorePattern": "^_"

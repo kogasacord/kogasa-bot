@@ -1,6 +1,7 @@
 import { Client, Message } from "discord.js";
 import helpers, { ExternalDependencies } from "@helpers/helpers.js";
 import settings from "@root/settings.json" assert { type: "json" };
+import { ChannelScope } from "@helpers/types";
 
 let latency = await getAverageLatency("discord.com", 3);
 setInterval(async () => {
@@ -14,7 +15,7 @@ type DoctorResults = {
 
 export const name = "doctor";
 export const aliases = ["eirinhelpme"];
-export const channel = "Guild";
+export const channel: ChannelScope[] = ["Guild"];
 export const cooldown = 20;
 export const special = true;
 export const description = "Send me to Eirin and let them check my health.";
@@ -30,7 +31,7 @@ export async function execute(
 		canvas: false,
 	};
 	doctor_results.ytdl = await pingServer(`${settings.ytdl_endpoint}/ping`);
-	doctor_results.canvas = await pingServer(`${settings.quote_endpoint}/ping`);
+	doctor_results.canvas = await pingServer(`${settings.canvas_endpoint}/ping`);
 	msg.reply(
 		"## Eirin's Diagnosis\n\n" +
 			`Latency to discord.com, refreshed every minute: \`${latency}ms\`. \n` +

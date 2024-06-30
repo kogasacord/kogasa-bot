@@ -4,25 +4,31 @@ import { Client, Message } from "discord.js";
 
 import config from "@root/config.json" assert { type: "json" };
 import { checkIfLink } from "@helpers/misc/link.js";
+import { ChannelScope } from "@helpers/types";
 
 const sauce = sagiri(config.saucenao_token, { results: 2 });
 
 export const name = "sauce";
 export const cooldown = 60;
-export const channel = "Guild";
+export const channel: ChannelScope[] = ["Guild", "Thread"];
 export const description =
 	"Find the sauce. Reply or send a link/attachment to me.";
 export async function execute(client: Client, msg: Message, args: string[]) {
 	let response = "";
 
 	const link = args.at(0);
-	if (link) {
-		response = await useLink(link);
-	}
 
 	if (msg.reference?.messageId !== undefined) {
 		const replied = await msg.channel.messages.fetch(msg.reference.messageId);
-		response = await useAttachments(replied);
+		if (replied.attachments.size >= 1) {
+			response = await useAttachments(replied);
+		}
+	} else if (link) {
+		response = await useLink(link);
+	} else if (msg.attachments.size >= 1) {
+		response = await useAttachments(msg);
+	} else {
+		response = "`??sauce [replied to image] [link or attachment]` You're missing one of these.";
 	}
 	msg.reply(response);
 }
@@ -32,10 +38,10 @@ export async function execute(client: Client, msg: Message, args: string[]) {
  *
  * modifies the response string
  */
-async function useAttachments(replied: Message) {
+async function useAttachments(msg: Message) {
 	let response = "## Sources found?:\n\n";
 
-	const first_attachment = replied.attachments.at(0)!;
+	const first_attachment = msg.attachments.at(0)!;
 	const mime_lookup =
 		first_attachment.contentType ?? mimetype.lookup(first_attachment.name);
 
@@ -77,12 +83,4 @@ async function useLink(link: string) {
 	}
 
 	return response;
-}
-
-export async function checker(msg: Message, args: string[]): Promise<boolean> {
-	if (!args.at(0) && msg.reference?.messageId === undefined) {
-		msg.reply("Reply to an image or give a link for me to search.");
-		return false;
-	}
-	return true;
 }
