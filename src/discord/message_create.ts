@@ -55,7 +55,7 @@ export async function messageCreate(
 			command_module,
 			msg.author.id
 		);
-		if (!expired_timestamp) {
+		if (expired_timestamp) {
 			msg.reply(
 				`Please wait, you are on a cooldown for \`${command_module.name}\`.` +
 					` You can use it again <t:${expired_timestamp}:R>.`

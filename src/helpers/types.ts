@@ -7,6 +7,7 @@ export type ChannelScope = "DMs" | "Guild" | "Thread";
 export type CommandModule = {
 	name: string;
 	description: string;
+	extended_description: string | undefined;
 	cooldown: number;
 	execute: (
 		client: Client,
