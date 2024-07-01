@@ -11,10 +11,10 @@ const interpreter = new Interpreter();
 const printer = new ASTPrinter();
 
 export const name = "calc";
-export const aliases = ["calc"];
+export const aliases = [];
 export const cooldown = 5;
 export const channel: ChannelScope[] = ["Guild"];
-export const description = "Basic calculator. Programming language soon.";
+export const description = "Basic calculator.";
 export async function execute(_client: Client, msg: Message, args: string[]) {
 	const input = args.join(" ");
 	const val = run_interpreter(printer, interpreter, input);

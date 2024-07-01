@@ -8,11 +8,10 @@ export const name = "buffer";
 export const aliases = ["back", "backtrack", "b"];
 export const cooldown = 20;
 export const channel: ChannelScope[] = ["Guild", "Thread"];
-export const description =
-	"Backtrack a channel. `??buffer (delete | edit | normal | none)`";
-export const extended_description = "`??buffer delete` sends the deleted messages."
-	+ "`??buffer edit` sends the edited messages."
-	+ "`??buffer` sends everything the bot has logged in.";
+export const description = "See edited or deleted messages in a channel.";
+export const extended_description = "`??buffer delete` sends the deleted messages.\n"
+	+ "`??buffer edit` sends the edited messages.\n"
+	+ "`??buffer` sends everything the bot has logged in.\n";
 export async function execute(
 	_: Client,
 	msg: Message,

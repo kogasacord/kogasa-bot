@@ -37,7 +37,7 @@ export async function execute(
 	let command_list = "";
 	for (const [name, command] of ext.commands) {
 		if (channel_types.some(([t, scope]) => command.channel.includes(scope) && msg.channel instanceof t)) {
-			command_list += `**${ext.prefix}${name}**\n`;
+			command_list += `**${ext.prefix}${name}** - ${command.description}\n`;
 		}
 	}
 	embed.setDescription(command_list);

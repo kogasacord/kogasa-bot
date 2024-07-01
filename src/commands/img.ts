@@ -5,6 +5,7 @@ import { ChannelScope } from "@helpers/types";
 export const name = "img";
 export const cooldown = 15;
 export const description = "Google Images.";
+export const extended_description = "`??img [search input]`";
 export const channel: ChannelScope[] = ["Guild"];
 export async function execute(client: Client, msg: Message, args: string[]) {
 	if (msg.channel.type !== ChannelType.GuildText) return;
