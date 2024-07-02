@@ -50,7 +50,6 @@ const other_dependencies: DiscordExternalDependencies = {
 	pb,
 };
 //////////////////////////////////////////////////////////////////////////////////
-if (!settings.test) await enableAutoDelete();
 
 client.on(
 	"messageCreate",
