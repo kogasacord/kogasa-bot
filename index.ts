@@ -9,7 +9,6 @@ import {
 	DiscordExternalDependencies,
 	Website,
 } from "./src/helpers/types.js";
-import { enableAutoDelete } from "./src/startup.js";
 import helpers, { CommandModule } from "./src/helpers/helpers.js";
 
 import settings from "@root/settings.json" assert { type: "json" };
