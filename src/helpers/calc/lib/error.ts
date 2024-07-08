@@ -1,27 +1,31 @@
-import { Token, TokenType } from "./scanner.js";
+import chalk from "chalk";
+import {Token, TokenType} from "./scanner.js";
 
-/**
- * Needs to be initialized for every run.
- */
+export class Stdout {
+	private out = "";
+	constructor() {}
+	public stdout(str: string | number) {
+		this.out += `${str}\n`;
+	}
+	public get_stdout() {
+		return this.out.trim();
+	}
+	public clear_stdout() {
+		this.out = "";
+	}
+}
+
 export class CalcError {
 	private had_error = false;
 	private had_runtime_error = false;
-	private errors = "";
-
-	constructor() {}
+	constructor(private out: Stdout) {}
 
 	public error(message: string) {
 		this.report("", message);
 	}
 	/**
-	 * Reporting scanner errors
-	 */
-	public scanError(character: string, message: string) {
-		this.report(character, message);
-	}
-	/**
-	 * Reporting tokenizer errors
-	 */
+	* Reporting tokenizer errors
+	*/
 	public tokenError(token: Token, message: string) {
 		if (token.type === TokenType.EOF) {
 			this.report("at end", message);
@@ -30,15 +34,15 @@ export class CalcError {
 		}
 	}
 	/**
-	 * Reporting run time errors
-	 */
+	* Reporting run time errors
+	*/
 	public runtimeError(error: RuntimeError) {
 		const message = error.getMessage();
-		this.errors += `RuntimeError: ${message}\n`;
+		this.out.stdout(`${chalk.redBright("RuntimeError")}: ${message}`);
 		this.had_runtime_error = true;
 	}
 	private report(where: string, message: string) {
-		this.errors += `Error: ${message} [${where}]\n`;
+		this.out.stdout(`${chalk.redBright("Error")}: ${message} [${where}]`);
 		this.had_error = true;
 	}
 	public getHasError(): boolean {
@@ -47,8 +51,9 @@ export class CalcError {
 	public getHasRuntimeError(): boolean {
 		return this.had_runtime_error;
 	}
-	public getErrorMessage(): string {
-		return this.errors;
+	public resetErrors() {
+		this.had_error = false;
+		this.had_runtime_error = false;
 	}
 }
 
@@ -57,11 +62,8 @@ export class ParseError {
 }
 
 export class RuntimeError {
-	constructor(
-		private token: Token,
-		private message: string
-	) {}
+	constructor(private token: Token, private message: string) {}
 	public getMessage() {
-		return `${this.message} at ${this.token.text}`;
+		return `${this.message} [at ${this.token.text}]`
 	}
 }
