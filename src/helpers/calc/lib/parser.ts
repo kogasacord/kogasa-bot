@@ -132,7 +132,7 @@ export class RecursiveDescentParser {
 			if (expr.type !== "VarExpr") {
 				const literal_expr = expr as Literal;
 				const token: Token = { type: TokenType.NUMBER, text: literal_expr.value.toString(), literal: literal_expr.value };
-				throw this.error(token, `A number can't be called.`);
+				throw this.error(token, "A number can't be called.");
 			}
 			expr = this.parse_arguments(expr);
 		}
@@ -225,7 +225,7 @@ export class RecursiveDescentParser {
 	}
 
 	private error(token: Token, message: string): ParseError {
-		this.calc_error.tokenError(token, message)
+		this.calc_error.tokenError(token, message);
 		return new ParseError();
 	}
 	private synchronize() {

@@ -20,6 +20,7 @@
 		"semi": ["warn", "always"],
 		"quotes": ["warn", "double"],
 		"eqeqeq": "warn",
+		"no-case-declarations": "off",
 
 		"no-unused-vars": "off",
 		"@typescript-eslint/no-unused-vars": [

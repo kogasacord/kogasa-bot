@@ -75,14 +75,14 @@ export class ASTPrinter {
 
 			case "PostExpr":
 				const post_node = node as Post;
-				this.str += `( [Post] `;
+				this.str += "( [Post] ";
 				this.str += `${post_node.operator.text} `;
 				this.parseExpr(post_node.left);
 				this.str += " )";
 				break;
 			case "CallExpr":
 				const call = node as Call;
-				this.str += `( [Call]`;
+				this.str += "( [Call]";
 				this.parseExpr(call.callee);
 				for (const arg of call.arguments) {
 					this.parseExpr(arg);

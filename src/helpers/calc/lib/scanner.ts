@@ -1,4 +1,3 @@
-import chalk from "chalk";
 import {Stdout} from "./error";
 
 export type Token = {
@@ -34,7 +33,7 @@ export class Tokenizer { // glorified function, but it follows crafting interpre
 	private keywords: { [key: string]: TokenType } = {
 		p: TokenType.PRINT,
 		root: TokenType.ROOT,
-	}
+	};
 
 	constructor(private out: Stdout, private str: string) {}
 
@@ -43,10 +42,10 @@ export class Tokenizer { // glorified function, but it follows crafting interpre
 			this.start = this.current;
 			const char = this.advance();
 			switch (char) {
-				case ' ':
-				case '\r':
-				case '\t': // skipping whitespace
-				case '\n':
+				case " ":
+				case "\r":
+				case "\t": // skipping whitespace
+				case "\n":
 					break;
 				case "(": this.add_token(TokenType.LEFT_PAREN); break;
 				case ")": this.add_token(TokenType.RIGHT_PAREN); break;
@@ -79,7 +78,7 @@ export class Tokenizer { // glorified function, but it follows crafting interpre
 		}
 		if (this.unexpected_chars.length >= 1) {
 			const e = `Unexpected character at characters [\n${this.unexpected_chars.map(c => `${c.char} at ${c.index}`).join(", ")}].`;
-			this.out.stdout(chalk.redBright(e));
+			this.out.stdout(e);
 		}
 		this.tokens.push({ type: TokenType.EOF, text: "", literal: undefined });
 		return this.tokens;
@@ -96,9 +95,9 @@ export class Tokenizer { // glorified function, but it follows crafting interpre
 		this.add_token(token_type);
 	}
 	private is_alpha(c: string) {
-		return (c >= 'a' && c <= 'z') || 
-			(c >= 'A' && c <= 'Z') || 
-			c == '_';
+		return (c >= "a" && c <= "z") || 
+			(c >= "A" && c <= "Z") || 
+			c === "_";
 	}
 	private is_alphanumeric(c: string) {
 		return this.is_alpha(c) || this.is_digit(c);

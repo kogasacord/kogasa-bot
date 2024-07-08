@@ -78,7 +78,6 @@ function run_interpreter(calc: string) {
 
 	try {
 		const tree = parser.parse();
-		
 		if (tree && !calc_err.getHasError()) {
 			interpreter.interpret(tree);
 		}

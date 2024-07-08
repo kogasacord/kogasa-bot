@@ -1,4 +1,3 @@
-import chalk from "chalk";
 import {Token, TokenType} from "./scanner.js";
 
 export class Stdout {
@@ -38,11 +37,11 @@ export class CalcError {
 	*/
 	public runtimeError(error: RuntimeError) {
 		const message = error.getMessage();
-		this.out.stdout(`${chalk.redBright("RuntimeError")}: ${message}`);
+		this.out.stdout(`**RuntimeError**: ${message}`);
 		this.had_runtime_error = true;
 	}
 	private report(where: string, message: string) {
-		this.out.stdout(`${chalk.redBright("Error")}: ${message} [${where}]`);
+		this.out.stdout(`**Error**: ${message} [${where}]`);
 		this.had_error = true;
 	}
 	public getHasError(): boolean {
@@ -64,6 +63,6 @@ export class ParseError {
 export class RuntimeError {
 	constructor(private token: Token, private message: string) {}
 	public getMessage() {
-		return `${this.message} [at ${this.token.text}]`
+		return `${this.message} [at ${this.token.text}]`;
 	}
 }

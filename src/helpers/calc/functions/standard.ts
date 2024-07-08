@@ -30,7 +30,7 @@ export class Abs extends Callable {
 	public arity: number = 1;
 	constructor() { super(); }
 	call(interpreter: Interpreter, args: number[]) {
-		return Math.abs(args[0])
+		return Math.abs(args[0]);
 	};
 }
 
