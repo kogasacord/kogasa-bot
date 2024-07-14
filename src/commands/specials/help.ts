@@ -33,11 +33,14 @@ export async function execute(
 	}
 
 	const channel_types: [typeof GuildChannel | typeof ThreadChannel | typeof DMChannel, ChannelScope][] = [[DMChannel, "DMs"], [GuildChannel, "Guild"], [ThreadChannel, "Thread"]];
-	const embed = new EmbedBuilder().setTitle("Help! Bad Apple!");
+	const embed = new EmbedBuilder().setTitle("Do ??help [command name] to get an extended description.");
 	let command_list = "";
 	for (const [name, command] of ext.commands) {
 		if (channel_types.some(([t, scope]) => command.channel.includes(scope) && msg.channel instanceof t)) {
 			command_list += `**${ext.prefix}${name}** - ${command.description}\n`;
+		}
+		if (channel_types.some(([t, scope]) => !command.channel.includes(scope) && msg.channel instanceof t)) {
+			command_list += `-# **${ext.prefix}${name}** - ${command.description}\n`;
 		}
 	}
 	embed.setDescription(command_list);

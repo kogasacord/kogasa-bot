@@ -10,7 +10,9 @@ export const aliases = ["rweb"];
 export const cooldown = 20;
 export const channel: ChannelScope[] = ["Guild"];
 export const description =
-	"Sends a random website to you, scaled by rarity. The more rare it is, the more obscure (or goofy) the website is. Goes from Common to Super Rare. Currently using a strong random number generator.";
+	"Sends a random website to you, scaled by rarity. ";
+export const extended_description =
+	"The more rare it is, the more obscure (or goofy) the website is. Goes from Common to Super Rare. Currently using a strong random number generator.";
 export async function execute(
 	client: Client,
 	msg: Message,

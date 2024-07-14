@@ -36,13 +36,13 @@ export async function execute(client: Client<true>, msg: Message, args: string[]
 				msg.reply("No guild associated with the index.");
 				return;
 			}
-			runConfess(client, msg, ext.pb, confess_guild, text);
+			sendConfessToGuild(client, msg, ext.pb, confess_guild, text);
 		} else {
 			if (confess_activated_guilds.length <= 0) {
 				msg.reply("You have no servers that are available to confess on.");
 				return;
 			}
-			sendConfessEmbed(msg, confess_activated_guilds);
+			sendConfessServerSelection(msg, confess_activated_guilds);
 		}
 	}
 
@@ -116,7 +116,7 @@ async function setup(msg: Message, pb: Pocketbase) {
 	}
 }
 
-async function runConfess(
+async function sendConfessToGuild(
 	client: Client<true>, msg: Message, pb: Pocketbase,
 	confess: { guild: Guild, channel: TextChannel }, text: string,
 ) {
@@ -136,6 +136,7 @@ async function runConfess(
 	const embed = new EmbedBuilder();
 	embed.setTitle(`Confession #${confessed_length}`);
 	embed.setDescription(text.slice(0, 500)); // no idea what the description limit is.
+	embed.setFooter({ text: "DM me `??confess` to send a confession." });
 
 	confess.channel.send({ embeds: [embed] });
 	msg.reply(`Sent to #${confess.channel.name} at ${confess.guild.name}`);
@@ -211,7 +212,7 @@ async function listConfessServers(client: Client<true>, msg: Message, pb: Pocket
 	return confess_activated_guilds;
 }
 
-async function sendConfessEmbed(msg: Message, confess_activated_guilds: { guild: Guild, channel: TextChannel }[]) {
+async function sendConfessServerSelection(msg: Message, confess_activated_guilds: { guild: Guild, channel: TextChannel }[]) {
 	const embed = new EmbedBuilder();
 	embed.setTitle("Choose a server to confess on: ");
 	for (let index = 0; index < confess_activated_guilds.length; index++) {

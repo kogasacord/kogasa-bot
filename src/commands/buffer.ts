@@ -11,7 +11,7 @@ export const channel: ChannelScope[] = ["Guild", "Thread"];
 export const description = "See edited or deleted messages in a channel.";
 export const extended_description = "`??buffer delete` sends the deleted messages.\n"
 	+ "`??buffer edit` sends the edited messages.\n"
-	+ "`??buffer` sends everything the bot has logged in.\n";
+	+ "`??buffer` sends everything the bot has logged in this server.\n";
 export async function execute(
 	_: Client,
 	msg: Message,

@@ -8,6 +8,8 @@ export const cooldown = 25;
 export const channel: ChannelScope[] = ["Guild", "Thread"];
 export const description =
 	"Reply to someone and capture a.. suspicious message.";
+export const extended_description =
+	"This makes an image to capture the message you replied to.";
 export async function execute(client: Client, msg: Message<true>, _args: string[]) {
 	if (!(msg.channel instanceof GuildChannel || msg.channel instanceof ThreadChannel)) return;
 

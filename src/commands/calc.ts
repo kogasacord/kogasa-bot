@@ -24,7 +24,7 @@ import { ChannelScope } from "@helpers/types";
 export const name = "calc";
 export const aliases = [];
 export const cooldown = 5;
-export const channel: ChannelScope[] = ["Guild"];
+export const channel: ChannelScope[] = ["Guild", "DMs"];
 export const description = "Basic calculator.";
 export const extended_description = "If you want to use this: [Documentation](https://github.com/DoormatIka/calculator-interpreter)";
 export async function execute(_client: Client, msg: Message, args: string[]) {

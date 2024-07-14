@@ -10,7 +10,7 @@ const sauce = sagiri(config.saucenao_token, { results: 2 });
 
 export const name = "sauce";
 export const cooldown = 60;
-export const channel: ChannelScope[] = ["Guild", "Thread"];
+export const channel: ChannelScope[] = ["Guild", "Thread", "DMs"];
 export const description =
 	"Find the sauce. Reply or send a link/attachment to me.";
 export async function execute(client: Client, msg: Message, args: string[]) {
