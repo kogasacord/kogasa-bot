@@ -2,6 +2,7 @@ import { Queue } from "./misc/queue.js";
 import { Client, Message, Collection } from "discord.js";
 import settings from "@root/settings.json" assert { type: "json" };
 import Pocketbase from "pocketbase";
+import {ReminderEmitter} from "./reminder/reminders.js";
 
 export type ChannelScope = "DMs" | "Guild" | "Thread";
 export type CommandModule = {
@@ -44,11 +45,13 @@ export type ExternalDependencies = {
 	tiers: [Tiers, number][],
 	chat_buffer: ChatBuffer,
 	settings: typeof settings,
+	reminder_emitter: ReminderEmitter,
 	pb: Pocketbase,
 };
 export type DiscordExternalDependencies = {
 	commands: Collection<string, CommandModule>;
 	aliases: Map<string, string>;
+	reminder_emitter: ReminderEmitter;
 	chat_buffer: ChatBuffer;
 	websites: Website[];
 	pb: Pocketbase;

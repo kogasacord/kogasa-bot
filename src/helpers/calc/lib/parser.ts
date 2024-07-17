@@ -11,7 +11,8 @@ export class RecursiveDescentParser {
 	private current = 0;
 	constructor(
 		private tokens: Token[],
-		private calc_error: CalcError
+		private calc_error: CalcError,
+		private measurements: string[]
 	) {}
 	public parse() {
 		const statements: Stmt[] = [];
@@ -132,7 +133,7 @@ export class RecursiveDescentParser {
 			if (expr.type !== "VarExpr") {
 				const literal_expr = expr as Literal;
 				const token: Token = { type: TokenType.NUMBER, text: literal_expr.value.toString(), literal: literal_expr.value };
-				throw this.error(token, "A number can't be called.");
+				throw this.error(token, `A number can't be called.`);
 			}
 			expr = this.parse_arguments(expr);
 		}
@@ -155,7 +156,19 @@ export class RecursiveDescentParser {
 	}
 	private primary(): Expr {
 		if (this.match_and_advance([TokenType.NUMBER])) {
-			const literal: Literal = { type: "LiteralExpr", value: this.previous().literal! };
+			const num_value = this.previous().literal!;
+			let number_type;
+			if (this.match_and_advance([TokenType.IDENTIFIER])) {
+				number_type = this.previous().text;
+			} // this will look like "NUMBER IDENTIFIER?"
+			if (number_type !== undefined && !this.measurements.includes(number_type)) {
+				throw this.error(this.previous(), "Unknown measurement type.");
+			}
+			const literal: Literal = { 
+				type: "LiteralExpr",
+				value: num_value,
+				label: number_type,
+			};
 			return literal;
 		}
 		if (this.match_and_advance([TokenType.IDENTIFIER])) {
@@ -221,11 +234,11 @@ export class RecursiveDescentParser {
 		if (this.check(type)) {
 			return this.advance();
 		}
-		throw this.error(this.peek(), message);
+		throw this.error(this.previous(), message);
 	}
 
 	private error(token: Token, message: string): ParseError {
-		this.calc_error.tokenError(token, message);
+		this.calc_error.tokenError(token, message)
 		return new ParseError();
 	}
 	private synchronize() {

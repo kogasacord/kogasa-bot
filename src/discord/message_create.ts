@@ -72,13 +72,14 @@ export async function messageCreate(
 		if (channel_types.some(([t, scope]) => command_module.channel.includes(scope) && msg.channel instanceof t)) {
 			setCooldown(user_cooldowns, command_module, msg.author.id, args);
 			const ext: ExternalDependencies = {
+				pb: deps.pb,
 				commands: deps.commands,
 				prefix: prefix,
 				websites: deps.websites,
 				tiers: tiers,
 				chat_buffer: deps.chat_buffer,
 				settings: settings,
-				pb: deps.pb,
+				reminder_emitter: deps.reminder_emitter,
 			};
 			command_module.execute(client, msg, args, ext);
 		}

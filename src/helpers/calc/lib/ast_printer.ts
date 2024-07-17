@@ -57,7 +57,7 @@ export class ASTPrinter {
 
 			case "LiteralExpr":
 				const literal_node = node as Literal;
-				this.str += `[Literal] ${literal_node.value}`;
+				this.str += `[Literal] ${literal_node.value}, type: ${literal_node.label}`;
 				break;
 
 			case "UnaryExpr":
@@ -75,14 +75,14 @@ export class ASTPrinter {
 
 			case "PostExpr":
 				const post_node = node as Post;
-				this.str += "( [Post] ";
+				this.str += `( [Post] `;
 				this.str += `${post_node.operator.text} `;
 				this.parseExpr(post_node.left);
 				this.str += " )";
 				break;
 			case "CallExpr":
 				const call = node as Call;
-				this.str += "( [Call]";
+				this.str += `( [Call]`;
 				this.parseExpr(call.callee);
 				for (const arg of call.arguments) {
 					this.parseExpr(arg);

@@ -14,8 +14,12 @@ import {
 import {
 	Abs, Clock, Sqrt, Ceiling, 
 	Floor, Round, Signum, 
-	Maximum, Minimum, Cbrt
+	Maximum, Minimum, Cbrt, Num
 } from "@helpers/calc/functions/standard.js";
+
+import {WeightedGraph} from "@helpers/calc/lib/graph.js";
+import {createConversionFunction} from "@helpers/calc/functions/conversion.js";
+import { edges } from "@helpers/calc/data/units.js";
 
 import { Client, Message } from "discord.js";
 import { ChannelScope } from "@helpers/types";
@@ -29,6 +33,9 @@ export const description = "Basic calculator.";
 export const extended_description = "If you want to use this: [Documentation](https://github.com/DoormatIka/calculator-interpreter)";
 export async function execute(_client: Client, msg: Message, args: string[]) {
 	const input = args.join(" ");
+	if (input.length <= 0) {
+		return;
+	}
 	const res = run_interpreter(input);
 	if (res.length >= 1) {
 		msg.reply(res);
@@ -37,11 +44,19 @@ export async function execute(_client: Client, msg: Message, args: string[]) {
 	}
 }
 
+
+const graph = new WeightedGraph();
 const out = new Stdout();
 const calc_err = new CalcError(out);
 const interpreter = new Interpreter(out, calc_err);
+
+graph.addJSONEdges(edges);
+const measurement_units = graph.getAllNodes();
+
 interpreter
+	// Standard Functions
 	.add_global("clock", new Clock())
+	.add_global("num", new Num()) // removes the label
 	// Math Functions
 	.add_global("sin", new Sine())
 	.add_global("cos", new Cosine())
@@ -52,8 +67,8 @@ interpreter
 	.add_global("sqrt", new Sqrt())
 	.add_global("cbrt", new Cbrt())
 	.add_global("abs", new Abs())
-	.add_global("pi", Math.PI)
-	.add_global("e", Math.E)
+	.add_global("pi", { num_value: Math.PI })
+	.add_global("e", { num_value: Math.E })
 	.add_global("ceil", new Ceiling())
 	.add_global("floor", new Floor())
 	.add_global("round", new Round())
@@ -69,12 +84,15 @@ interpreter
 	.add_global("acosh", new InverseHyperbolicCosine())
 	.add_global("asinh", new InverseHyperbolicSine())
 	.add_global("atanh", new InverseHyperbolicTangent());
+for (const unit of measurement_units) {
+	interpreter.add_global(unit, createConversionFunction(unit, graph));
+}
 const printer = new ASTPrinter();
 
 function run_interpreter(calc: string) {
 	const tokenizer = new Tokenizer(out, calc);
 	const parsed_tokens = tokenizer.parse();
-	const parser = new RecursiveDescentParser(parsed_tokens, calc_err);
+	const parser = new RecursiveDescentParser(parsed_tokens, calc_err, measurement_units);
 
 	try {
 		const tree = parser.parse();
@@ -82,7 +100,7 @@ function run_interpreter(calc: string) {
 			interpreter.interpret(tree);
 		}
 	} catch (error: unknown) {
-		// shh.
+		// shh
 	}
 
 	const s = structuredClone(out.get_stdout());

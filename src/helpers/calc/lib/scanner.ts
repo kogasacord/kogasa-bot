@@ -21,16 +21,18 @@ export enum TokenType {
 
 	EOF,
 }
+// {  } array
+// [  ] equation
 
 /**
 	* Needs to be re-initialized every run.
 	*/
-export class Tokenizer { // glorified function, but it follows crafting interpreters' OOP practices ig
+export class Tokenizer {
 	private start = 0;
 	private current = 0;
 	private tokens: Token[] = [];
 	private unexpected_chars: { char: string, index: number }[] = [];
-	private keywords: { [key: string]: TokenType } = {
+	private keywords: {[key: string]: TokenType} = {
 		p: TokenType.PRINT,
 		root: TokenType.ROOT,
 	};
@@ -77,8 +79,12 @@ export class Tokenizer { // glorified function, but it follows crafting interpre
 			}
 		}
 		if (this.unexpected_chars.length >= 1) {
-			const e = `Unexpected character at characters [\n${this.unexpected_chars.map(c => `${c.char} at ${c.index}`).join(", ")}].`;
+			const e = `Unexpected character at characters [${this.unexpected_chars.map(c => `${c.char} at ${c.index}`).join(", ")}].`;
 			this.out.stdout(e);
+		}
+		if (this.tokens.findIndex(v => v.type === TokenType.SEMICOLON) === -1) {
+			// optional semicolon.
+			this.tokens.push({ type: TokenType.SEMICOLON, text: ";", literal: undefined });
 		}
 		this.tokens.push({ type: TokenType.EOF, text: "", literal: undefined });
 		return this.tokens;
@@ -97,7 +103,7 @@ export class Tokenizer { // glorified function, but it follows crafting interpre
 	private is_alpha(c: string) {
 		return (c >= "a" && c <= "z") || 
 			(c >= "A" && c <= "Z") || 
-			c === "_";
+			c == "_";
 	}
 	private is_alphanumeric(c: string) {
 		return this.is_alpha(c) || this.is_digit(c);

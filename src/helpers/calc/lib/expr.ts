@@ -1,14 +1,23 @@
 import {Interpreter} from "./interpreter.js";
 import {Token} from "./scanner.js";
 
+export interface LabelledNumber {
+	num_value: number,
+	type?: string,
+}
+
 export class Callable {
 	public arity: number = 0;
-	call(interpreter: Interpreter, args: number[]) {return 0;};
+	call(interpreter: Interpreter, args: LabelledNumber[]): LabelledNumber {
+		return {num_value: 0};
+	};
 }
 
 export interface Expr {
-	type: "BinaryExpr" | "GroupingExpr" | "LiteralExpr" | "UnaryExpr" | "PostExpr"
-	| "VarExpr" | "CallExpr";
+	type: "BinaryExpr" | "GroupingExpr" 
+		| "LiteralExpr" | "UnaryExpr" 
+		| "PostExpr" | "VarExpr" 
+		| "CallExpr";
 };
 
 export interface Binary extends Expr {
@@ -21,7 +30,8 @@ export interface Grouping extends Expr {
 	expression: Expr,
 };
 export interface Literal extends Expr {
-	value: number
+	value: number,
+	label?: string,
 };
 export interface Unary extends Expr {
 	operator: Token,

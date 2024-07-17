@@ -37,11 +37,11 @@ export class CalcError {
 	*/
 	public runtimeError(error: RuntimeError) {
 		const message = error.getMessage();
-		this.out.stdout(`**RuntimeError**: ${message}`);
+		this.out.stdout(`RuntimeError: ${message}`);
 		this.had_runtime_error = true;
 	}
 	private report(where: string, message: string) {
-		this.out.stdout(`**Error**: ${message} [${where}]`);
+		this.out.stdout(`Error: ${message} [${where}]`);
 		this.had_error = true;
 	}
 	public getHasError(): boolean {
