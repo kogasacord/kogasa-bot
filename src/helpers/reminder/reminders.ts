@@ -30,14 +30,16 @@ export class ReminderEmitter {
 					if (current_date.getTime() < reminder.to_date.getTime()) {
 						continue;
 					}
-					client.users.send(userid, `Reminder: ${reminder.contents}`)
-						.catch(() => {
-							this.reminders.delete(userid);
-						});
-					if (reminders.length >= 2) {
-						reminders.splice(i, 1);
-					} else {
-						user_to_delete.push(userid);
+					try {
+						client.users.send(userid, `Reminder: ${reminder.contents}`);
+						if (reminders.length >= 2) {
+							reminders.splice(i, 1);
+						} else {
+							user_to_delete.push(userid);
+						}
+					} catch (error) {
+						this.reminders.delete(userid);
+						// it just deletes the user's reminders if it can't DM them.
 					}
 				}
 			}
@@ -56,14 +58,18 @@ export class ReminderEmitter {
 			this.reminders.set(user_id, [user_reminder]);
 		}
 	}
-	popReminder(user_id: string, index: number) {
+	popReminder(user_id: string, index: number): ReminderContents | undefined {
 		const reminder = this.reminders.get(user_id);
 		if (reminder) {
 			if (reminder.length >= 2) { // [element1, element2] // [e1, e2, e3, e4]
-				reminder.splice(index, 1);
+				return reminder.splice(index, 1).at(0);
 			} else { // [element1]
+				const contents = reminder.splice(index, 1).at(0);
 				this.reminders.delete(user_id);
+				return contents;
 			}
+		} else {
+			return undefined;
 		}
 	}
 	getReminderFromUser(user_id: string): ReminderContents[] | undefined {
