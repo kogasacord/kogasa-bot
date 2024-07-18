@@ -1,8 +1,9 @@
-
 // Solution from this: https://stackoverflow.com/a/5124834
 export function dec2frac(num: number, max_iter: number = 20) {
 	const d = [0, 1];
-	for (let i = 0; i < max_iter; i++) { d.push(0); }
+	for (let i = 0; i < max_iter; i++) {
+		d.push(0);
+	}
 	let z = structuredClone(num);
 	let n = 1;
 	let t = 1;

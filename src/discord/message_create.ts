@@ -1,4 +1,11 @@
-import { Client, Collection, DMChannel, GuildChannel, Message, ThreadChannel } from "discord.js";
+import {
+	Client,
+	Collection,
+	DMChannel,
+	GuildChannel,
+	Message,
+	ThreadChannel,
+} from "discord.js";
 import { pushMessageToBuffer } from "@helpers/buffer/buffer.js";
 import { separateCommands } from "@helpers/parser/parser.js";
 import {
@@ -17,14 +24,27 @@ import { ChannelScope } from "@helpers/types.js";
 
 const user_cooldowns = new Collection<string, Cooldown>();
 
-const tiers: [Tiers, number][] = [["C", 0.50], ["UC", 0.30], ["R", 0.15], ["SR", 0.04999], ["Q", 0.0001]];
-const channel_types: [typeof GuildChannel | typeof ThreadChannel | typeof DMChannel, ChannelScope][] = [[DMChannel, "DMs"], [GuildChannel, "Guild"], [ThreadChannel, "Thread"]];
+const tiers: [Tiers, number][] = [
+	["C", 0.5],
+	["UC", 0.3],
+	["R", 0.15],
+	["SR", 0.04999],
+	["Q", 0.0001],
+];
+const channel_types: [
+	typeof GuildChannel | typeof ThreadChannel | typeof DMChannel,
+	ChannelScope,
+][] = [
+	[DMChannel, "DMs"],
+	[GuildChannel, "Guild"],
+	[ThreadChannel, "Thread"],
+];
 
 export async function messageCreate(
 	client: Client,
 	msg: Message,
 	deps: DiscordExternalDependencies,
-	prefix: string,
+	prefix: string
 ) {
 	// make it support threads.
 	if (msg.author.bot) {
@@ -69,7 +89,12 @@ export async function messageCreate(
 			}
 		}
 
-		if (channel_types.some(([t, scope]) => command_module.channel.includes(scope) && msg.channel instanceof t)) {
+		if (
+			channel_types.some(
+				([t, scope]) =>
+					command_module.channel.includes(scope) && msg.channel instanceof t
+			)
+		) {
 			setCooldown(user_cooldowns, command_module, msg.author.id, args);
 			const ext: ExternalDependencies = {
 				pb: deps.pb,
@@ -83,7 +108,6 @@ export async function messageCreate(
 			};
 			command_module.execute(client, msg, args, ext);
 		}
-
 	} catch (err) {
 		console.error(err);
 	}

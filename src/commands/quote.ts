@@ -1,5 +1,12 @@
 import helpers from "@helpers/helpers.js";
-import { Client, GuildChannel, GuildMember, Message, ThreadChannel, User } from "discord.js";
+import {
+	Client,
+	GuildChannel,
+	GuildMember,
+	Message,
+	ThreadChannel,
+	User,
+} from "discord.js";
 import { ChannelScope } from "@helpers/types";
 
 export const name = "quote";
@@ -10,8 +17,18 @@ export const description =
 	"Reply to someone and capture a.. suspicious message.";
 export const extended_description =
 	"This makes an image to capture the message you replied to.";
-export async function execute(client: Client, msg: Message<true>, _args: string[]) {
-	if (!(msg.channel instanceof GuildChannel || msg.channel instanceof ThreadChannel)) return;
+export async function execute(
+	client: Client,
+	msg: Message<true>,
+	_args: string[]
+) {
+	if (
+		!(
+			msg.channel instanceof GuildChannel ||
+			msg.channel instanceof ThreadChannel
+		)
+	)
+		return;
 
 	const replied =
 		msg.channel.messages.cache.get(msg.reference!.messageId!) ??
@@ -29,7 +46,11 @@ export async function execute(client: Client, msg: Message<true>, _args: string[
 	const avatar_url = getAvatarURL(replied.author, guild_member);
 
 	try {
-		const recieved_quote = await helpers.quoteDefault(parsed_content, replied.author.displayName, avatar_url);
+		const recieved_quote = await helpers.quoteDefault(
+			parsed_content,
+			replied.author.displayName,
+			avatar_url
+		);
 		msg.reply({
 			files: [{ attachment: recieved_quote }],
 		});

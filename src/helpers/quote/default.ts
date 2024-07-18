@@ -4,7 +4,7 @@ import settings from "@root/settings.json" assert { type: "json" };
 export async function quoteDefault(
 	text: string,
 	author: string,
-	avatar_url: string,
+	avatar_url: string
 ) {
 	const check = await fetch(`${settings.canvas_endpoint}/quote`, {
 		method: "POST",

@@ -9,8 +9,7 @@ export const name = "randomweb";
 export const aliases = ["rweb"];
 export const cooldown = 20;
 export const channel: ChannelScope[] = ["Guild"];
-export const description =
-	"Sends a random website to you, scaled by rarity. ";
+export const description = "Sends a random website to you, scaled by rarity. ";
 export const extended_description =
 	"The more rare it is, the more obscure (or goofy) the website is. Goes from Common to Super Rare. Currently using a strong random number generator.";
 export async function execute(
@@ -33,7 +32,9 @@ export async function execute(
 }
 
 function gachaFormatter(gacha: Website) {
-	return `:package: ||${rarityName(gacha.rarity as Tiers)} <${gacha.site}>|| ${rarityEmote(gacha.rarity as Tiers)}`;
+	return `:package: ||${rarityName(gacha.rarity as Tiers)} <${
+		gacha.site
+	}>|| ${rarityEmote(gacha.rarity as Tiers)}`;
 }
 function rarityName(rarity: Tiers) {
 	switch (rarity) {

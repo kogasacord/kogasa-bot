@@ -1,8 +1,21 @@
-import {Binary, Call, Expr, Expression, Grouping, Literal, Post, Print, Stmt, Unary, VarExpr, VarStmt} from "./expr.js";
+import {
+	Binary,
+	Call,
+	Expr,
+	Expression,
+	Grouping,
+	Literal,
+	Post,
+	Print,
+	Stmt,
+	Unary,
+	VarExpr,
+	VarStmt,
+} from "./expr.js";
 
 /**
-	* Doesn't need to be re-initialized every run.
-	*/
+ * Doesn't need to be re-initialized every run.
+ */
 export class ASTPrinter {
 	private str = "";
 	constructor() {}
@@ -75,14 +88,14 @@ export class ASTPrinter {
 
 			case "PostExpr":
 				const post_node = node as Post;
-				this.str += `( [Post] `;
+				this.str += "( [Post] ";
 				this.str += `${post_node.operator.text} `;
 				this.parseExpr(post_node.left);
 				this.str += " )";
 				break;
 			case "CallExpr":
 				const call = node as Call;
-				this.str += `( [Call]`;
+				this.str += "( [Call]";
 				this.parseExpr(call.callee);
 				for (const arg of call.arguments) {
 					this.parseExpr(arg);
@@ -97,4 +110,3 @@ export class ASTPrinter {
 		return this.str;
 	}
 }
-

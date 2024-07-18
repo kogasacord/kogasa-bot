@@ -1,16 +1,17 @@
-
-import {spawn, ChildProcessWithoutNullStreams} from "child_process";
+import { spawn, ChildProcessWithoutNullStreams } from "child_process";
 
 /**
-	* An extremely light wrapper for child process spawning.
-	*/
+ * An extremely light wrapper for child process spawning.
+ */
 export class Process {
 	private process: ChildProcessWithoutNullStreams;
 	constructor(path: string) {
 		try {
 			this.process = spawn(path);
 		} catch (error) {
-			throw new Error(`Failed to spawn engine process: ${(error as Error).message}`);
+			throw new Error(
+				`Failed to spawn engine process: ${(error as Error).message}`
+			);
 		}
 	}
 
@@ -19,7 +20,7 @@ export class Process {
 			let dataBuffer = "";
 
 			this.process.stdin.write(command + "\n");
-			const dataListener = (data:Buffer) => {
+			const dataListener = (data: Buffer) => {
 				dataBuffer += data.toString();
 				if (endSignal.test(dataBuffer)) {
 					this.process.stdout.off("data", dataListener);
@@ -27,7 +28,7 @@ export class Process {
 					resolve(dataBuffer);
 				}
 			};
-			const errorListener = (err:Error) => {
+			const errorListener = (err: Error) => {
 				this.process.stdout.off("data", dataListener);
 				this.process.stdout.off("error", errorListener);
 				reject(err);

@@ -1,4 +1,3 @@
-
 import path from "path";
 import * as url from "url";
 import { Client, Collection, Options, Partials, User } from "discord.js";
@@ -18,12 +17,18 @@ import { messageUpdate } from "./src/discord/message_update.js";
 import { messageDelete } from "./src/discord/message_delete.js";
 import { messageCreate } from "./src/discord/message_create.js";
 import { ready } from "./src/discord/ready.js";
-import {ReminderEmitter} from "@helpers/reminder/reminders.js";
+import { ReminderEmitter } from "@helpers/reminder/reminders.js";
 
 ///////////////////////////////////////////////////////////////////////////////////
 const __dirname = url.fileURLToPath(new URL(".", import.meta.url));
 const client = new Client({
-	intents: ["Guilds", "GuildMessages", "MessageContent", "GuildIntegrations", "DirectMessages"],
+	intents: [
+		"Guilds",
+		"GuildMessages",
+		"MessageContent",
+		"GuildIntegrations",
+		"DirectMessages",
+	],
 	partials: [Partials.Channel],
 	makeCache: Options.cacheWithLimits({
 		...Options.DefaultMakeCacheSettings,
@@ -35,7 +40,7 @@ const pb = new Pocketbase("http://127.0.0.1:8090");
 ///////////////////////////////////////////////////////////////////////////////////
 const commands = new Collection<string, CommandModule>().concat(
 	await helpers.importDirectories(__dirname, "/src/commands/"),
-	await helpers.importDirectories(__dirname, "/src/commands/specials/"),
+	await helpers.importDirectories(__dirname, "/src/commands/specials/")
 );
 const websites: Website[] = await helpers.grabAllRandomWebsites(
 	path.join(__dirname, "./media/randomweb.jsonl")
@@ -56,7 +61,13 @@ const other_dependencies: DiscordExternalDependencies = {
 
 client.on(
 	"messageCreate",
-	async (msg) => await messageCreate(client, msg, other_dependencies, settings.test ? "!!" : settings.prefix)
+	async (msg) =>
+		await messageCreate(
+			client,
+			msg,
+			other_dependencies,
+			settings.test ? "!!" : settings.prefix
+		)
 );
 client.on(
 	"messageUpdate",

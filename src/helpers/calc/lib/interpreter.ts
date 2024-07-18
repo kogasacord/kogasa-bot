@@ -1,10 +1,24 @@
-
-import {CalcError, RuntimeError, Stdout} from "./error.js";
-import {Grouping, Literal, Unary, Expr, Binary, Expression, Print, Stmt, VarStmt, VarExpr, Call, Callable, Post, LabelledNumber} from "./expr.js";
-import {Token, TokenType} from "./scanner.js";
-import {Environment} from "./environment.js";
-import {decimal_factorial} from "./math/factorial.js";
-import {dec2frac} from "./math/dec2frac.js";
+import { CalcError, RuntimeError, Stdout } from "./error.js";
+import {
+	Grouping,
+	Literal,
+	Unary,
+	Expr,
+	Binary,
+	Expression,
+	Print,
+	Stmt,
+	VarStmt,
+	VarExpr,
+	Call,
+	Callable,
+	Post,
+	LabelledNumber,
+} from "./expr.js";
+import { Token, TokenType } from "./scanner.js";
+import { Environment } from "./environment.js";
+import { decimal_factorial } from "./math/factorial.js";
+import { dec2frac } from "./math/dec2frac.js";
 
 function formatPrint(value: LabelledNumber): string {
 	const val = `${value.num_value}${value.type ?? ""}`;
@@ -16,17 +30,20 @@ function formatPrint(value: LabelledNumber): string {
 }
 
 /**
-	* Doesn't need to be re-initialized every run
-	*/
+ * Doesn't need to be re-initialized every run
+ */
 export class Interpreter {
 	private globals = new Environment<LabelledNumber | Callable>();
 	private environment = new Environment<LabelledNumber>();
 
-	constructor(private std: Stdout, private calc_error: CalcError) {}
+	constructor(
+		private std: Stdout,
+		private calc_error: CalcError
+	) {}
 
 	/**
-		* Throws some errors!
-		*/
+	 * Throws some errors!
+	 */
 	public interpret(statements: Stmt[]) {
 		for (let i = 0; i < statements.length; i++) {
 			const statement = statements[i];
@@ -79,17 +96,26 @@ export class Interpreter {
 		const g_var = this.globals.get(stmt.name);
 		if (stmt.initializer === undefined) {
 			if (g_var === undefined) {
-				const runtime = new RuntimeError(stmt.name, "Variable needs to have an initializer.");
+				const runtime = new RuntimeError(
+					stmt.name,
+					"Variable needs to have an initializer."
+				);
 				throw this.runtimeError(runtime);
 			}
 			return g_var;
 		} else {
 			if (g_var !== undefined) {
 				if (g_var instanceof Callable) {
-					const runtime = new RuntimeError(stmt.name, "That function has already been defined. Please replace the name.");
+					const runtime = new RuntimeError(
+						stmt.name,
+						"That function has already been defined. Please replace the name."
+					);
 					throw this.runtimeError(runtime);
 				}
-				const runtime = new RuntimeError(stmt.name, "Global variable can't be reassigned.");
+				const runtime = new RuntimeError(
+					stmt.name,
+					"Global variable can't be reassigned."
+				);
 				throw this.runtimeError(runtime);
 			}
 			const value = this.evaluate(stmt.initializer);
@@ -101,8 +127,8 @@ export class Interpreter {
 	}
 
 	/**
-		* Recursive descent parsing
-		*/
+	 * Recursive descent parsing
+	 */
 	public evaluate(expr: Expr): Expr | LabelledNumber {
 		switch (expr.type) {
 			case "UnaryExpr":
@@ -127,8 +153,14 @@ export class Interpreter {
 				const p = expr as Post;
 				return this.evaluatePost(p);
 			default:
-				const t: Token = { type: TokenType.SEMICOLON, text: "???", literal: undefined };
-				throw this.runtimeError(new RuntimeError(t, "Something went terribly wrong."));
+				const t: Token = {
+					type: TokenType.SEMICOLON,
+					text: "???",
+					literal: undefined,
+				};
+				throw this.runtimeError(
+					new RuntimeError(t, "Something went terribly wrong.")
+				);
 		}
 	}
 
@@ -137,7 +169,10 @@ export class Interpreter {
 		const callee = expr.callee as VarExpr;
 		const callable = this.globals.get(callee.name);
 		if (callable === undefined) {
-			const runtime = new RuntimeError(expr.paren, `Cannot find a function named "${callee.name.text}".`);
+			const runtime = new RuntimeError(
+				expr.paren,
+				`Cannot find a function named "${callee.name.text}".`
+			);
 			throw this.runtimeError(runtime);
 		}
 		const args: LabelledNumber[] = [];
@@ -149,7 +184,10 @@ export class Interpreter {
 		}
 		if (callable instanceof Callable) {
 			if (args.length !== callable.arity) {
-				const runtime = new RuntimeError(expr.paren, `Expected ${callable.arity} arguments but got ${args.length}.`);
+				const runtime = new RuntimeError(
+					expr.paren,
+					`Expected ${callable.arity} arguments but got ${args.length}.`
+				);
 				throw this.runtimeError(runtime);
 			}
 			try {
@@ -161,21 +199,33 @@ export class Interpreter {
 			}
 		}
 		if (isLabelledNumber(callable)) {
-			const runtime = new RuntimeError(expr.paren, `${callee.name} is not a function, but a number.`);
+			const runtime = new RuntimeError(
+				expr.paren,
+				`${callee.name} is not a function, but a number.`
+			);
 			throw this.runtimeError(runtime);
 		}
-		const runtime = new RuntimeError(expr.paren, `Something went wrong with function ${callee.name}.`);
+		const runtime = new RuntimeError(
+			expr.paren,
+			`Something went wrong with function ${callee.name}.`
+		);
 		throw this.runtimeError(runtime);
 	}
 	public evaluateVarExpr(expr: VarExpr): LabelledNumber {
 		const g_var = this.globals.get(expr.name);
 		if (g_var instanceof Callable) {
-			const runtime = new RuntimeError(expr.name, `You can't use function "${expr.name.text}" as a normal variable.`);
+			const runtime = new RuntimeError(
+				expr.name,
+				`You can't use function "${expr.name.text}" as a normal variable.`
+			);
 			throw this.runtimeError(runtime);
 		}
 		const v = g_var ?? this.environment.get(expr.name);
 		if (v === undefined) {
-			const runtime = new RuntimeError(expr.name, `The variable "${expr.name.text}" does not exist!`);
+			const runtime = new RuntimeError(
+				expr.name,
+				`The variable "${expr.name.text}" does not exist!`
+			);
 			throw this.runtimeError(runtime);
 		}
 		return v;
@@ -191,14 +241,20 @@ export class Interpreter {
 				return this.evaluate(expr.expression) as LabelledNumber;
 			}
 			default:
-				const runtime = new RuntimeError(expr.operator, "I can't evaluate that grouping for some reason.");
+				const runtime = new RuntimeError(
+					expr.operator,
+					"I can't evaluate that grouping for some reason."
+				);
 				throw this.runtimeError(runtime);
 		}
 	}
 	public evaluatePost(expr: Post): LabelledNumber {
 		const left = this.evaluate(expr.left);
 		if (!isLabelledNumber(left)) {
-			const runtime = new RuntimeError(expr.operator, "Left of postfix was not a number.");
+			const runtime = new RuntimeError(
+				expr.operator,
+				"Left of postfix was not a number."
+			);
 			throw this.runtimeError(runtime);
 		}
 		switch (expr.operator.type) {
@@ -224,7 +280,10 @@ export class Interpreter {
 					return { num_value: -right.num_value, type: right.type };
 		}
 
-		const runtime = new RuntimeError(expr.operator, "Error evaluating Unary expression.");
+		const runtime = new RuntimeError(
+			expr.operator,
+			"Error evaluating Unary expression."
+		);
 		throw this.runtimeError(runtime);
 	}
 	public evaluateBinary(expr: Binary): LabelledNumber {
@@ -232,25 +291,36 @@ export class Interpreter {
 		const right = this.evaluate(expr.right);
 
 		if (!isLabelledNumber(left) || !isLabelledNumber(right)) {
-			const runtime = new RuntimeError(expr.operator, "Left or Right in binary was not a number.");
+			const runtime = new RuntimeError(
+				expr.operator,
+				"Left or Right in binary was not a number."
+			);
 			throw this.runtimeError(runtime);
 		}
 
 		switch (expr.operator.type) {
 			case TokenType.MINUS: {
-				if (left.type === right.type) { // undefined === undefined
+				if (left.type === right.type) {
+					// undefined === undefined
 					const val = left.num_value - right.num_value;
 					return { num_value: val, type: left.type };
 				}
-				const runtime = new RuntimeError(expr.operator, `Number ${left.num_value} of label ${left.type} can't be subtracted from a number ${right.num_value} of label ${right.type}.`);
+				const runtime = new RuntimeError(
+					expr.operator,
+					`Number ${left.num_value} of label ${left.type} can't be subtracted from a number ${right.num_value} of label ${right.type}.`
+				);
 				throw this.runtimeError(runtime);
 			}
 			case TokenType.PLUS: {
-				if (left.type === right.type) { // undefined === undefined
+				if (left.type === right.type) {
+					// undefined === undefined
 					const val = left.num_value + right.num_value;
 					return { num_value: val, type: left.type };
 				}
-				const runtime = new RuntimeError(expr.operator, `Number ${left.num_value} of label ${left.type} can't be added from a number ${right.num_value} of label ${right.type}.`);
+				const runtime = new RuntimeError(
+					expr.operator,
+					`Number ${left.num_value} of label ${left.type} can't be added from a number ${right.num_value} of label ${right.type}.`
+				);
 				throw this.runtimeError(runtime);
 			}
 			case TokenType.SLASH: {
@@ -259,7 +329,10 @@ export class Interpreter {
 					const resultType = left.type !== undefined ? left.type : right.type;
 					return { num_value: val, type: resultType };
 				} else {
-					const runtime = new RuntimeError(expr.operator, "Dividing two labeled numbers is not supported.");
+					const runtime = new RuntimeError(
+						expr.operator,
+						"Dividing two labeled numbers is not supported."
+					);
 					throw this.runtimeError(runtime);
 				}
 			}
@@ -269,38 +342,56 @@ export class Interpreter {
 					const resultType = left.type !== undefined ? left.type : right.type;
 					return { num_value: val, type: resultType };
 				} else {
-					const runtime = new RuntimeError(expr.operator, "Multiplying two labeled numbers is not supported.");
+					const runtime = new RuntimeError(
+						expr.operator,
+						"Multiplying two labeled numbers is not supported."
+					);
 					throw this.runtimeError(runtime);
 				}
 			}
 			case TokenType.CARAT: {
 				if (left.type === undefined && right.type === undefined) {
 					const val = Math.pow(left.num_value, right.num_value);
-					return {num_value: val, type: left.type};
+					return { num_value: val, type: left.type };
 				}
-				const runtime = new RuntimeError(expr.operator, "Labelled numbers cannot be operated with an exponent.");
+				const runtime = new RuntimeError(
+					expr.operator,
+					"Labelled numbers cannot be operated with an exponent."
+				);
 				throw this.runtimeError(runtime);
 			}
 			case TokenType.ROOT: {
 				// how do i handle 1cm root 2km ???
 				if (left.num_value <= 0) {
-					const runtime = new RuntimeError(expr.operator, "You can't do negative roots. Will support soon though!");
+					const runtime = new RuntimeError(
+						expr.operator,
+						"You can't do negative roots. Will support soon though!"
+					);
 					throw this.runtimeError(runtime);
 				}
 				if (right.num_value <= 0) {
-					const runtime = new RuntimeError(expr.operator, "You can't do a root on negative values.");
+					const runtime = new RuntimeError(
+						expr.operator,
+						"You can't do a root on negative values."
+					);
 					throw this.runtimeError(runtime);
 				}
 				if (left.type === undefined && right.type === undefined) {
-					const val = Math.pow(right.num_value, 1/left.num_value);
-					return {num_value: val, type: left.type};
+					const val = Math.pow(right.num_value, 1 / left.num_value);
+					return { num_value: val, type: left.type };
 				}
-				const runtime = new RuntimeError(expr.operator, "Labelled numbers cannot be operated with a root.");
+				const runtime = new RuntimeError(
+					expr.operator,
+					"Labelled numbers cannot be operated with a root."
+				);
 				throw this.runtimeError(runtime);
 			}
 		}
 
-		const runtime = new RuntimeError(expr.operator, "Error evaluating Binary expression.");
+		const runtime = new RuntimeError(
+			expr.operator,
+			"Error evaluating Binary expression."
+		);
 		throw this.runtimeError(runtime);
 	}
 
@@ -310,6 +401,8 @@ export class Interpreter {
 	}
 }
 
-function isLabelledNumber(num: Expr | LabelledNumber | Callable | number): num is LabelledNumber {
+function isLabelledNumber(
+	num: Expr | LabelledNumber | Callable | number
+): num is LabelledNumber {
 	return (num as LabelledNumber).num_value !== undefined;
 }

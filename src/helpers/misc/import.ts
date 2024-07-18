@@ -34,8 +34,10 @@ function recheck_fields(command: CommandModule) {
 	if (command.name === undefined) {
 		throw new Error("Name missing for a command..");
 	}
-	if (!command.channel.every(v => dm.includes(v))) {
-		throw new Error(`Channel missing or mispelled for ${command.name}, "${command.channel}"`);
+	if (!command.channel.every((v) => dm.includes(v))) {
+		throw new Error(
+			`Channel missing or mispelled for ${command.name}, "${command.channel}"`
+		);
 	}
 	if (command.cooldown === undefined) {
 		throw new Error(`Cooldown missing for ${command.name}`);

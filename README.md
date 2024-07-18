@@ -37,6 +37,7 @@ The structure of it is like this:
 	"saucenao_token": "[saucenao token here]"
 }
 ```
+
 2. Download and extract [canvas](https://github.com/kogasacord/canvas-http-api).
 3. Run `npm install` and `ts-node --esm index.ts`.
 

@@ -28,9 +28,9 @@ export function generateWeightedRandomTable(chances: [string, number][]) {
 export function weightedPicker(chances: [string, number][]) {
 	const length = 100_000;
 	let tracked = 0; // offsetter.
-									 // e.g: if 0.9 => 900 then it should add to the weighted_chance in the next loop
-									 // so before it would be: 0.9 => 900, then 0.05 => 50 (a number like 943 wouldn't be caught)
-		 							 // now it would be: 0.9 => 900, then 0.05 => 900 + 50 (a number like 930 WOULD be caught)
+	// e.g: if 0.9 => 900 then it should add to the weighted_chance in the next loop
+	// so before it would be: 0.9 => 900, then 0.05 => 50 (a number like 943 wouldn't be caught)
+	// now it would be: 0.9 => 900, then 0.05 => 900 + 50 (a number like 930 WOULD be caught)
 
 	const picked_number = getRandomInt(0, length);
 	for (const [name, chance] of chances) {

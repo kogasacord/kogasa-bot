@@ -28,7 +28,8 @@ export async function execute(client: Client, msg: Message, args: string[]) {
 	} else if (msg.attachments.size >= 1) {
 		response = await useAttachments(msg);
 	} else {
-		response = "`??sauce [replied to image] [link or attachment]` You're missing one of these.";
+		response =
+			"`??sauce [replied to image] [link or attachment]` You're missing one of these.";
 	}
 	msg.reply(response);
 }

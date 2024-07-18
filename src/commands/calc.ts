@@ -1,36 +1,53 @@
-
-import {ASTPrinter} from "@helpers/calc/lib/ast_printer.js";
-import {Interpreter} from "@helpers/calc/lib/interpreter.js";
-import {RecursiveDescentParser} from "@helpers/calc/lib/parser.js";
-import {Tokenizer} from "@helpers/calc/lib/scanner.js";
-import {CalcError, Stdout} from "@helpers/calc/lib/error.js";
+import { ASTPrinter } from "@helpers/calc/lib/ast_printer.js";
+import { Interpreter } from "@helpers/calc/lib/interpreter.js";
+import { RecursiveDescentParser } from "@helpers/calc/lib/parser.js";
+import { Tokenizer } from "@helpers/calc/lib/scanner.js";
+import { CalcError, Stdout } from "@helpers/calc/lib/error.js";
 import {
-	Cosine, Log, Sine, 
-	Tangent, Base2Log, Base10Log,
-	HyperbolicCosine, HyperbolicSine, HyperbolicTangent, 
-	InverseHyperbolicCosine, InverseHyperbolicSine, InverseHyperbolicTangent,
-	InverseSine, InverseCosine, InverseTangent
+	Cosine,
+	Log,
+	Sine,
+	Tangent,
+	Base2Log,
+	Base10Log,
+	HyperbolicCosine,
+	HyperbolicSine,
+	HyperbolicTangent,
+	InverseHyperbolicCosine,
+	InverseHyperbolicSine,
+	InverseHyperbolicTangent,
+	InverseSine,
+	InverseCosine,
+	InverseTangent,
 } from "@helpers/calc/functions/trig.js";
 import {
-	Abs, Clock, Sqrt, Ceiling, 
-	Floor, Round, Signum, 
-	Maximum, Minimum, Cbrt, Num
+	Abs,
+	Clock,
+	Sqrt,
+	Ceiling,
+	Floor,
+	Round,
+	Signum,
+	Maximum,
+	Minimum,
+	Cbrt,
+	Num,
 } from "@helpers/calc/functions/standard.js";
 
-import {WeightedGraph} from "@helpers/calc/lib/graph.js";
-import {createConversionFunction} from "@helpers/calc/functions/conversion.js";
+import { WeightedGraph } from "@helpers/calc/lib/graph.js";
+import { createConversionFunction } from "@helpers/calc/functions/conversion.js";
 import { edges } from "@helpers/calc/data/units.js";
 
 import { Client, Message } from "discord.js";
 import { ChannelScope } from "@helpers/types";
-
 
 export const name = "calc";
 export const aliases = [];
 export const cooldown = 5;
 export const channel: ChannelScope[] = ["Guild", "DMs"];
 export const description = "Basic calculator.";
-export const extended_description = "If you want to use this: [Documentation](https://github.com/DoormatIka/calculator-interpreter)";
+export const extended_description =
+	"If you want to use this: [Documentation](https://github.com/DoormatIka/calculator-interpreter)";
 export async function execute(_client: Client, msg: Message, args: string[]) {
 	const input = args.join(" ");
 	if (input.length <= 0) {
@@ -40,10 +57,11 @@ export async function execute(_client: Client, msg: Message, args: string[]) {
 	if (res.length >= 1) {
 		msg.reply(res);
 	} else {
-		msg.reply("To view a value, you must add `p` to it. E.g: `p 1 + 1`. This is to support variables.");
+		msg.reply(
+			"To view a value, you must add `p` to it. E.g: `p 1 + 1`. This is to support variables."
+		);
 	}
 }
-
 
 const graph = new WeightedGraph();
 const out = new Stdout();
@@ -92,7 +110,11 @@ const printer = new ASTPrinter();
 function run_interpreter(calc: string) {
 	const tokenizer = new Tokenizer(out, calc);
 	const parsed_tokens = tokenizer.parse();
-	const parser = new RecursiveDescentParser(parsed_tokens, calc_err, measurement_units);
+	const parser = new RecursiveDescentParser(
+		parsed_tokens,
+		calc_err,
+		measurement_units
+	);
 
 	try {
 		const tree = parser.parse();
