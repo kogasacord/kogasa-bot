@@ -9,8 +9,6 @@ const seed = crypto.randomBytes(400).toString();
 const rng = random.clone(seedrandom(seed, { entropy: true }));
 /*
  * min: inclusive, max: inclusive
- *
- * Impure function.
  */
 export function getRandomInt(min: number, max: number) {
 	return rng.uniformInt(min, max)();
