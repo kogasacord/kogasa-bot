@@ -259,9 +259,8 @@ async function listConfessServers(
 	const pb_guild_collection = pb.collection("guild");
 	const pb_channel_collection = pb.collection("confess");
 
-	const guilds = await client.guilds.fetch();
-	for (const oauth2guild of guilds.values()) {
-		const guild = await oauth2guild.fetch();
+	const guilds = client.guilds.cache;
+	for (const guild of guilds.values()) {
 		const members = await guild.members.fetch();
 		const member = members.get(msg.author.id);
 		if (!member) {
