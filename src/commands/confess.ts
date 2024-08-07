@@ -31,7 +31,7 @@ interface ConfessGuilds {
 export const name = "confess";
 export const aliases = [];
 export const channel: ChannelScope[] = ["DMs", "Guild"];
-export const cooldown = 1;
+export const cooldown = 10;
 export const description = "Secretly send a message.";
 export const extended_description =
 	"To confess, you must do `??confess` in DMs first and follow the instructions listed there." +
