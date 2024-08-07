@@ -22,11 +22,16 @@ interface PBConfess extends RecordModel {
 		banned: string[];
 	};
 }
+interface ConfessGuilds {
+	guild: Guild;
+	channel?: TextChannel;
+	tag?: "Timed out." | "Banned.";
+}
 
 export const name = "confess";
 export const aliases = [];
 export const channel: ChannelScope[] = ["DMs", "Guild"];
-export const cooldown = 15;
+export const cooldown = 1;
 export const description = "Secretly send a message.";
 export const extended_description =
 	"To confess, you must do `??confess` in DMs first and follow the instructions listed there." +
@@ -54,7 +59,7 @@ export async function execute(
 				msg.reply("No guild associated with the index.");
 				return;
 			}
-			sendConfessToGuild(client, msg, ext.pb, confess_guild, text);
+			sendConfessToGuild(msg, ext.pb, confess_guild, text);
 		} else {
 			if (confess_activated_guilds.length <= 0) {
 				msg.reply("You have no servers that are available to confess on.");
@@ -157,23 +162,27 @@ async function setup(msg: Message, pb: Pocketbase) {
 }
 
 async function sendConfessToGuild(
-	client: Client<true>,
 	msg: Message,
 	pb: Pocketbase,
-	confess: { guild: Guild; channel: TextChannel },
+	confess: ConfessGuilds,
 	text: string
 ) {
-	const hash_channel_id = hash(confess.channel.id, 15);
-	const channels = pb.collection("confess");
-	const channel_record = await getRecord<PBConfess>(channels, hash_channel_id);
-
-	// ban logic
-	if (channel_record?.users.banned.find((id) => id === msg.author.id)) {
+	if (confess.tag === "Banned.") {
 		msg.reply(
-			`You're banned from confessing to ${confess.guild.name}. Ask a mod there to unban you.`
+			"You're currently banned from confessing in that server."
 		);
 		return;
 	}
+	if (confess.tag === "Timed out.") {
+		msg.reply(
+			"You're currently timed out from speaking in that server."
+		);
+		return;
+	}
+
+	const hash_channel_id = hash(confess.channel!.id, 15);
+	const channels = pb.collection("confess");
+	const channel_record = await getRecord<PBConfess>(channels, hash_channel_id);
 
 	const confessed_length = channel_record?.users.confessed.push(msg.author.id);
 	await channels.update<PBConfess>(hash_channel_id, {
@@ -185,8 +194,8 @@ async function sendConfessToGuild(
 	embed.setDescription(text.slice(0, 500)); // no idea what the description limit is.
 	embed.setFooter({ text: "DM me `??confess` to send a confession." });
 
-	confess.channel.send({ embeds: [embed] });
-	msg.reply(`Sent to #${confess.channel.name} at ${confess.guild.name}`);
+	confess.channel!.send({ embeds: [embed] });
+	msg.reply(`Sent to #${confess.channel!.name} at ${confess.guild.name}`);
 }
 
 async function banUserFromConfess(
@@ -245,48 +254,66 @@ async function listConfessServers(
 	client: Client<true>,
 	msg: Message,
 	pb: Pocketbase
-) {
-	const confess_activated_guilds: { guild: Guild; channel: TextChannel }[] = [];
+): Promise<ConfessGuilds[]> {
+	const confess_activated_guilds: ConfessGuilds[] = [];
 	const pb_guild_collection = pb.collection("guild");
 	const pb_channel_collection = pb.collection("confess");
 
-	for (const guild of client.guilds.cache.values()) {
-		if (guild.members.cache.has(msg.author.id)) {
-			// checking mutually joined servers with user.
-			const pb_guild = await getRecord<PBGuild>(
-				pb_guild_collection,
-				hash(guild.id, 15)
+	const guilds = await client.guilds.fetch();
+	for (const oauth2guild of guilds.values()) {
+		const guild = await oauth2guild.fetch();
+		const members = await guild.members.fetch();
+		const member = members.get(msg.author.id);
+		if (!member) {
+			continue;
+		}
+
+		if (member.isCommunicationDisabled()) {
+			confess_activated_guilds.push({
+				guild: guild,
+				tag: "Timed out.",
+			});
+			continue;
+		}
+		// checking mutually joined servers with user.
+		const pb_guild = await getRecord<PBGuild>(
+			pb_guild_collection,
+			hash(guild.id, 15)
+		);
+		if (pb_guild && pb_guild.confess) {
+			// checking if that guild has activated the feature.
+			const pb_confess = await getRecord<PBConfess>(
+				pb_channel_collection,
+				pb_guild.confess
 			);
-			if (pb_guild && pb_guild.confess) {
-				// checking if that guild has activated the feature.
-				const pb_confess = await getRecord<PBConfess>(
-					pb_channel_collection,
-					pb_guild.confess
-				);
-				if (!pb_confess) {
-					continue;
-				}
-				// quite confident it will be a GuildChannel because of the previous check (msg.channel.type === ChannelType.GuildText)
-				const confess_channel = (await guild.channels.fetch(
-					pb_confess?.channel_id
-				)) as TextChannel;
-				if (!confess_channel) {
-					continue;
-				}
+			if (!pb_confess) {
+				continue;
+			}
+			if (pb_confess.users.banned.find((id) => id === msg.author.id)) {
 				confess_activated_guilds.push({
 					guild: guild,
-					channel: confess_channel,
+					tag: "Banned.",
 				});
+				continue;
 			}
+			// quite confident it will be a GuildChannel because of the previous check (msg.channel.type === ChannelType.GuildText)
+			const confess_channel = (await guild.channels.fetch(pb_confess?.channel_id, { cache: true })) as TextChannel;
+			if (!confess_channel) {
+				continue;
+			}
+			confess_activated_guilds.push({
+				guild: guild,
+				channel: confess_channel,
+			});
 		}
-	}
 
+	}
 	return confess_activated_guilds;
 }
 
 async function sendConfessServerSelection(
 	msg: Message,
-	confess_activated_guilds: { guild: Guild; channel: TextChannel }[]
+	confess_activated_guilds: ConfessGuilds[]
 ) {
 	const embed = new EmbedBuilder();
 	embed.setTitle("Choose a server to confess on: ");
@@ -294,7 +321,7 @@ async function sendConfessServerSelection(
 		const guild = confess_activated_guilds[index];
 		embed.addFields({
 			name: `#${index} ${guild.guild.name}`,
-			value: `At: ${guild.channel.name}`,
+			value: guild.tag ? `-# ${guild.tag}` : `-# At: ${guild.channel!.name}`,
 			inline: true,
 		});
 	}

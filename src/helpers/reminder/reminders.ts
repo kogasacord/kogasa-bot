@@ -4,8 +4,10 @@ import EventEmitter from "node:events";
 export type ReminderContents = {
 	to_date: Date;
 	contents: string;
-};
+}; // this is used in a loop to periodically check if to_date has passed Date.now()
 type Reminders = Map<string, ReminderContents[]>;
+// Reminders gets looped through in order to check every user
+// It's a map because I want to get the ReminderContents via string
 
 export class ReminderEmitter {
 	private reminders: Reminders = new Map();
@@ -52,13 +54,11 @@ export class ReminderEmitter {
 		);
 	}
 	pushReminder(user_id: string, user_reminder: ReminderContents) {
-		const reminder = this.reminders.get(user_id);
-		if (reminder) {
-			reminder.push(user_reminder);
-			this.reminders.set(user_id, reminder);
-		} else {
-			this.reminders.set(user_id, [user_reminder]);
+		if (!this.reminders.has(user_id)) {
+			this.reminders.set(user_id, []);
 		}
+		const reminder = this.reminders.get(user_id)!;
+		reminder.push(user_reminder);
 	}
 	popReminder(user_id: string, index: number): ReminderContents | undefined {
 		const reminder = this.reminders.get(user_id);

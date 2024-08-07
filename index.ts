@@ -28,12 +28,13 @@ const client = new Client({
 		"MessageContent",
 		"GuildIntegrations",
 		"DirectMessages",
+		"GuildMembers",
 	],
 	partials: [Partials.Channel],
 	makeCache: Options.cacheWithLimits({
 		...Options.DefaultMakeCacheSettings,
 		MessageManager: 2000,
-		UserManager: 100,
+		UserManager: 10_000,
 	}),
 });
 const pb = new Pocketbase("http://127.0.0.1:8090");
@@ -77,9 +78,6 @@ client.on(
 	"messageDelete",
 	async (msg) => await messageDelete(client, msg, chat_buffer)
 );
-client.on("cacheSweep", (message) => {
-	console.log(`Sweeped cache: ${message}`);
-});
 client.on("ready", (client) => {
 	ready(client, settings);
 	reminder_emitter.activate();

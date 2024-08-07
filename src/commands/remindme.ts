@@ -113,16 +113,16 @@ function userAddReminder(
 		? 0
 		: Number(match.groups.minutes);
 
-	if (days >= 7) {
-		msg.reply("Days specified was more than 7.");
+	if (days > 30) {
+		msg.reply("Days specified was more than 30.");
 		return;
 	}
 	if (hours >= 24) {
-		msg.reply("Hours specified was more than 24.");
+		msg.reply("Hours specified was more than or equal to 24.");
 		return;
 	}
 	if (minutes >= 60) {
-		msg.reply("Minutes specified was more than 60.");
+		msg.reply("Minutes specified was more than or equal to 60.");
 		return;
 	}
 
