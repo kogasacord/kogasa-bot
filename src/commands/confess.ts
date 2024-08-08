@@ -4,9 +4,11 @@ import {
 	Client,
 	EmbedBuilder,
 	Guild,
+	GuildMember,
 	Message,
 	PermissionsBitField,
 	TextChannel,
+	User,
 } from "discord.js";
 import { ChannelScope } from "@helpers/types";
 import Pocketbase, { RecordModel, RecordService } from "pocketbase";
@@ -250,7 +252,9 @@ async function unbanUserFromConfess(pb: Pocketbase, msg: Message) {
 
 //// HELPERS ////
 
-async function listConfessServers(
+// optimization: when someone's confessing to a specific server..
+// 		maybe don't get every single server only to use one?
+async function listConfessServers( 
 	client: Client<true>,
 	msg: Message,
 	pb: Pocketbase
@@ -259,11 +263,13 @@ async function listConfessServers(
 	const pb_guild_collection = pb.collection("guild");
 	const pb_channel_collection = pb.collection("confess");
 
+	console.time("getGuilds");
 	const guilds = client.guilds.cache;
 	for (const guild of guilds.values()) {
-		const members = await guild.members.fetch();
-		const member = members.get(msg.author.id);
-		if (!member) {
+		let member: GuildMember;
+		try {
+			member = await guild.members.fetch(msg.author.id);
+		} catch (error) {
 			continue;
 		}
 
@@ -307,6 +313,7 @@ async function listConfessServers(
 		}
 
 	}
+	console.timeEnd("getGuilds");
 	return confess_activated_guilds;
 }
 
