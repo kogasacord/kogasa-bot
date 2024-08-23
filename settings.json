@@ -1,7 +1,7 @@
 {
 	"test": true,
 	"ytdl_endpoint": "http://localhost:3000",
-	"canvas_endpoint": "http://localhost:4000",
+	"canvas_endpoint": "http://localhost:8080",
 	"prefix": "??",
 	"offlineMode": false
 }

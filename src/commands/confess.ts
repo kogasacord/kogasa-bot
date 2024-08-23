@@ -8,7 +8,6 @@ import {
 	Message,
 	PermissionsBitField,
 	TextChannel,
-	User,
 } from "discord.js";
 import { ChannelScope } from "@helpers/types";
 import Pocketbase, { RecordModel, RecordService } from "pocketbase";
@@ -263,7 +262,6 @@ async function listConfessServers(
 	const pb_guild_collection = pb.collection("guild");
 	const pb_channel_collection = pb.collection("confess");
 
-	console.time("getGuilds");
 	const guilds = client.guilds.cache;
 	for (const guild of guilds.values()) {
 		let member: GuildMember;
@@ -313,7 +311,6 @@ async function listConfessServers(
 		}
 
 	}
-	console.timeEnd("getGuilds");
 	return confess_activated_guilds;
 }
 

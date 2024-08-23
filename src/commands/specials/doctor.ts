@@ -76,7 +76,7 @@ export async function pingServer(url: string) {
 				Accept: "application/json",
 			},
 		});
-		return (await server.json()) as boolean; // turn this into a boolean soon.
+		return server.body ? true : false; // turn this into a boolean soon.
 	} catch (err) {
 		return false;
 	}
