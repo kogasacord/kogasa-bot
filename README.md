@@ -40,12 +40,11 @@ The structure of it is like this:
 
 2. Download and extract [canvas](https://github.com/kogasacord/canvas-http-api).
 3. Run `npm install` and `ts-node --esm index.ts`.
-
 4. Run `npm install`, `npm run build`, and `npm run prestart` in that order.
 
 ## Contributing
 
-1. Make sure to use prettier after you make changes to the code. Run it by calling `npm run format`.
+1. Make sure to use prettier after you make changes to the code. Run it by calling `npm run format`. Testing `inline code`.
 
 ## Misc
 

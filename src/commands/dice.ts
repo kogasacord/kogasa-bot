@@ -9,7 +9,7 @@ import {getRandomInt} from "@helpers/misc/random.js";
 const dice_regex = /(?<amount>\d+)d(?<sides>\d+)/g;
 
 export const name = "dice";
-export const aliases = ["d"];
+export const aliases = ["d", "roll"];
 export const cooldown = 5;
 export const channel: ChannelScope[] = ["Guild", "Thread", "DMs"];
 export const description =
