@@ -24,6 +24,9 @@ export async function execute(
 		return;
 	}
 	*/
+	msg.reply("Unavailable yet.");
+	return;
+	/*
 	if (args.length < 1) {
 		msg.reply("Enter at least 1 names: `??love [name1] [name2] [name3] ...`");
 		return;
@@ -35,6 +38,7 @@ export async function execute(
 		+ `Desire value: ${chaldean.calculateHeartDesire()}\n`
 		+ `Personality value: ${chaldean.calculatePersonalityNumber()}\n`
 	);
+	*/
 }
 
 class ChaldeanNumerologyCalculator {
