@@ -1,5 +1,5 @@
-import { RuntimeError } from "./error.js";
-import { Token } from "./scanner.js";
+import {RuntimeError} from "./error.js";
+import {Token} from "./scanner.js";
 
 export class Environment<T> {
 	private values = new Map<string, T>();

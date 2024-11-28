@@ -13,8 +13,8 @@ const bible_list = await importBibleCSV();
 
 export const name = "isthisinthebible";
 export const cooldown = 5;
-export const description = "Reply or type a message to check if any of those words are in the bible. `??isthisinthebible [content?]` or reply to a message.";
-export const extended_description = "This command scans through every word in the bible and your text and compares them.";
+export const description = "Reply or type a message to check if any of those words are in the bible. ";
+export const extended_description = "`??isthisinthebible [content?]` or reply to a message.\nThis command scans through every word in the bible and your text and compares them.";
 export const channel: ChannelScope[] = ["Guild"];
 export const aliases = ["biblecheck"];
 export async function execute(_client: Client, msg: Message, args: string[]) {

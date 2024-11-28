@@ -1,55 +1,49 @@
-import { Stdout } from "./error";
+import {Stdout} from "./error";
 
 export type Token = {
-	type: TokenType;
-	text: string;
-	literal: number | undefined;
-};
+	type: TokenType,
+	text: string,
+	literal: number | undefined,
+}
 
 export enum TokenType {
-	LEFT_PAREN,
+	LEFT_SQ,
+	RIGHT_SQ,
+
+	LEFT_CURLY,
+	RIGHT_CURLY,
+
+	LEFT_PAREN, 
 	RIGHT_PAREN,
-	DOT,
-	MINUS,
-	PLUS,
-	SLASH,
-	STAR,
-	CARAT,
-	BANG,
-	BAR,
+	DOT, MINUS, PLUS, SLASH, STAR,
+	CARAT, BANG, BAR,
 
 	NUMBER,
 
-	PRINT,
-	ROOT,
+	PRINT, ROOT, 
 
-	SEMICOLON,
-	COMMA,
-	IDENTIFIER,
-	EQUALS,
+	SEMICOLON, COMMA,
+	IDENTIFIER, EQUALS,
 
 	EOF,
 }
-// {  } array
-// [  ] equation
+// [  ] array
+// {  } equation
 
 /**
- * Needs to be re-initialized every run.
- */
+	* Needs to be re-initialized every run.
+	*/
 export class Tokenizer {
 	private start = 0;
 	private current = 0;
 	private tokens: Token[] = [];
-	private unexpected_chars: { char: string; index: number }[] = [];
-	private keywords: { [key: string]: TokenType } = {
+	private unexpected_chars: { char: string, index: number }[] = [];
+	private keywords: {[key: string]: TokenType} = {
 		p: TokenType.PRINT,
 		root: TokenType.ROOT,
 	};
 
-	constructor(
-		private out: Stdout,
-		private str: string
-	) {}
+	constructor(private out: Stdout, private str: string) {}
 
 	public parse() {
 		while (!this.is_at_end()) {
@@ -61,45 +55,23 @@ export class Tokenizer {
 				case "\t": // skipping whitespace
 				case "\n":
 					break;
-				case "(":
-					this.add_token(TokenType.LEFT_PAREN);
-					break;
-				case ")":
-					this.add_token(TokenType.RIGHT_PAREN);
-					break;
-				case ".":
-					this.add_token(TokenType.DOT);
-					break;
-				case "-":
-					this.add_token(TokenType.MINUS);
-					break;
-				case "+":
-					this.add_token(TokenType.PLUS);
-					break;
-				case "*":
-					this.add_token(TokenType.STAR);
-					break;
-				case "/":
-					this.add_token(TokenType.SLASH);
-					break;
-				case ";":
-					this.add_token(TokenType.SEMICOLON);
-					break;
-				case "=":
-					this.add_token(TokenType.EQUALS);
-					break;
-				case ",":
-					this.add_token(TokenType.COMMA);
-					break;
-				case "^":
-					this.add_token(TokenType.CARAT);
-					break;
-				case "!":
-					this.add_token(TokenType.BANG);
-					break;
-				case "|":
-					this.add_token(TokenType.BAR);
-					break;
+				case "[": this.add_token(TokenType.LEFT_SQ); break;
+				case "]": this.add_token(TokenType.RIGHT_SQ); break;
+				case "}": this.add_token(TokenType.LEFT_CURLY); break;
+				case "{": this.add_token(TokenType.RIGHT_CURLY); break;
+				case "(": this.add_token(TokenType.LEFT_PAREN); break;
+				case ")": this.add_token(TokenType.RIGHT_PAREN); break;
+				case ".": this.add_token(TokenType.DOT); break;
+				case "-": this.add_token(TokenType.MINUS); break;
+				case "+": this.add_token(TokenType.PLUS); break;
+				case "*": this.add_token(TokenType.STAR); break;
+				case "/": this.add_token(TokenType.SLASH); break;
+				case ";": this.add_token(TokenType.SEMICOLON); break;
+				case "=": this.add_token(TokenType.EQUALS); break;
+				case ",": this.add_token(TokenType.COMMA); break;
+				case "^": this.add_token(TokenType.CARAT); break;
+				case "!": this.add_token(TokenType.BANG); break;
+				case "|": this.add_token(TokenType.BAR); break;
 				default:
 					if (this.is_digit(char)) {
 						this.number();
@@ -107,9 +79,9 @@ export class Tokenizer {
 						this.identifier();
 					} else {
 						if (this.unexpected_chars.length < 5) {
-							this.unexpected_chars.push({
+							this.unexpected_chars.push({ 
 								char: this.str[this.current],
-								index: this.current,
+								index: this.current 
 							});
 						}
 					}
@@ -117,18 +89,12 @@ export class Tokenizer {
 			}
 		}
 		if (this.unexpected_chars.length >= 1) {
-			const e = `Unexpected character at characters [${this.unexpected_chars
-				.map((c) => `${c.char} at ${c.index}`)
-				.join(", ")}].`;
+			const e = `Unexpected character at characters [${this.unexpected_chars.map(c => `${c.char} at ${c.index}`).join(", ")}].`;
 			this.out.stdout(e);
 		}
-		if (this.tokens.findIndex((v) => v.type === TokenType.SEMICOLON) === -1) {
+		if (this.tokens.findIndex(v => v.type === TokenType.SEMICOLON) === -1) {
 			// optional semicolon.
-			this.tokens.push({
-				type: TokenType.SEMICOLON,
-				text: ";",
-				literal: undefined,
-			});
+			this.tokens.push({ type: TokenType.SEMICOLON, text: ";", literal: undefined });
 		}
 		this.tokens.push({ type: TokenType.EOF, text: "", literal: undefined });
 		return this.tokens;
@@ -145,7 +111,9 @@ export class Tokenizer {
 		this.add_token(token_type);
 	}
 	private is_alpha(c: string) {
-		return (c >= "a" && c <= "z") || (c >= "A" && c <= "Z") || c == "_";
+		return (c >= "a" && c <= "z") || 
+			(c >= "A" && c <= "Z") || 
+			c == "_";
 	}
 	private is_alphanumeric(c: string) {
 		return this.is_alpha(c) || this.is_digit(c);

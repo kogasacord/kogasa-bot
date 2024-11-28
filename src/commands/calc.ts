@@ -32,6 +32,9 @@ import {
 	Minimum,
 	Cbrt,
 	Num,
+	LCM,
+	GCD,
+	Factor,
 } from "@helpers/calc/functions/standard.js";
 
 import { WeightedGraph } from "@helpers/calc/lib/graph.js";
@@ -85,8 +88,8 @@ interpreter
 	.add_global("sqrt", new Sqrt())
 	.add_global("cbrt", new Cbrt())
 	.add_global("abs", new Abs())
-	.add_global("pi", { num_value: Math.PI })
-	.add_global("e", { num_value: Math.E })
+	.add_global("pi", {num_value: Math.PI})
+	.add_global("e", {num_value: Math.E})
 	.add_global("ceil", new Ceiling())
 	.add_global("floor", new Floor())
 	.add_global("round", new Round())
@@ -101,7 +104,10 @@ interpreter
 	.add_global("tanh", new HyperbolicTangent())
 	.add_global("acosh", new InverseHyperbolicCosine())
 	.add_global("asinh", new InverseHyperbolicSine())
-	.add_global("atanh", new InverseHyperbolicTangent());
+	.add_global("atanh", new InverseHyperbolicTangent())
+	.add_global("lcm", new LCM())
+	.add_global("gcd", new GCD())
+	.add_global("factor", new Factor());
 for (const unit of measurement_units) {
 	interpreter.add_global(unit, createConversionFunction(unit, graph));
 }

@@ -1,4 +1,4 @@
-import { Token, TokenType } from "./scanner.js";
+import {Token, TokenType} from "./scanner.js";
 
 export class Stdout {
 	private out = "";
@@ -23,8 +23,8 @@ export class CalcError {
 		this.report("", message);
 	}
 	/**
-	 * Reporting tokenizer errors
-	 */
+	* Reporting tokenizer errors
+	*/
 	public tokenError(token: Token, message: string) {
 		if (token.type === TokenType.EOF) {
 			this.report("at end", message);
@@ -33,8 +33,8 @@ export class CalcError {
 		}
 	}
 	/**
-	 * Reporting run time errors
-	 */
+	* Reporting run time errors
+	*/
 	public runtimeError(error: RuntimeError) {
 		const message = error.getMessage();
 		this.out.stdout(`RuntimeError: ${message}`);
@@ -61,10 +61,7 @@ export class ParseError {
 }
 
 export class RuntimeError {
-	constructor(
-		private token: Token,
-		private message: string
-	) {}
+	constructor(private token: Token, private message: string) {}
 	public getMessage() {
 		return `${this.message} [at ${this.token.text}]`;
 	}
