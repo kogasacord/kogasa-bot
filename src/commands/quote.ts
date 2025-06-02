@@ -1,10 +1,8 @@
 import helpers from "@helpers/helpers.js";
 import {
 	Client,
-	GuildChannel,
 	GuildMember,
 	Message,
-	ThreadChannel,
 	User,
 } from "discord.js";
 import { ChannelScope } from "@helpers/types";
@@ -22,14 +20,6 @@ export async function execute(
 	msg: Message<true>,
 	_args: string[]
 ) {
-	if (
-		!(
-			msg.channel instanceof GuildChannel ||
-			msg.channel instanceof ThreadChannel
-		)
-	)
-		return;
-
 	const replied =
 		msg.channel.messages.cache.get(msg.reference!.messageId!) ??
 		(await msg.channel.messages.fetch(msg.reference!.messageId!));
@@ -62,7 +52,10 @@ export async function execute(
 
 export async function checker(msg: Message): Promise<boolean> {
 	if (!(msg.reference && msg.reference.messageId)) {
-		msg.reply("You need to reply to a message in-order to quote it.");
+		msg.reply("You need to reply to a message in order to quote it.");
+		return false;
+	}
+	if (msg.content.length <= 0) {
 		return false;
 	}
 	return true;
@@ -83,8 +76,7 @@ async function parseQuotes(client: Client, str: string) {
 	let string = str.slice();
 
 	const uid_regex = /<@(\d+)>/g;
-	const uids = [...string.matchAll(uid_regex)];
-	for (const [entire_mention, uid] of uids) {
+	for (const [entire_mention, uid] of string.matchAll(uid_regex)) {
 		try {
 			const user =
 				client.users.cache.get(uid) ?? (await client.users.fetch(uid));

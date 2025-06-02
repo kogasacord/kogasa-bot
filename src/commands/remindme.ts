@@ -141,11 +141,7 @@ function userAddReminder(
 	reminder_emitter.pushReminder(msg.author.id, { to_date, contents });
 	reminders = reminder_emitter.getReminderFromUser(msg.author.id);
 
-	const reminders_left = `You have ${20 - reminders!.length} reminders left.`;
-
-	msg.reply(
-		`I will remind you "${contents}" in ${days} days ${hours} hours ${minutes} minutes. ${reminders_left}`
-	);
+	msg.react("\u23F0").catch(() => {});
 }
 
 function addDayToDate(date: Date, days: number) {

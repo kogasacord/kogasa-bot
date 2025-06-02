@@ -8,11 +8,11 @@ export const name = "buffer";
 export const aliases = ["back", "backtrack", "b"];
 export const cooldown = 20;
 export const channel: ChannelScope[] = ["Guild", "Thread"];
-export const description = "See edited or deleted messages in a channel.";
+export const description = "See edited or deleted messages in a channel, limited to the latest 20 messages.";
 export const extended_description =
 	"`??buffer delete` sends the deleted messages.\n" +
 	"`??buffer edit` sends the edited messages.\n" +
-	"`??buffer` sends everything the bot has logged in this server.\n";
+	"`??buffer` sends everything the bot has logged in this channel.\n";
 export async function execute(
 	_: Client,
 	msg: Message,
@@ -53,7 +53,7 @@ export async function execute(
 	const r = await msg.reply({ embeds: [embed] });
 	setTimeout(async () => {
 		r.delete().catch(() => {});
-	}, 5 * 1000);
+	}, 15 * 1000);
 }
 
 function limitMessageLength(message: ChatBufferMessage, maxLength: number) {
