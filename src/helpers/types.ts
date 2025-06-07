@@ -1,8 +1,8 @@
 import { Queue } from "./misc/queue.js";
 import { Client, Message, Collection } from "discord.js";
 import settings from "@root/settings.json" assert { type: "json" };
-import Pocketbase from "pocketbase";
 import { ReminderEmitter } from "./reminder/reminders.js";
+import { Database } from "better-sqlite3";
 
 export type ChannelScope = "DMs" | "Guild" | "Thread";
 export type CommandModule = {
@@ -39,6 +39,7 @@ export type ChatBuffer = Map<string, Queue<ChatBufferMessage>>;
 // why do i have two ExternalDependencies.
 // shouldn't external dependencies be handled by the messageCreate function?
 export type ExternalDependencies = {
+	db: Database;
 	commands: Collection<string, CommandModule>;
 	prefix: string;
 	websites: Website[];
@@ -46,15 +47,14 @@ export type ExternalDependencies = {
 	chat_buffer: ChatBuffer;
 	settings: typeof settings;
 	reminder_emitter: ReminderEmitter;
-	pb: Pocketbase;
 };
 export type DiscordExternalDependencies = {
+	db: Database;
+	websites: Website[];
+	chat_buffer: ChatBuffer;
 	commands: Collection<string, CommandModule>;
 	aliases: Map<string, string>;
 	reminder_emitter: ReminderEmitter;
-	chat_buffer: ChatBuffer;
-	websites: Website[];
-	pb: Pocketbase;
 };
 export type Tiers = "C" | "UC" | "R" | "SR" | "Q";
 

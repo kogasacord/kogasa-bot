@@ -1,7 +1,7 @@
 import path from "path";
 import * as url from "url";
 import { Client, Collection, Options, Partials, User } from "discord.js";
-import Pocketbase from "pocketbase";
+import sqlite3 from "better-sqlite3";
 
 import {
 	ChatBuffer,
@@ -20,6 +20,13 @@ import { ready } from "./src/discord/ready.js";
 import { ReminderEmitter } from "@helpers/reminder/reminders.js";
 
 ///////////////////////////////////////////////////////////////////////////////////
+
+const db = new sqlite3(":memory:", {verbose: console.log});
+db.pragma("foreign_keys = ON");
+db.pragma("journal_mode = WAL");
+db.pragma("cache_size = -2048");
+db.pragma("page_size = 4096");
+
 const __dirname = url.fileURLToPath(new URL(".", import.meta.url));
 const client = new Client({
 	intents: [
@@ -39,7 +46,6 @@ const client = new Client({
 		UserManager: 10_000,
 	}),
 });
-const pb = new Pocketbase("http://127.0.0.1:8090");
 ///////////////////////////////////////////////////////////////////////////////////
 const commands = new Collection<string, CommandModule>().concat(
 	await helpers.importDirectories(__dirname, "/src/commands/"),
@@ -53,12 +59,12 @@ const chat_buffer: ChatBuffer = new Map();
 const reminder_emitter = new ReminderEmitter(client);
 
 const other_dependencies: DiscordExternalDependencies = {
+	db,
 	commands,
 	aliases,
 	chat_buffer,
 	websites,
 	reminder_emitter,
-	pb,
 };
 //////////////////////////////////////////////////////////////////////////////////
 

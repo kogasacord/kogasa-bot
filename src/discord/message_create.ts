@@ -7,7 +7,6 @@ import {
 	ThreadChannel,
 } from "discord.js";
 import { pushMessageToBuffer } from "@helpers/buffer/buffer.js";
-import { separateCommands } from "@helpers/parser/parser.js";
 import {
 	CommandModule,
 	Tiers,
@@ -50,7 +49,6 @@ export async function messageCreate(
 	if (msg.author.bot) {
 		return;
 	}
-
 	await pushMessageToBuffer(client, msg, deps.chat_buffer);
 
 	////////////////// COMMAND STUFF BELOW //////////////////
@@ -97,7 +95,7 @@ export async function messageCreate(
 		) {
 			setCooldown(user_cooldowns, command_module, msg.author.id, args);
 			const ext: ExternalDependencies = {
-				pb: deps.pb,
+				db: deps.db,
 				commands: deps.commands,
 				prefix: prefix,
 				websites: deps.websites,
@@ -123,4 +121,12 @@ function aliasNameToCommand(
 		return commands.get(command_name);
 	}
 	return commands.get(alias);
+}
+
+function separateCommands(message_content: string, prefix: string) {
+	// maybe i should write something better for this (O~O)
+	const split_message = message_content.split(" ");
+	const args = split_message.slice(1);
+	const alias_command_name = split_message[0].replace(prefix, "");
+	return { args, alias_command_name };
 }
