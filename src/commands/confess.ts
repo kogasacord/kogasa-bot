@@ -3,10 +3,7 @@ import {
 	ChannelType,
 	Client,
 	EmbedBuilder,
-	Guild,
-	GuildMember,
 	Message,
-	PermissionsBitField,
 	TextChannel,
 } from "discord.js";
 import { ChannelScope } from "@helpers/types";
@@ -41,15 +38,19 @@ interface DBConfessChannel {
 interface DBConfession {
 	id: string,
 	confession_number: number,
-	timestamp: Date,
+	timestamp: string,
 	confess_channel_id: string, // fk
 	guild_user_id: string, // fk
 }
 
+type FromChannel = Pick<DBConfessChannel, "id" | "name" | "count">
+type FromGuild = Pick<DBGuild, "id" | "name">
 type ServerList = {
-	guild_name: Pick<DBGuild, "name">
-	channel_name: Pick<DBConfessChannel, "name">
-	count: Pick<DBConfessChannel, "count">
+	channel_id: FromChannel["id"]
+	channel_name: FromChannel["name"]
+	count: FromChannel["count"]
+	guild_id: FromGuild["id"]
+	guild_name: FromGuild["name"]
 }
 
 const HASH_LENGTH = 25;
@@ -67,7 +68,7 @@ export const extended_description =
 // TODO: if a channel or server has been deleted, 
 // 		when someone tries to confess to it, 
 // 			on error (trying to send to a non-existent channel): 
-// 				it should delete the records associated with the guild/channel
+// 				it should delete the channel record in the database.
 export async function execute(
 	client: Client<true>,
 	msg: Message,
@@ -75,17 +76,11 @@ export async function execute(
 	ext: ExternalDependencies
 ) {
 	const db = ext.db;
-	const insert_user_stmt = db.prepare<DBUsers>(sql`INSERT OR IGNORE INTO users (id, name) VALUES (@id, @name)`.sql);
-	const insert_guild_stmt = db.prepare<DBGuild>(sql`INSERT OR IGNORE INTO guild (id, name) VALUES (@id, @name)`.sql);
-	const insert_guild_user_stmt = db.prepare<DBGuildUser>(sql`INSERT OR IGNORE INTO guild_user (id, name, confess_banned, user_id, guild_id) VALUES (@id, @name, @confess_banned, @user_id, @guild_id)`.sql);
-	const insert_confess_channel_stmt = db.prepare<DBConfessChannel>(sql`INSERT OR IGNORE INTO confess_channel (id, name, channel_id, guild_id, count) VALUES (@id, @name, @channel_id, @guild_id, @count)`.sql);
-	const insert_confession_stmt = db.prepare<DBConfession>(sql`INSERT OR IGNORE INTO confession (id, confession_number, timestamp, confess_channel_id, guild_user_id) VALUES (@id, @confession_number, @timestamp, @confess_channel_id, @guild_user_id)`.sql);
 
 	const get_users = db.prepare(sql`SELECT * FROM users`.sql);
 	const get_guilds = db.prepare(sql`SELECT * FROM guild`.sql);
 	const get_guild_users = db.prepare(sql`SELECT * FROM guild_user`.sql);
 	const get_confess_channels = db.prepare(sql`SELECT * FROM confess_channel`.sql);
-	const confessions = db.prepare(sql`SELECT * FROM confession`.sql);
 
 	const get_everything = db.transaction(() => {
 		const users = get_users.all() as DBUsers[] | undefined;
@@ -115,27 +110,25 @@ export async function execute(
 		return;
 	}
 
-
 	if (msg.channel.type === ChannelType.DM) {
-		const user_existing = db.prepare(sql`SELECT 1 FROM users WHERE id = ?`.sql);
-		const is_user_existing = user_existing.get(msg.author.id) as boolean | undefined;
-		if (is_user_existing === undefined) {
-			createUserRecords(db, msg, client);
-			await msg.reply("Created user records");
+		createUserRecords(db, msg);
+		const servers = listServers(db, msg.author.id);
+
+		const index = args.at(0);
+		const text = args.slice(1).join(" ");
+		const guild_index = Number(index);
+		if (servers === undefined || (servers && servers.length <= 0)) {
+			msg.reply("No servers in common!");
+			return;
 		}
 
-		const servers = listServers(db, msg.author.id);
-		if (servers && servers.length > 0) {
+		if (isNaN(guild_index) || text.length <= 0) {
+			// ??confess
 			sendConfessServerSelection(msg, servers);
 		} else {
-			msg.reply("No servers in common!");
+			// ??confess [guild_index] [text] - confesses the text.
+			confess(db, msg as Message<false>, servers, guild_index, text);
 		}
-		// ??confess [guild_index] [text] - confesses the text.
-		// ??confess - lists down the servers they can confess in
-		// 		when the user tries to confess in dms,
-		// 			when they do not exist in the database,
-		// 			check every single guild that kogasa is in,
-		// 				check if the user is in those.
 	}
 	if (msg.channel.type === ChannelType.GuildText) {
 		// mod perm check needed here
@@ -148,19 +141,17 @@ export async function execute(
 		// set confess channel by typing ??confess in, ??confess disable is allowed too.
 		// warn people that confess is supposed to be done in dms, delete their message too.
 	}
-	// msg.reply("Confess is being moved!");
 }
 
 //// DM ////
-function dm(msg: Message<boolean>) {
-	
-}
 function listServers(db: Database, user_id: string): ServerList[] | undefined {
 	const list = db.transaction((user_id: string) => {
 		const join = db.prepare(sql`
 			SELECT 
+				guild.id AS guild_id,
 				guild.name AS guild_name, 
 				confess_channel.name AS channel_name,
+				confess_channel.channel_id,
 				confess_channel.count
 			FROM guild_user
 			JOIN guild ON guild_user.guild_id = guild.id
@@ -171,6 +162,104 @@ function listServers(db: Database, user_id: string): ServerList[] | undefined {
 	});
 	return list(user_id);
 }
+async function confess(
+	db: Database,
+	msg: Message<false>, 
+	server_list: ServerList[], 
+	index: number, 
+	text: string
+) {
+	const client = msg.client;
+
+	// ERROR PRONE!!
+	const delete_channel = db.prepare(sql`DELETE FROM confess_channel WHERE id = ?`.sql);
+	const get_confession_count = db.prepare(sql`SELECT count FROM confess_channel WHERE id = ?`.sql);
+	const insert_confession_stmt = db.prepare<DBConfession>(sql`
+		INSERT INTO confession (id, confession_number, timestamp, confess_channel_id, guild_user_id)
+		VALUES (@id, @confession_number, @timestamp, @confess_channel_id, @guild_user_id)
+	`.sql);
+
+	const server = server_list.at(index);
+	if (server !== undefined) {
+		const increment = db.prepare(sql`
+			UPDATE confess_channel
+			SET count = count + 1
+			WHERE channel_id = ?
+		`.sql);
+		const confession = get_confession_count.get(server.channel_id) as Pick<DBConfessChannel, "count"> | undefined;
+
+		const discord_channel = client.channels.cache.get(server.channel_id) 
+			?? await client.channels.fetch(server.channel_id);
+		if (discord_channel instanceof TextChannel) {
+			const embed = new EmbedBuilder();
+				embed.setTitle(`Confession #${confession?.count ?? "unknown"}`);
+				embed.setDescription(text.length > 500 ? `${text.slice(0, 500)} ...` : text);
+				embed.setFooter({ text: "DM me `??confess` to send a confession." });
+			increment.run(server.channel_id);
+			insert_confession_stmt.run({ // needs to be updated.
+				id: hash(`${msg.author.id}-${msg.id}`, HASH_LENGTH),
+				confess_channel_id: server.channel_id,
+				confession_number: confession?.count ?? 0,
+				guild_user_id: hash(msg.author.id + server.guild_id, HASH_LENGTH),
+				timestamp: dateToString(new Date(Date.now())),
+			});
+			discord_channel.send({ embeds: [embed] });
+		} else {
+			// deleting the channel if it couldn't be fetched.
+			delete_channel.run(server.channel_id);
+			msg.reply("That channel has been deleted.");
+		}
+	} else {
+		msg.reply("You're not in that server!");
+	}
+}
+
+//// GUILD ////
+function disable(db: Database, msg: Message<true>) {
+	db.prepare(sql`DELETE FROM confess_channel WHERE guild_id = ?`.sql).run(msg.guild.id);
+	msg.reply("Disabled confess from this server.");
+}
+// temporary async.
+async function setup(db: Database, msg: Message<true>) {
+	const insert_guild_stmt = db.prepare<DBGuild>(sql`INSERT OR IGNORE INTO guild (id, name) VALUES (@id, @name)`.sql);
+	const insert_confess_channel_stmt = db.prepare<DBConfessChannel>(sql`
+		INSERT OR IGNORE INTO confess_channel (id, name, channel_id, guild_id, count) 
+		VALUES (@id, @name, @channel_id, @guild_id, @count)
+	`.sql);
+	const guild_existing = db.prepare(sql`SELECT 1 FROM guild WHERE id = ?`.sql);
+
+	const is_guild_existing = guild_existing.get(msg.guild.id) as DBGuild | undefined;
+	if (is_guild_existing === undefined) {
+		insert_guild_stmt.run({ id: msg.guild!.id, name: msg.guild!.name });
+	}
+
+	const confess_channel = db.prepare(sql`SELECT * FROM confess_channel WHERE guild_id = ? LIMIT 1`.sql)
+		.get(msg.guild!.id) as DBConfessChannel | undefined;
+	if (confess_channel) {
+		if (confess_channel.channel_id !== msg.channelId) {
+			db.prepare(sql`UPDATE confess_channel SET name = @name, channel_id = @to WHERE channel_id = @from`.sql)
+				.run({ name: msg.channel.name, to: msg.channelId, from: confess_channel.channel_id });
+			msg.reply(`Switched confess to ${msg.channel.name} channel.`);
+		} else {
+			msg.reply("Set to the same channel!");
+		}
+	} else {
+		db.transaction((msg: Message<true>) => {
+			insert_confess_channel_stmt.run({
+				id: msg.channelId,
+				name: msg.channel.name,
+				guild_id: msg.guild!.id,
+				channel_id: msg.channel.id,
+				count: 0,
+			});
+		})(msg as Message<true>);
+
+		msg.reply("Set confess channel.");
+	}
+}
+
+
+//// HELPERS ////
 function sendConfessServerSelection(msg: Message, confess_activated_guilds: ServerList[]) {
 	const embed = new EmbedBuilder();
 	embed.setTitle("Servers:");
@@ -189,87 +278,22 @@ function sendConfessServerSelection(msg: Message, confess_activated_guilds: Serv
 		embeds: [embed],
 	});
 }
-function confess() {
-	
-}
 
-//// GUILD ////
-function disable(db: Database, msg: Message<true>) {
-	const res = db.prepare(sql`DELETE FROM confess_channel WHERE guild_id = ?`.sql).run(msg.guild.id);
-	msg.reply("Disabled confess from this server.");
-}
-// temporary async.
-async function setup(db: Database, msg: Message<true>) {
-	const insert_guild_stmt = db.prepare<DBGuild>(sql`INSERT OR IGNORE INTO guild (id, name) VALUES (@id, @name)`.sql);
-	const insert_confess_channel_stmt = db.prepare<DBConfessChannel>(sql`INSERT OR IGNORE INTO confess_channel (id, name, channel_id, guild_id, count) VALUES (@id, @name, @channel_id, @guild_id, @count)`.sql);
-
-	const guild_existing = db.prepare(sql`SELECT 1 FROM guild WHERE id = ?`.sql);
-	const is_guild_existing = guild_existing.get(msg.guild.id) as DBGuild | undefined;
-	if (is_guild_existing === undefined) {
-		insert_guild_stmt.run({ id: msg.guild!.id, name: msg.guild!.name });
-		// temp: remove message.
-		await msg.reply("Creating guild that didn't exist in the database.");
-	}
-
-	const confess_channel = db.prepare(sql`SELECT * FROM confess_channel WHERE guild_id = ? LIMIT 1`.sql)
-		.get(msg.guild!.id) as DBConfessChannel | undefined;
-
-	if (confess_channel) {
-		if (confess_channel.channel_id !== msg.channelId) {
-			db.prepare(sql`UPDATE confess_channel SET name = @name, channel_id = @to WHERE channel_id = @from`.sql)
-				.run({ name: msg.channel.name, to: msg.channelId, from: confess_channel.channel_id });
-			// temp: remove await.
-			await msg.reply(`Switched confess to ${msg.channel.name} channel.`);
-		} else {
-			await msg.reply("Set to the same channel!");
-		}
-	} else {
-		db.transaction((msg: Message<true>) => {
-			insert_confess_channel_stmt.run({
-				id: msg.channelId,
-				name: msg.channel.name,
-				guild_id: msg.guild!.id,
-				channel_id: msg.channel.id,
-				count: 0,
-			});
-		})(msg as Message<true>);
-
-		await msg.reply("Set confess channel.");
-	}
-}
-
-
-//// DB ////
-
-async function createUserRecords(db: Database, msg: Message, client: Client<true>) {
+async function createUserRecords(db: Database, msg: Message) {
 	const insert_user_stmt = db.prepare<DBUsers>(sql`INSERT OR IGNORE INTO users (id, name) VALUES (@id, @name)`.sql);
 	const insert_guild_user_stmt = db.prepare<DBGuildUser>(sql`INSERT OR IGNORE INTO guild_user (id, name, confess_banned, user_id, guild_id) VALUES (@id, @name, @confess_banned, @user_id, @guild_id)`.sql);
-
+	const delete_channel = db.prepare(sql`DELETE FROM confess_channel WHERE id = ?`.sql);
 	const get_confess_guild_ids = db.prepare(sql`SELECT channel_id, guild_id FROM confess_channel`.sql);
-	const delete_channel_ids = db.prepare(sql`DELETE FROM confess_channel WHERE id = ?`.sql);
-
-	//  lists down the servers they can confess in
-	// 		when the user tries to confess in dms,
-	// 			if the user does not exist in the database,
-	// 				check every single guild that kogasa stored in sqlite,
-	// 				grab the ids, query the guilds (client.cache)
-	// 				check if the user is in those. (client.fetch)
 	
 	insert_user_stmt.run({ id: msg.author.id, name: msg.author.globalName ?? msg.author.displayName });
 
-	const db_guild_id_with_confess = get_confess_guild_ids.all() as { channel_id: string, guild_id: string }[];
-	const discord_guilds = client.guilds.cache;
-	for (const db_res of db_guild_id_with_confess) {
+	const db_guild_ids_with_confess = get_confess_guild_ids.all() as { channel_id: string, guild_id: string }[];
+	const discord_guilds = msg.client.guilds.cache;
+	for (const db_res of db_guild_ids_with_confess) {
 		for (const [_, guild] of discord_guilds) {
 			if (db_res.guild_id === guild.id) {
 				const discord_channels = guild.channels.cache.get(db_res.channel_id) as TextChannel 
 					?? await guild.channels.fetch(db_res.channel_id) as TextChannel | null;
-				if (discord_channels === null) {
-					// TODO: move this somewhere to be used when someone deletes
-					// 			a channel without disabling it.
-					// deleting the channel if it couldn't be fetched.
-					delete_channel_ids.run(db_res.channel_id);
-				}
 				insert_guild_user_stmt.run({ 
 					id: hash(msg.author.id + guild.id, HASH_LENGTH),
 					name: msg.author.globalName ?? msg.author.displayName,
@@ -280,9 +304,7 @@ async function createUserRecords(db: Database, msg: Message, client: Client<true
 			}
 		}
 	}
-
 }
-
 
 function hash(content: string, hash_length: number) {
 	return createHash("sha256")
@@ -292,3 +314,8 @@ function hash(content: string, hash_length: number) {
 		.slice(0, hash_length);
 }
 
+function dateToString(date: Date) {
+	const isoString = date.toISOString();
+	const formattedDate = isoString.split("T")[0];
+	return formattedDate;
+}
