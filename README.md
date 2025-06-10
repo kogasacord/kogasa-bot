@@ -1,4 +1,4 @@
-# kogasa-bot
+# kogasa-bot 🏖️
 
 A Discord bot dedicated to spurring activity without being intrusive.
 
