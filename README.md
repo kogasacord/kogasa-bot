@@ -1,6 +1,6 @@
 # kogasa-bot 🏖️
 
-A Discord bot dedicated to spurring activity without being intrusive.
+A Discord bot dedicated to spurring activity in servers without being intrusive.
 
 It has a basic file structure to make commands easy to add.
 
