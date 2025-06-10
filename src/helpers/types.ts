@@ -15,7 +15,7 @@ export type CommandModule = {
 		msg: Message,
 		args: string[],
 		deps: ExternalDependencies
-	) => void;
+	) => Promise<void>;
 	channel: ChannelScope[];
 
 	dyn_cooldown?: (args: string[]) => Promise<number>;

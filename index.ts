@@ -1,7 +1,6 @@
 import path from "path";
 import * as url from "url";
 import { Client, Collection, Options, Partials, User } from "discord.js";
-import sqlite3 from "better-sqlite3";
 
 import {
 	ChatBuffer,
@@ -18,14 +17,11 @@ import { messageDelete } from "./src/discord/message_delete.js";
 import { messageCreate } from "./src/discord/message_create.js";
 import { ready } from "./src/discord/ready.js";
 import { ReminderEmitter } from "@helpers/reminder/reminders.js";
+import {createDatabase} from "@helpers/db/create.js";
 
 ///////////////////////////////////////////////////////////////////////////////////
 
-const db = new sqlite3(":memory:", {verbose: console.log});
-db.pragma("foreign_keys = ON");
-db.pragma("journal_mode = WAL");
-db.pragma("cache_size = -2048");
-db.pragma("page_size = 4096");
+const db = createDatabase(settings.test ? ":memory:" : "sqlitev1.db");
 
 const __dirname = url.fileURLToPath(new URL(".", import.meta.url));
 const client = new Client({

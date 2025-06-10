@@ -9,7 +9,7 @@ const time_regex =
 export const name = "remindme";
 export const aliases = ["rme", "remind"];
 export const cooldown = 8;
-export const channel: ChannelScope[] = ["Guild", "DMs"];
+export const channel: ChannelScope[] = ["Guild", "DMs", "Thread"];
 export const description = "Reminds you of a specific thing.";
 export const extended_description =
 	"\n**To add a reminder**" +

@@ -104,7 +104,11 @@ export async function messageCreate(
 				settings: settings,
 				reminder_emitter: deps.reminder_emitter,
 			};
-			command_module.execute(client, msg, args, ext);
+			command_module.execute(client, msg, args, ext)
+				.catch((err) => {
+					msg.reply("Something went wrong when processing your request!");
+					console.log("NON-FATAL: ", err);
+				});
 		}
 	} catch (err) {
 		console.error(err);
