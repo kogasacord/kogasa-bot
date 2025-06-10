@@ -36,7 +36,7 @@ The structure of it is like this:
 }
 ```
 
-2. Download and extract [canvas](https://github.com/kogasacord/canvas-http-api), follow the instructions in that README to run it.
+2. Download and extract [canvas-go](https://github.com/kogasacord/canvas-go). Follow the instructions in that README to run it.
 3. Run `npm install`, `npm run poststart-windows` or `npm run poststart-linux` in that order.
 
 ## Contributing
