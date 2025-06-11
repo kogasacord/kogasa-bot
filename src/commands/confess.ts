@@ -3,6 +3,7 @@ import {
 	ChannelType,
 	Client,
 	EmbedBuilder,
+	GuildMember,
 	Message,
 	TextChannel,
 } from "discord.js";
@@ -39,7 +40,6 @@ interface DBConfession {
 	id?: string,
 	confession_number: number,
 	timestamp: string,
-	channel_id: string, // not a foreign key.
 	confess_channel_id: number, // fk
 	guild_user_id: string, // fk
 }
@@ -63,13 +63,8 @@ export const cooldown = 1;
 export const description = "Secretly send a message.";
 export const extended_description =
 	"To confess, you must do `??confess` in DMs first and follow the instructions listed there." +
-	"\nFor server owners, `??confess ban (confession number)` and `??confess ban @User` to moderate it." +
+	"\nFor server owners, `??confess mute-toggle (confession number)` and `??confess mute-toggle @User` to moderate it." +
 	"\n`??confess` in a channel to set it up.";
-// TODO: the ability to remove the confess feature entirely.
-// TODO: if a channel or server has been deleted, 
-// 		when someone tries to confess to it, 
-// 			on error (trying to send to a non-existent channel): 
-// 				it should delete the channel record in the database.
 export async function execute(
 	client: Client<true>,
 	msg: Message,
@@ -135,15 +130,90 @@ export async function execute(
 		}
 	}
 	if (msg.channel.type === ChannelType.GuildText) {
-		// mod perm check needed here
-		const confess_disable: boolean = args.at(0)?.toLowerCase() === "disable" ? true : false;
-		if (confess_disable) {
-			disable(db, msg as Message<true>);
+		const confess_disable = args.at(0)?.toLowerCase();
+		const mentioned = msg.mentions.members?.at(0);
+
+		if (msg.member!.permissions.has("ManageGuild")) {
+			if (confess_disable === "disable") {
+				disable(db, msg as Message<true>);
+			} else if (confess_disable === "mute-toggle") {
+				const index = args.at(1);
+				const confession_index = Number(index);
+
+				if (mentioned !== undefined) {
+					banUserFromConfess(db, msg as Message<true>, mentioned);
+				} else {
+					if (isNaN(confession_index)) {
+						msg.reply("Enter a valid confession!");
+					} else {
+						banIndexFromConfess(db, msg as Message<true>, confession_index);
+					}
+				}
+			} else {
+				setup(db, msg as Message<true>);
+			}
 		} else {
-			await setup(db, msg as Message<true>);
+			msg.reply("Confess in dms instead!")
+				.then(() => {
+					msg.delete().catch(() => {});
+				});
 		}
-		// set confess channel by typing ??confess in, ??confess disable is allowed too.
-		// warn people that confess is supposed to be done in dms, delete their message too.
+	}
+}
+
+function banUserFromConfess(db: Database, msg: Message<true>, user: GuildMember) {
+	const guild_id = msg.guild.id;
+	const hash_target_user = hash(user.id + guild_id, HASH_LENGTH);
+
+	const update_user_stmt = db.prepare(sql`UPDATE guild_user SET confess_banned = NOT confess_banned WHERE id = ?`.sql);
+	update_user_stmt.run(hash_target_user);
+}
+
+function banIndexFromConfess(db: Database, msg: Message<true>, confession_index: number) {
+	const guild_id = msg.guild.id;
+
+	const get_confess_channel_stmt = db.prepare(sql`
+		SELECT id, channel_id 
+		FROM confess_channel 
+		WHERE guild_id = ?
+		LIMIT 1
+	`.sql);
+	const get_confession_stmt = db.prepare<{ confess_channel_id: number, confession_number: number }>(sql`
+		SELECT guild_user_id
+		FROM confession 
+		WHERE confess_channel_id = @confess_channel_id 
+			AND confession_number = @confession_number
+		LIMIT 1
+	`.sql);
+	const update_user_stmt = db.prepare(sql`
+		UPDATE guild_user 
+		SET confess_banned = NOT confess_banned 
+		WHERE id = ?
+	`.sql);
+	const is_confess_banned_stmt = db.prepare(sql`
+		SELECT confess_banned
+		FROM guild_user
+		WHERE id = ?
+	`.sql);
+
+	const confess_channel = get_confess_channel_stmt.get(guild_id) as Pick<DBConfessChannel, "id" | "channel_id"> | undefined;
+	if (confess_channel) {
+		const user = get_confession_stmt.get({
+			confession_number: confession_index,
+			confess_channel_id: confess_channel.id!,
+		}) as Pick<DBConfession, "guild_user_id"> | undefined;
+		if (user !== undefined) {
+			if (user.guild_user_id === undefined) {
+				throw Error("Database user id is null somehow?");
+			}
+			update_user_stmt.run(user.guild_user_id);
+			const is_confess_banned = is_confess_banned_stmt.get(user.guild_user_id) as Pick<DBGuildUser, "confess_banned"> | undefined;
+			msg.reply(`Confessor has been ${is_confess_banned?.confess_banned === "true" ? "muted" : "unmuted"}.`);
+		} else {
+			msg.reply("Invalid confession number.");
+		}
+	} else {
+		msg.reply("Invalid confession number.");
 	}
 }
 
@@ -175,31 +245,48 @@ async function confess(
 ) {
 	const client = msg.client;
 
-	const delete_channel = db.prepare(sql`DELETE FROM confess_channel WHERE channel_id = ?`.sql);
-	const get_confess_channel = db.prepare(sql`SELECT id, count FROM confess_channel WHERE channel_id = ?`.sql);
+	const is_confess_banned_stmt = db.prepare(sql`
+		SELECT confess_banned
+		FROM guild_user
+		WHERE id = ?
+	`.sql);
+
+	const delete_channel = db.prepare(sql`DELETE FROM confess_channel WHERE id = ?`.sql);
+	const get_confess_channel = db.prepare(sql`
+		SELECT id, count 
+		FROM confess_channel 
+		WHERE channel_id = ?
+		LIMIT 1
+	`.sql);
 	const insert_confession_stmt = db.prepare<DBConfession>(sql`
-		INSERT INTO confession (confession_number, timestamp, confess_channel_id, channel_id, guild_user_id)
-		VALUES (@confession_number, @timestamp, @confess_channel_id, @channel_id, @guild_user_id)
+		INSERT INTO confession (confession_number, timestamp, confess_channel_id, guild_user_id)
+		VALUES (@confession_number, @timestamp, @confess_channel_id, @guild_user_id)
 	`.sql);
 
 	const server = server_list.at(index);
 	if (server !== undefined) {
+		const guild_user_id = hash(msg.author.id + server.guild_id, HASH_LENGTH);
 		const increment = db.prepare(sql`
 			UPDATE confess_channel
 			SET count = count + 1
 			WHERE channel_id = ?
 		`.sql);
 		const confess_channel = get_confess_channel.get(server.channel_id) as Pick<DBConfessChannel, "count" | "id"> | undefined;
+		const is_confess_banned = is_confess_banned_stmt.get(guild_user_id) as Pick<DBGuildUser, "confess_banned"> | undefined;
+		console.log(is_confess_banned);
+		if (is_confess_banned?.confess_banned === "true") {
+			msg.reply("You are currently banned!");
+			return;
+		}
 
 		const discord_channel = client.channels.cache.get(server.channel_id) 
 			?? await client.channels.fetch(server.channel_id);
 		if (discord_channel instanceof TextChannel) {
 			increment.run(server.channel_id);
-			insert_confession_stmt.run({ // needs to be updated.
+			insert_confession_stmt.run({
 				timestamp: dateToString(new Date(Date.now())),
 				confession_number: confess_channel?.count ?? 1,
-				channel_id: server.channel_id, // fails because the channel_id isn't pointing at anything.
-				guild_user_id: hash(msg.author.id + server.guild_id, HASH_LENGTH),
+				guild_user_id: guild_user_id,
 				confess_channel_id: confess_channel!.id!,
 			});
 			const embed = new EmbedBuilder();
@@ -209,7 +296,7 @@ async function confess(
 			discord_channel.send({ embeds: [embed] });
 		} else {
 			// deleting the channel if it couldn't be fetched.
-			delete_channel.run(server.channel_id);
+			delete_channel.run(confess_channel!.id!);
 			msg.reply("That channel has been deleted.");
 		}
 	} else {
@@ -222,8 +309,7 @@ function disable(db: Database, msg: Message<true>) {
 	db.prepare(sql`DELETE FROM confess_channel WHERE guild_id = ?`.sql).run(msg.guild.id);
 	msg.reply("Disabled confess from this server.");
 }
-// temporary async.
-async function setup(db: Database, msg: Message<true>) {
+function setup(db: Database, msg: Message<true>) {
 	const insert_guild_stmt = db.prepare<DBGuild>(sql`INSERT OR IGNORE INTO guild (id, name) VALUES (@id, @name)`.sql);
 	const insert_confess_channel_stmt = db.prepare<DBConfessChannel>(sql`
 		INSERT OR IGNORE INTO confess_channel (name, channel_id, guild_id, count) 

@@ -16,6 +16,7 @@
 	"author": "",
 	"license": "ISC",
 	"devDependencies": {
+		"@types/node": "^24.0.0",
 		"@types/better-sqlite3": "^7.6.9",
 		"@types/humanize-duration": "^3.27.1",
 		"@types/mime-types": "^2.1.1",

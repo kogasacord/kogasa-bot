@@ -1,9 +1,10 @@
-import fs from "fs";
+import fs, {ReadStream} from "fs";
 import readline from "readline";
 import seedrandom from "seedrandom";
 import random from "random";
 import crypto from "crypto";
 import { Tiers, Website } from "../types";
+import {Readable} from "stream";
 
 const seed = crypto.randomBytes(400).toString();
 const rng = random.clone(seedrandom(seed, { entropy: true }));
@@ -46,8 +47,12 @@ export function pickRandom<T>(iterable: T[]): T {
 export function grabAllRandomWebsites(path: string): Promise<Website[]> {
 	return new Promise<{ rarity: string; site: string }[]>((res) => {
 		const sites: { rarity: string; site: string }[] = [];
+		const rs = fs.createReadStream(path);
 		const readInterface = readline.createInterface({
-			input: fs.createReadStream(path),
+			/* eslint-disable @typescript-eslint/no-explicit-any */
+			// typescript sucks. it shouts when i'm passing a fs.ReadableStream instead of a ReadStream.
+			// this code works fine.
+			input: rs as any
 		});
 		readInterface.on("line", (input) => {
 			sites.push(JSON.parse(input));

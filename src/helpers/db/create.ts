@@ -54,7 +54,6 @@ export function createDatabase(path: ":memory:" | string): Database {
 				id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
 				confession_number INTEGER NOT NULL,
 				timestamp DATE NOT NULL,
-				channel_id TEXT NOT NULL,
 				confess_channel_id INTEGER NOT NULL,
 				guild_user_id TEXT NOT NULL,
 
