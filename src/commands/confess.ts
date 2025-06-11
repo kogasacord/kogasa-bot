@@ -25,7 +25,7 @@ interface DBGuild {
 interface DBGuildUser {
 	id: string,
 	name: string,
-	confess_banned: string, // boolean.
+	confess_banned: number, // boolean.
 	user_id: string, // fk
 	guild_id: string, // fk
 }
@@ -153,10 +153,8 @@ export async function execute(
 				setup(db, msg as Message<true>);
 			}
 		} else {
-			msg.reply("Confess in dms instead!")
-				.then(() => {
-					msg.delete().catch(() => {});
-				});
+			msg.reply("Confess in dms instead!");
+			msg.delete().catch(() => {});
 		}
 	}
 }
@@ -165,8 +163,16 @@ function banUserFromConfess(db: Database, msg: Message<true>, user: GuildMember)
 	const guild_id = msg.guild.id;
 	const hash_target_user = hash(user.id + guild_id, HASH_LENGTH);
 
-	const update_user_stmt = db.prepare(sql`UPDATE guild_user SET confess_banned = NOT confess_banned WHERE id = ?`.sql);
-	update_user_stmt.run(hash_target_user);
+	const toggle_ban_user = db.prepare(sql`UPDATE guild_user SET confess_banned = NOT confess_banned WHERE id = ?`.sql);
+	const is_confess_banned_stmt = db.prepare(sql`
+		SELECT confess_banned
+		FROM guild_user
+		WHERE id = ?
+	`.sql);
+	toggle_ban_user.run(hash_target_user);
+	const is_confess_banned = is_confess_banned_stmt.get(hash_target_user) as Pick<DBGuildUser, "confess_banned"> | undefined;
+
+	msg.reply(`Confessor has been ${is_confess_banned?.confess_banned ? "muted" : "unmuted"}.`);
 }
 
 function banIndexFromConfess(db: Database, msg: Message<true>, confession_index: number) {
@@ -208,7 +214,7 @@ function banIndexFromConfess(db: Database, msg: Message<true>, confession_index:
 			}
 			update_user_stmt.run(user.guild_user_id);
 			const is_confess_banned = is_confess_banned_stmt.get(user.guild_user_id) as Pick<DBGuildUser, "confess_banned"> | undefined;
-			msg.reply(`Confessor has been ${is_confess_banned?.confess_banned === "true" ? "muted" : "unmuted"}.`);
+			msg.reply(`Confessor has been ${is_confess_banned?.confess_banned ? "muted" : "unmuted"}.`);
 		} else {
 			msg.reply("Invalid confession number.");
 		}
@@ -273,8 +279,7 @@ async function confess(
 		`.sql);
 		const confess_channel = get_confess_channel.get(server.channel_id) as Pick<DBConfessChannel, "count" | "id"> | undefined;
 		const is_confess_banned = is_confess_banned_stmt.get(guild_user_id) as Pick<DBGuildUser, "confess_banned"> | undefined;
-		console.log(is_confess_banned);
-		if (is_confess_banned?.confess_banned === "true") {
+		if (is_confess_banned?.confess_banned) {
 			msg.reply("You are currently banned!");
 			return;
 		}
@@ -383,7 +388,7 @@ function createGuildUserRecords(db: Database, msg: Message) {
 				insert_guild_user_stmt.run({ 
 					id: hash(msg.author.id + guild.id, HASH_LENGTH),
 					name: msg.author.globalName ?? msg.author.displayName,
-					confess_banned: "false",
+					confess_banned: 0,
 					guild_id: guild.id,
 					user_id: msg.author.id,
 				});
