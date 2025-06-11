@@ -73,42 +73,6 @@ export async function execute(
 ) {
 	const db = ext.db;
 
-	const get_users = db.prepare(sql`SELECT * FROM users`.sql);
-	const get_guilds = db.prepare(sql`SELECT * FROM guild`.sql);
-	const get_guild_users = db.prepare(sql`SELECT * FROM guild_user`.sql);
-	const get_confess_channels = db.prepare(sql`SELECT * FROM confess_channel`.sql);
-	const get_confessions = db.prepare(sql`SELECT * FROM confession`.sql);
-
-	const get_everything = db.transaction(() => {
-		const users = get_users.all() as DBUsers[] | undefined;
-		const guilds = get_guilds.all() as DBGuild[] | undefined;
-		const guild_users = get_guild_users.all() as DBGuildUser[] | undefined;
-		const confess_channels = get_confess_channels.all() as DBConfessChannel[] | undefined;
-		const confessions = get_confessions.all() as DBConfession[] | undefined;
-
-		return `users: ${JSON.stringify(users)}\n`
-			+ `guilds: ${JSON.stringify(guilds)}\n`
-			+ `guild users: ${JSON.stringify(guild_users)}\n`
-			+ `confess channels: ${JSON.stringify(confess_channels)}\n`
-			+ `confessions: ${JSON.stringify(confessions)}`;
-	});
-
-	if (args.at(0) === "reset") {
-		db.transaction(() => {
-			db.prepare(sql`DELETE FROM confession`.sql).run();
-			db.prepare(sql`DELETE FROM confess_channel`.sql).run();
-			db.prepare(sql`DELETE FROM guild_user`.sql).run();
-			db.prepare(sql`DELETE FROM guild`.sql).run();
-			db.prepare(sql`DELETE FROM users`.sql).run();
-		})();
-		msg.reply("Resetted the database.");
-		return;
-	}
-	if (args.at(0) === "get") {
-		msg.reply(get_everything());
-		return;
-	}
-
 	if (msg.channel.type === ChannelType.DM) {
 		createGuildUserRecords(db, msg);
 		const servers = listServers(db, msg.author.id);
@@ -172,7 +136,7 @@ function banUserFromConfess(db: Database, msg: Message<true>, user: GuildMember)
 	toggle_ban_user.run(hash_target_user);
 	const is_confess_banned = is_confess_banned_stmt.get(hash_target_user) as Pick<DBGuildUser, "confess_banned"> | undefined;
 
-	msg.reply(`Confessor has been ${is_confess_banned?.confess_banned ? "muted" : "unmuted"} ${is_confess_banned}.`);
+	msg.reply(`Confessor has been ${is_confess_banned?.confess_banned ? "muted" : "unmuted"}.`);
 }
 
 function banIndexFromConfess(db: Database, msg: Message<true>, confession_index: number) {
@@ -214,7 +178,7 @@ function banIndexFromConfess(db: Database, msg: Message<true>, confession_index:
 			}
 			update_user_stmt.run(user.guild_user_id);
 			const is_confess_banned = is_confess_banned_stmt.get(user.guild_user_id) as Pick<DBGuildUser, "confess_banned"> | undefined;
-			msg.reply(`Confessor has been ${is_confess_banned?.confess_banned ? "muted" : "unmuted"}. ${is_confess_banned}`);
+			msg.reply(`Confessor has been ${is_confess_banned?.confess_banned ? "muted" : "unmuted"}.`);
 		} else {
 			msg.reply("Invalid confession number.");
 		}
