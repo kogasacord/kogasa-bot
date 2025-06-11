@@ -172,7 +172,7 @@ function banUserFromConfess(db: Database, msg: Message<true>, user: GuildMember)
 	toggle_ban_user.run(hash_target_user);
 	const is_confess_banned = is_confess_banned_stmt.get(hash_target_user) as Pick<DBGuildUser, "confess_banned"> | undefined;
 
-	msg.reply(`Confessor has been ${is_confess_banned?.confess_banned ? "muted" : "unmuted"}.`);
+	msg.reply(`Confessor has been ${is_confess_banned?.confess_banned ? "muted" : "unmuted"} ${is_confess_banned}.`);
 }
 
 function banIndexFromConfess(db: Database, msg: Message<true>, confession_index: number) {
@@ -214,7 +214,7 @@ function banIndexFromConfess(db: Database, msg: Message<true>, confession_index:
 			}
 			update_user_stmt.run(user.guild_user_id);
 			const is_confess_banned = is_confess_banned_stmt.get(user.guild_user_id) as Pick<DBGuildUser, "confess_banned"> | undefined;
-			msg.reply(`Confessor has been ${is_confess_banned?.confess_banned ? "muted" : "unmuted"}.`);
+			msg.reply(`Confessor has been ${is_confess_banned?.confess_banned ? "muted" : "unmuted"}. ${is_confess_banned}`);
 		} else {
 			msg.reply("Invalid confession number.");
 		}
