@@ -29,24 +29,25 @@ interface DBGuildUser {
 	guild_id: string, // fk
 }
 interface DBConfessChannel {
-	id: string,
+	id?: number,
 	name: string,
 	count: number,
 	channel_id: string, // not a foreign key.
 	guild_id: string, // fk
 }
 interface DBConfession {
-	id: string,
+	id?: string,
 	confession_number: number,
 	timestamp: string,
-	confess_channel_id: string, // fk
+	channel_id: string, // not a foreign key.
+	confess_channel_id: number, // fk
 	guild_user_id: string, // fk
 }
 
-type FromChannel = Pick<DBConfessChannel, "id" | "name" | "count">
+type FromChannel = Pick<DBConfessChannel, "channel_id" | "name" | "count">
 type FromGuild = Pick<DBGuild, "id" | "name">
 type ServerList = {
-	channel_id: FromChannel["id"]
+	channel_id: FromChannel["channel_id"]
 	channel_name: FromChannel["name"]
 	count: FromChannel["count"]
 	guild_id: FromGuild["id"]
@@ -81,17 +82,20 @@ export async function execute(
 	const get_guilds = db.prepare(sql`SELECT * FROM guild`.sql);
 	const get_guild_users = db.prepare(sql`SELECT * FROM guild_user`.sql);
 	const get_confess_channels = db.prepare(sql`SELECT * FROM confess_channel`.sql);
+	const get_confessions = db.prepare(sql`SELECT * FROM confession`.sql);
 
 	const get_everything = db.transaction(() => {
 		const users = get_users.all() as DBUsers[] | undefined;
 		const guilds = get_guilds.all() as DBGuild[] | undefined;
 		const guild_users = get_guild_users.all() as DBGuildUser[] | undefined;
 		const confess_channels = get_confess_channels.all() as DBConfessChannel[] | undefined;
+		const confessions = get_confessions.all() as DBConfession[] | undefined;
 
 		return `users: ${JSON.stringify(users)}\n`
 			+ `guilds: ${JSON.stringify(guilds)}\n`
 			+ `guild users: ${JSON.stringify(guild_users)}\n`
-			+ `confess channels: ${JSON.stringify(confess_channels)}`;
+			+ `confess channels: ${JSON.stringify(confess_channels)}\n`
+			+ `confessions: ${JSON.stringify(confessions)}`;
 	});
 
 	if (args.at(0) === "reset") {
@@ -111,7 +115,7 @@ export async function execute(
 	}
 
 	if (msg.channel.type === ChannelType.DM) {
-		createUserRecords(db, msg);
+		createGuildUserRecords(db, msg);
 		const servers = listServers(db, msg.author.id);
 
 		const index = args.at(0);
@@ -171,12 +175,11 @@ async function confess(
 ) {
 	const client = msg.client;
 
-	// ERROR PRONE!!
-	const delete_channel = db.prepare(sql`DELETE FROM confess_channel WHERE id = ?`.sql);
-	const get_confession_count = db.prepare(sql`SELECT count FROM confess_channel WHERE id = ?`.sql);
+	const delete_channel = db.prepare(sql`DELETE FROM confess_channel WHERE channel_id = ?`.sql);
+	const get_confess_channel = db.prepare(sql`SELECT id, count FROM confess_channel WHERE channel_id = ?`.sql);
 	const insert_confession_stmt = db.prepare<DBConfession>(sql`
-		INSERT INTO confession (id, confession_number, timestamp, confess_channel_id, guild_user_id)
-		VALUES (@id, @confession_number, @timestamp, @confess_channel_id, @guild_user_id)
+		INSERT INTO confession (confession_number, timestamp, confess_channel_id, channel_id, guild_user_id)
+		VALUES (@confession_number, @timestamp, @confess_channel_id, @channel_id, @guild_user_id)
 	`.sql);
 
 	const server = server_list.at(index);
@@ -186,23 +189,23 @@ async function confess(
 			SET count = count + 1
 			WHERE channel_id = ?
 		`.sql);
-		const confession = get_confession_count.get(server.channel_id) as Pick<DBConfessChannel, "count"> | undefined;
+		const confess_channel = get_confess_channel.get(server.channel_id) as Pick<DBConfessChannel, "count" | "id"> | undefined;
 
 		const discord_channel = client.channels.cache.get(server.channel_id) 
 			?? await client.channels.fetch(server.channel_id);
 		if (discord_channel instanceof TextChannel) {
-			const embed = new EmbedBuilder();
-				embed.setTitle(`Confession #${confession?.count ?? "unknown"}`);
-				embed.setDescription(text.length > 500 ? `${text.slice(0, 500)} ...` : text);
-				embed.setFooter({ text: "DM me `??confess` to send a confession." });
 			increment.run(server.channel_id);
 			insert_confession_stmt.run({ // needs to be updated.
-				id: hash(`${msg.author.id}-${msg.id}`, HASH_LENGTH),
-				confess_channel_id: server.channel_id,
-				confession_number: confession?.count ?? 0,
-				guild_user_id: hash(msg.author.id + server.guild_id, HASH_LENGTH),
 				timestamp: dateToString(new Date(Date.now())),
+				confession_number: confess_channel?.count ?? 1,
+				channel_id: server.channel_id, // fails because the channel_id isn't pointing at anything.
+				guild_user_id: hash(msg.author.id + server.guild_id, HASH_LENGTH),
+				confess_channel_id: confess_channel!.id!,
 			});
+			const embed = new EmbedBuilder();
+				embed.setTitle(`Confession #${confess_channel?.count ?? "unknown"}`);
+				embed.setDescription(text.length > 500 ? `${text.slice(0, 500)} ...` : text);
+				embed.setFooter({ text: "DM me `??confess` to send a confession." });
 			discord_channel.send({ embeds: [embed] });
 		} else {
 			// deleting the channel if it couldn't be fetched.
@@ -223,8 +226,8 @@ function disable(db: Database, msg: Message<true>) {
 async function setup(db: Database, msg: Message<true>) {
 	const insert_guild_stmt = db.prepare<DBGuild>(sql`INSERT OR IGNORE INTO guild (id, name) VALUES (@id, @name)`.sql);
 	const insert_confess_channel_stmt = db.prepare<DBConfessChannel>(sql`
-		INSERT OR IGNORE INTO confess_channel (id, name, channel_id, guild_id, count) 
-		VALUES (@id, @name, @channel_id, @guild_id, @count)
+		INSERT OR IGNORE INTO confess_channel (name, channel_id, guild_id, count) 
+		VALUES (@name, @channel_id, @guild_id, @count)
 	`.sql);
 	const guild_existing = db.prepare(sql`SELECT 1 FROM guild WHERE id = ?`.sql);
 
@@ -239,6 +242,7 @@ async function setup(db: Database, msg: Message<true>) {
 		if (confess_channel.channel_id !== msg.channelId) {
 			db.prepare(sql`UPDATE confess_channel SET name = @name, channel_id = @to WHERE channel_id = @from`.sql)
 				.run({ name: msg.channel.name, to: msg.channelId, from: confess_channel.channel_id });
+			// delete all confessions related to channel_id in database.
 			msg.reply(`Switched confess to ${msg.channel.name} channel.`);
 		} else {
 			msg.reply("Set to the same channel!");
@@ -246,7 +250,6 @@ async function setup(db: Database, msg: Message<true>) {
 	} else {
 		db.transaction((msg: Message<true>) => {
 			insert_confess_channel_stmt.run({
-				id: msg.channelId,
 				name: msg.channel.name,
 				guild_id: msg.guild!.id,
 				channel_id: msg.channel.id,
@@ -279,10 +282,9 @@ function sendConfessServerSelection(msg: Message, confess_activated_guilds: Serv
 	});
 }
 
-async function createUserRecords(db: Database, msg: Message) {
+function createGuildUserRecords(db: Database, msg: Message) {
 	const insert_user_stmt = db.prepare<DBUsers>(sql`INSERT OR IGNORE INTO users (id, name) VALUES (@id, @name)`.sql);
 	const insert_guild_user_stmt = db.prepare<DBGuildUser>(sql`INSERT OR IGNORE INTO guild_user (id, name, confess_banned, user_id, guild_id) VALUES (@id, @name, @confess_banned, @user_id, @guild_id)`.sql);
-	const delete_channel = db.prepare(sql`DELETE FROM confess_channel WHERE id = ?`.sql);
 	const get_confess_guild_ids = db.prepare(sql`SELECT channel_id, guild_id FROM confess_channel`.sql);
 	
 	insert_user_stmt.run({ id: msg.author.id, name: msg.author.globalName ?? msg.author.displayName });
@@ -292,8 +294,6 @@ async function createUserRecords(db: Database, msg: Message) {
 	for (const db_res of db_guild_ids_with_confess) {
 		for (const [_, guild] of discord_guilds) {
 			if (db_res.guild_id === guild.id) {
-				const discord_channels = guild.channels.cache.get(db_res.channel_id) as TextChannel 
-					?? await guild.channels.fetch(db_res.channel_id) as TextChannel | null;
 				insert_guild_user_stmt.run({ 
 					id: hash(msg.author.id + guild.id, HASH_LENGTH),
 					name: msg.author.globalName ?? msg.author.displayName,

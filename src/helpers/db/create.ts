@@ -39,7 +39,7 @@ export function createDatabase(path: ":memory:" | string): Database {
 		`.sql).run();
 		db.prepare(sql`
 			CREATE TABLE IF NOT EXISTS confess_channel (
-				id TEXT NOT NULL PRIMARY KEY,
+				id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
 				name TEXT NOT NULL,
 				count INTEGER NOT NULL,
 				channel_id TEXT NOT NULL,
@@ -51,14 +51,15 @@ export function createDatabase(path: ":memory:" | string): Database {
 		`.sql).run();
 		db.prepare(sql`
 			CREATE TABLE IF NOT EXISTS confession (
-				id TEXT NOT NULL PRIMARY KEY,
+				id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
 				confession_number INTEGER NOT NULL,
 				timestamp DATE NOT NULL,
-				confess_channel_id TEXT NOT NULL,
+				channel_id TEXT NOT NULL,
+				confess_channel_id INTEGER NOT NULL,
 				guild_user_id TEXT NOT NULL,
 
 				FOREIGN KEY (confess_channel_id)
-					REFERENCES confess_channel (id),
+					REFERENCES confess_channel (id) ON DELETE CASCADE
 				FOREIGN KEY (guild_user_id)
 					REFERENCES guild_user (id)
 			)
@@ -67,7 +68,7 @@ export function createDatabase(path: ":memory:" | string): Database {
 	createTables();
 	/* eslint-disable  @typescript-eslint/no-explicit-any */
 	const user_version = db.pragma("user_version") as any;
-	console.log(`Running ${path === ":memory:" ? "in-memory" : "file system"} database "${path}". Tables on version ${user_version[0].user_version}.`);
+	console.log(`Running ${path === ":memory:" ? "test in-memory" : "public file system"} database "${path}". Tables on version ${user_version[0].user_version}.`);
 
 	return db;
 }

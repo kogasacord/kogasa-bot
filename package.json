@@ -37,7 +37,6 @@
 		"mime-types": "^2.1.35",
 		"node-fetch": "^3.3.2",
 		"random": "^4.1.0",
-		"sagiri": "^3.4.0",
 		"seedrandom": "^3.0.5",
 		"sql-template-tag": "^5.2.1"
 	},
