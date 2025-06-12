@@ -2,7 +2,7 @@
 
 import { quoteDefault } from "./quote/default.js";
 
-import { importDirectories, postProcessAliases } from "./misc/import.js";
+import { importCommandsFromDirectory, postProcessAliases } from "./misc/import.js";
 import { completePartialMessage } from "./misc/fetch.js";
 import { checkIfLink } from "./misc/link.js";
 import { pingURL } from "./misc/ping.js";
@@ -27,7 +27,7 @@ import {
 const mod = {
 	quoteDefault,
 
-	importDirectories,
+	importCommandsFromDirectory,
 	postProcessAliases,
 	checkIfLink,
 

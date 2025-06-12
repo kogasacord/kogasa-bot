@@ -1,7 +1,6 @@
 import path from "path";
 import * as url from "url";
 import { Client, Collection, Options, Partials, User } from "discord.js";
-import Pocketbase from "pocketbase";
 
 import {
 	ChatBuffer,
@@ -18,8 +17,12 @@ import { messageDelete } from "./src/discord/message_delete.js";
 import { messageCreate } from "./src/discord/message_create.js";
 import { ready } from "./src/discord/ready.js";
 import { ReminderEmitter } from "@helpers/reminder/reminders.js";
+import {createDatabase} from "@helpers/db/create.js";
 
 ///////////////////////////////////////////////////////////////////////////////////
+
+const db = createDatabase(settings.test ? ":memory:" : "sqlitev1.db");
+
 const __dirname = url.fileURLToPath(new URL(".", import.meta.url));
 const client = new Client({
 	intents: [
@@ -39,11 +42,10 @@ const client = new Client({
 		UserManager: 10_000,
 	}),
 });
-const pb = new Pocketbase("http://127.0.0.1:8090");
 ///////////////////////////////////////////////////////////////////////////////////
 const commands = new Collection<string, CommandModule>().concat(
-	await helpers.importDirectories(__dirname, "/src/commands/"),
-	await helpers.importDirectories(__dirname, "/src/commands/specials/")
+	await helpers.importCommandsFromDirectory(__dirname, "/src/commands/"),
+	await helpers.importCommandsFromDirectory(__dirname, "/src/commands/specials/")
 );
 const websites: Website[] = await helpers.grabAllRandomWebsites(
 	path.join(__dirname, "./media/randomweb.jsonl")
@@ -53,14 +55,13 @@ const chat_buffer: ChatBuffer = new Map();
 const reminder_emitter = new ReminderEmitter(client);
 
 const other_dependencies: DiscordExternalDependencies = {
-	commands,
-	aliases,
-	chat_buffer,
-	websites,
 	reminder_emitter,
-	pb,
+	chat_buffer,
+	commands,
+	websites,
+	aliases,
+	db,
 };
-//////////////////////////////////////////////////////////////////////////////////
 
 client.on(
 	"messageCreate",

@@ -3,7 +3,7 @@ import helpers, { ExternalDependencies } from "@helpers/helpers.js";
 import settings from "@root/settings.json" assert { type: "json" };
 import { ChannelScope } from "@helpers/types";
 
-let latency = await getAverageLatency("discord.com", 3);
+let latency = 0;
 setInterval(async () => {
 	latency = await getAverageLatency("discord.com", 3);
 }, 60 * 3000);
@@ -14,7 +14,7 @@ type DoctorResults = {
 
 export const name = "doctor";
 export const aliases = ["eirinhelpme"];
-export const channel: ChannelScope[] = ["Guild"];
+export const channel: ChannelScope[] = ["Guild", "Thread", "DMs"];
 export const cooldown = 20;
 export const special = true;
 export const description = "Send me to Eirin and let them check my health.";
@@ -60,7 +60,7 @@ async function getAverageLatency(url: string, ping_count: number) {
 
 	if (average_latency.length > 1)
 		return average_latency.reduce((prev, curr) => prev + curr) / pings.length;
-	return average_latency;
+	return average_latency[0];
 }
 
 export async function pingServer(url: string) {

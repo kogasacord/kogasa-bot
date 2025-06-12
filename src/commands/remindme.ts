@@ -9,7 +9,7 @@ const time_regex =
 export const name = "remindme";
 export const aliases = ["rme", "remind"];
 export const cooldown = 8;
-export const channel: ChannelScope[] = ["Guild", "DMs"];
+export const channel: ChannelScope[] = ["Guild", "DMs", "Thread"];
 export const description = "Reminds you of a specific thing.";
 export const extended_description =
 	"\n**To add a reminder**" +
@@ -141,7 +141,8 @@ function userAddReminder(
 	reminder_emitter.pushReminder(msg.author.id, { to_date, contents });
 	reminders = reminder_emitter.getReminderFromUser(msg.author.id);
 
-	msg.react("\u23F0").catch(() => {});
+	const alarm_clock = "\u23F0";
+	msg.react(alarm_clock).catch(() => {});
 }
 
 function addDayToDate(date: Date, days: number) {

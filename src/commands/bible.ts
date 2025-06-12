@@ -72,7 +72,7 @@ function importBibleCSV(): Promise<Set<string>> {
 	return new Promise((res, rej) => {
 		let last = "";
 		fs.createReadStream(p)
-			.on("data", function(chunk) {
+			.on("data", function(chunk: string | Buffer) {
 				let i = 0;
 				let lines: string[] = [];
 

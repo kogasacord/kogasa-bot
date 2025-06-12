@@ -20,6 +20,10 @@ export async function execute(
 	msg: Message<true>,
 	_args: string[]
 ) {
+	if (!(msg.reference && msg.reference.messageId) && msg.content.length <= 0) {
+		msg.reply("You need to reply to a message in order to quote it.");
+		return;
+	}
 	const replied =
 		msg.channel.messages.cache.get(msg.reference!.messageId!) ??
 		(await msg.channel.messages.fetch(msg.reference!.messageId!));
@@ -48,17 +52,6 @@ export async function execute(
 		msg.reply("Something went wrong.");
 		console.log(err);
 	}
-}
-
-export async function checker(msg: Message): Promise<boolean> {
-	if (!(msg.reference && msg.reference.messageId)) {
-		msg.reply("You need to reply to a message in order to quote it.");
-		return false;
-	}
-	if (msg.content.length <= 0) {
-		return false;
-	}
-	return true;
 }
 
 function getAvatarURL(user: User, guild_member: GuildMember) {

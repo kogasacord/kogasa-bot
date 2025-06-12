@@ -1,5 +1,6 @@
 node_modules
 config.json
 build/
-db.json
+*.db
+*.db-*
 media/engines/*

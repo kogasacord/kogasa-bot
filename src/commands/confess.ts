@@ -3,336 +3,397 @@ import {
 	ChannelType,
 	Client,
 	EmbedBuilder,
-	Guild,
 	GuildMember,
 	Message,
-	PermissionsBitField,
 	TextChannel,
 } from "discord.js";
 import { ChannelScope } from "@helpers/types";
-import Pocketbase, { RecordModel, RecordService } from "pocketbase";
 import { createHash } from "node:crypto";
+import sql from "sql-template-tag";
+import { Database } from "better-sqlite3";
 
-interface PBGuild extends RecordModel {
-	confess: string;
+// cache data on first run?
+
+interface DBUsers {
+	id: string,
+	name: string,
 }
-interface PBConfess extends RecordModel {
-	channel_id: string;
-	users: {
-		confessed: string[];
-		banned: string[];
-	};
+interface DBGuild {
+	id: string,
+	name: string,
 }
-interface ConfessGuilds {
-	guild: Guild;
-	channel?: TextChannel;
-	tag?: "Timed out." | "Banned.";
+interface DBGuildUser {
+	id: string,
+	name: string,
+	confess_banned: number, // boolean.
+	user_id: string, // fk
+	guild_id: string, // fk
 }
+interface DBConfessChannel {
+	id?: number,
+	name: string,
+	count: number,
+	channel_id: string, // not a foreign key.
+	guild_id: string, // fk
+}
+interface DBConfession {
+	id?: string,
+	confession_number: number,
+	timestamp: string,
+	confess_channel_id: number, // fk
+	guild_user_id: string, // fk
+}
+
+type FromChannel = Pick<DBConfessChannel, "channel_id" | "name" | "count">
+type FromGuild = Pick<DBGuild, "id" | "name">
+type ServerList = {
+	channel_id: FromChannel["channel_id"]
+	channel_name: FromChannel["name"]
+	count: FromChannel["count"]
+	guild_id: FromGuild["id"]
+	guild_name: FromGuild["name"]
+}
+
+const HASH_LENGTH = 25;
 
 export const name = "confess";
 export const aliases = [];
 export const channel: ChannelScope[] = ["DMs", "Guild"];
-export const cooldown = 10;
+export const cooldown = 1;
 export const description = "Secretly send a message.";
 export const extended_description =
 	"To confess, you must do `??confess` in DMs first and follow the instructions listed there." +
-	"\nFor server owners, `??confess ban (confession number)` and `??confess ban @User` to moderate it." +
+	"\nFor server owners, `??confess mute-toggle (confession number)` and `??confess mute-toggle @User` to moderate it." +
 	"\n`??confess` in a channel to set it up.";
-// to do: the ability to remove the confess feature entirely.
 export async function execute(
 	client: Client<true>,
 	msg: Message,
 	args: string[],
 	ext: ExternalDependencies
 ) {
+	const db = ext.db;
+
 	if (msg.channel.type === ChannelType.DM) {
-		const index = Number(args.at(0));
+		createGuildUserRecords(db, msg as Message<false>);
+		const servers = listServers(db, msg.author.id);
+
+		const index = args.at(0);
 		const text = args.slice(1).join(" ");
+		const guild_index = Number(index);
+		if (servers === undefined || (servers && servers.length <= 0)) {
+			msg.reply("No servers in common!");
+			return;
+		}
 
-		const confess_activated_guilds = await listConfessServers(
-			client,
-			msg,
-			ext.pb
-		);
-		if (!isNaN(index) && text.length !== 0) {
-			const confess_guild = confess_activated_guilds.at(index);
-			if (!confess_guild) {
-				msg.reply("No guild associated with the index.");
-				return;
-			}
-			sendConfessToGuild(msg, ext.pb, confess_guild, text);
+		if (isNaN(guild_index) || text.length <= 0) {
+			// ??confess
+			sendConfessServerSelection(msg, servers);
 		} else {
-			if (confess_activated_guilds.length <= 0) {
-				msg.reply("You have no servers that are available to confess on.");
-				return;
-			}
-			sendConfessServerSelection(msg, confess_activated_guilds);
+			// ??confess [guild_index] [text] - confesses the text.
+			confess(db, msg as Message<false>, servers, guild_index, text);
 		}
 	}
-
 	if (msg.channel.type === ChannelType.GuildText) {
-		const selection = args.at(0);
-		const confession_index = Number(args.at(1));
+		const confess_disable = args.at(0)?.toLowerCase();
+		const mentioned = msg.mentions.members?.at(0);
 
-		switch (selection) {
-			case "ban": {
-				if (isNaN(confession_index)) {
-					msg.reply(
-						"Please choose a confession to delete: `??confess ban [confession number]`"
-					);
-					return;
+		if (msg.member!.permissions.has("ManageGuild")) {
+			if (confess_disable === "disable") {
+				disable(db, msg as Message<true>);
+			} else if (confess_disable === "mute-toggle") {
+				const index = args.at(1);
+				const confession_index = Number(index);
+
+				if (mentioned !== undefined) {
+					banUserFromConfess(db, msg as Message<true>, mentioned);
+				} else {
+					if (isNaN(confession_index)) {
+						msg.reply("Enter a valid confession!");
+					} else {
+						banIndexFromConfess(db, msg as Message<true>, confession_index);
+					}
 				}
-				const has_perms = msg.member?.permissions.has(
-					PermissionsBitField.Flags.MuteMembers
-				);
-				if (!has_perms) {
-					msg.reply(
-						"You need to have the Mute Members permission before being able to mute confessors."
-					);
-					return;
-				}
-				banUserFromConfess(ext.pb, msg, confession_index);
-				break;
+			} else {
+				setup(db, msg as Message<true>);
 			}
-			case "unban": {
-				const has_perms = msg.member?.permissions.has(
-					PermissionsBitField.Flags.MuteMembers
-				);
-				if (!has_perms) {
-					msg.reply(
-						"You need to have the Mute Members permission before being able to mute confessors."
-					);
-					return;
-				}
-				unbanUserFromConfess(ext.pb, msg);
-				break;
-			}
-			default: {
-				const has_perms = msg.member?.permissions.has(
-					PermissionsBitField.Flags.ManageChannels
-				);
-				if (!has_perms) {
-					msg.reply(
-						"Please DM me if you want to confess, and do `??help confess` there."
-					);
-					return;
-				}
-				await setup(msg, ext.pb);
-				break;
-			}
+		} else {
+			msg.reply("Confess in dms instead!");
+			msg.delete().catch(() => {});
 		}
 	}
 }
 
-async function setup(msg: Message, pb: Pocketbase) {
-	const channel_hash = hash(msg.channelId, 15);
-	const guild_hash = hash(msg.guild!.id, 15);
-	const pb_channels = pb.collection("confess");
-	const pb_guild = pb.collection("guild");
+function banUserFromConfess(db: Database, msg: Message<true>, user: GuildMember) {
+	const guild_id = msg.guild.id;
+	const hash_target_user = hash(user.id + guild_id, HASH_LENGTH);
 
-	// makes a channel, makes a guild (if unavailable), connects those two.
-	const previous_channel = await getRecord<PBConfess>(
-		pb_channels,
-		channel_hash
-	);
-	if (previous_channel) {
-		await pb_channels.delete(previous_channel.id);
-	}
-	const current_channel = await pb_channels.create<PBConfess>({
-		id: channel_hash,
-		channel_id: msg.channelId,
-		users: {
-			confessed: previous_channel?.users.confessed ?? [],
-			banned: previous_channel?.users.banned ?? [],
-		},
-	});
-	const guild = await getRecord<PBGuild>(pb_guild, guild_hash);
-	if (guild) {
-		await pb_guild.update(guild.id, { confess: [current_channel.id] });
-		msg.reply(
-			`You switched the confess channel to #${
-				(msg.channel as TextChannel).name
-			}`
-		);
+	const toggle_ban_user = db.prepare(sql`UPDATE guild_user SET confess_banned = NOT confess_banned WHERE id = ?`.sql);
+	const is_confess_banned_stmt = db.prepare(sql`
+		SELECT confess_banned
+		FROM guild_user
+		WHERE id = ?
+	`.sql);
+	toggle_ban_user.run(hash_target_user);
+	const is_confess_banned = is_confess_banned_stmt.get(hash_target_user) as Pick<DBGuildUser, "confess_banned"> | undefined;
+
+	msg.reply(`Confessor has been ${is_confess_banned?.confess_banned ? "muted" : "unmuted"}.`);
+}
+
+function banIndexFromConfess(db: Database, msg: Message<true>, confession_index: number) {
+	const guild_id = msg.guild.id;
+
+	const get_confess_channel_stmt = db.prepare(sql`
+		SELECT id, channel_id 
+		FROM confess_channel 
+		WHERE guild_id = ?
+		LIMIT 1
+	`.sql);
+	const get_confession_stmt = db.prepare<{ confess_channel_id: number, confession_number: number }>(sql`
+		SELECT guild_user_id
+		FROM confession 
+		WHERE confess_channel_id = @confess_channel_id 
+			AND confession_number = @confession_number
+		LIMIT 1
+	`.sql);
+	const update_user_stmt = db.prepare(sql`
+		UPDATE guild_user 
+		SET confess_banned = NOT confess_banned 
+		WHERE id = ?
+	`.sql);
+	const is_confess_banned_stmt = db.prepare(sql`
+		SELECT confess_banned
+		FROM guild_user
+		WHERE id = ?
+	`.sql);
+
+	const confess_channel = get_confess_channel_stmt.get(guild_id) as Pick<DBConfessChannel, "id" | "channel_id"> | undefined;
+	if (confess_channel) {
+		const user = get_confession_stmt.get({
+			confession_number: confession_index,
+			confess_channel_id: confess_channel.id!,
+		}) as Pick<DBConfession, "guild_user_id"> | undefined;
+		if (user !== undefined) {
+			if (user.guild_user_id === undefined) {
+				throw Error("Database user id is null somehow?");
+			}
+			update_user_stmt.run(user.guild_user_id);
+			const is_confess_banned = is_confess_banned_stmt.get(user.guild_user_id) as Pick<DBGuildUser, "confess_banned"> | undefined;
+			msg.reply(`Confessor has been ${is_confess_banned?.confess_banned ? "muted" : "unmuted"}.`);
+		} else {
+			msg.reply("Invalid confession number.");
+		}
 	} else {
-		await pb_guild.create({ id: guild_hash, confess: [current_channel.id] });
-		msg.reply(
-			`You set up the confess channel on #${(msg.channel as TextChannel).name}`
-		);
+		msg.reply("Invalid confession number.");
 	}
 }
 
-async function sendConfessToGuild(
-	msg: Message,
-	pb: Pocketbase,
-	confess: ConfessGuilds,
+//// DM ////
+function listServers(db: Database, user_id: string): ServerList[] | undefined {
+	const list = db.transaction((user_id: string) => {
+		const join = db.prepare(sql`
+			SELECT 
+				guild.id AS guild_id,
+				guild.name AS guild_name, 
+				confess_channel.name AS channel_name,
+				confess_channel.channel_id,
+				confess_channel.count
+			FROM guild_user
+			JOIN guild ON guild_user.guild_id = guild.id
+			JOIN confess_channel ON confess_channel.guild_id = guild.id
+			WHERE guild_user.user_id = ?;
+		`.sql);
+		return join.all(user_id) as ServerList[];
+	});
+	return list(user_id);
+}
+async function confess(
+	db: Database,
+	msg: Message<false>, 
+	server_list: ServerList[], 
+	index: number, 
 	text: string
 ) {
-	if (confess.tag === "Banned.") {
-		msg.reply(
-			"You're currently banned from confessing in that server."
-		);
-		return;
-	}
-	if (confess.tag === "Timed out.") {
-		msg.reply(
-			"You're currently timed out from speaking in that server."
-		);
-		return;
-	}
+	const client = msg.client;
 
-	const hash_channel_id = hash(confess.channel!.id, 15);
-	const channels = pb.collection("confess");
-	const channel_record = await getRecord<PBConfess>(channels, hash_channel_id);
+	const is_confess_banned_stmt = db.prepare(sql`
+		SELECT confess_banned
+		FROM guild_user
+		WHERE id = ?
+	`.sql);
 
-	const confessed_length = channel_record?.users.confessed.push(msg.author.id);
-	await channels.update<PBConfess>(hash_channel_id, {
-		users: channel_record?.users,
-	});
+	const delete_channel = db.prepare(sql`DELETE FROM confess_channel WHERE id = ?`.sql);
+	const get_confess_channel = db.prepare(sql`
+		SELECT id, count 
+		FROM confess_channel 
+		WHERE channel_id = ?
+		LIMIT 1
+	`.sql);
+	const insert_confession_stmt = db.prepare<DBConfession>(sql`
+		INSERT INTO confession (confession_number, timestamp, confess_channel_id, guild_user_id)
+		VALUES (@confession_number, @timestamp, @confess_channel_id, @guild_user_id)
+	`.sql);
 
-	const embed = new EmbedBuilder();
-	embed.setTitle(`Confession #${confessed_length}`);
-	embed.setDescription(text.slice(0, 500)); // no idea what the description limit is.
-	embed.setFooter({ text: "DM me `??confess` to send a confession." });
-
-	confess.channel!.send({ embeds: [embed] });
-	msg.reply(`Sent to #${confess.channel!.name} at ${confess.guild.name}`);
-}
-
-async function banUserFromConfess(
-	pb: Pocketbase,
-	msg: Message,
-	confession_index: number
-) {
-	const channel_hash = hash(msg.channelId, 15);
-	const pb_confess = pb.collection("confess");
-	const record = await getRecord<PBConfess>(pb_confess, channel_hash);
-	if (record) {
-		const confess_user = record.users.confessed.at(
-			Math.abs(confession_index - 1)
-		);
-		if (confess_user) {
-			record.users.banned.push(confess_user);
-			await pb_confess.update<PBConfess>(channel_hash, { users: record.users });
-			msg.reply(`Banned confession #${confession_index}`);
-		} else {
-			msg.reply(`Confession #${confession_index} doesn't exist!`);
+	const server = server_list.at(index);
+	if (server !== undefined) {
+		const guild_user_id = hash(msg.author.id + server.guild_id, HASH_LENGTH);
+		const increment = db.prepare(sql`
+			UPDATE confess_channel
+			SET count = count + 1
+			WHERE channel_id = ?
+		`.sql);
+		const confess_channel = get_confess_channel.get(server.channel_id) as Pick<DBConfessChannel, "count" | "id"> | undefined;
+		const is_confess_banned = is_confess_banned_stmt.get(guild_user_id) as Pick<DBGuildUser, "confess_banned"> | undefined;
+		if (is_confess_banned?.confess_banned) {
+			msg.reply("You are currently banned!");
+			return;
 		}
-	} else {
-		msg.reply("Please invoke the command on a confess activated channel.");
-	}
-}
 
-async function unbanUserFromConfess(pb: Pocketbase, msg: Message) {
-	const id_of_unban = msg.mentions.users.first()?.id;
-	const channel_hash = hash(msg.channelId, 15);
-	const pb_confess = pb.collection("confess");
-	const record = await getRecord<PBConfess>(pb_confess, channel_hash);
-	if (record) {
-		const banned_index = record.users.banned.findIndex(
-			(id) => id === id_of_unban
-		);
-		if (banned_index !== -1) {
-			record.users.banned.splice(banned_index, 1);
-			await pb_confess.update<PBConfess>(channel_hash, {
-				users: {
-					banned: record.users.banned,
-					confessed: record.users.confessed,
-				},
+		const discord_channel = client.channels.cache.get(server.channel_id) 
+			?? await client.channels.fetch(server.channel_id);
+		if (discord_channel instanceof TextChannel) {
+			increment.run(server.channel_id);
+			insert_confession_stmt.run({
+				timestamp: dateToString(new Date(Date.now())),
+				confession_number: confess_channel?.count ?? 1,
+				guild_user_id: guild_user_id,
+				confess_channel_id: confess_channel!.id!,
 			});
-			msg.reply("Unbanned user from confessing.");
+			const embed = new EmbedBuilder();
+				embed.setTitle(`Confession #${confess_channel?.count ?? "unknown"}`);
+				embed.setDescription(text.length > 500 ? `${text.slice(0, 500)} ...` : text);
+				embed.setFooter({ text: "DM me `??confess` to send a confession." });
+			discord_channel.send({ embeds: [embed] });
+
+			const writing_hand = "\u270D";
+			msg.react(writing_hand).catch(() => {});
 		} else {
-			msg.reply("User isn't banned from confessing!");
+			// deleting the channel if it couldn't be fetched.
+			delete_channel.run(confess_channel!.id!);
+			msg.reply("That channel has been deleted.");
 		}
 	} else {
-		msg.reply("Please invoke the command on a confess activated channel.");
+		msg.reply("You're not in that server!");
 	}
 }
+
+//// GUILD ////
+function disable(db: Database, msg: Message<true>) {
+	db.prepare(sql`DELETE FROM confess_channel WHERE guild_id = ?`.sql).run(msg.guild.id);
+	msg.reply("Disabled confess from this server.");
+}
+function setup(db: Database, msg: Message<true>) {
+	const insert_guild_stmt = db.prepare<DBGuild>(sql`
+		INSERT OR IGNORE INTO guild (id, name) 
+		VALUES (@id, @name)
+	`.sql);
+	const insert_confess_channel_stmt = db.prepare<DBConfessChannel>(sql`
+		INSERT OR IGNORE INTO confess_channel (name, channel_id, guild_id, count) 
+		VALUES (@name, @channel_id, @guild_id, @count)
+	`.sql);
+	const guild_existing = db.prepare(sql`SELECT 1 FROM guild WHERE id = ?`.sql);
+
+	const is_guild_existing = guild_existing.get(msg.guild.id) as DBGuild | undefined;
+	if (is_guild_existing === undefined) {
+		insert_guild_stmt.run({ id: msg.guild!.id, name: msg.guild!.name });
+	}
+
+	const confess_channel = db.prepare(sql`
+		SELECT *
+		FROM confess_channel 
+		WHERE guild_id = ? 
+		LIMIT 1
+	`.sql)
+		.get(msg.guild!.id) as DBConfessChannel | undefined;
+	if (confess_channel) {
+		if (confess_channel.channel_id !== msg.channelId) {
+			db.prepare(sql`
+				UPDATE confess_channel 
+				SET name = @name, channel_id = @to 
+				WHERE channel_id = @from
+			`.sql)
+				.run({ 
+					name: msg.channel.name, 
+					to: msg.channelId, 
+					from: confess_channel.channel_id 
+				});
+			// delete all confessions related to channel_id in database.
+			msg.reply(`Switched confess to ${msg.channel.name} channel.`);
+		} else {
+			msg.reply("Set to the same channel!");
+		}
+	} else {
+		db.transaction((msg: Message<true>) => {
+			insert_confess_channel_stmt.run({
+				name: msg.channel.name,
+				guild_id: msg.guild!.id,
+				channel_id: msg.channel.id,
+				count: 0,
+			});
+		})(msg as Message<true>);
+
+		msg.reply("Set confess channel.");
+	}
+}
+
 
 //// HELPERS ////
-
-// optimization: when someone's confessing to a specific server..
-// 		maybe don't get every single server only to use one?
-async function listConfessServers( 
-	client: Client<true>,
-	msg: Message,
-	pb: Pocketbase
-): Promise<ConfessGuilds[]> {
-	const confess_activated_guilds: ConfessGuilds[] = [];
-	const pb_guild_collection = pb.collection("guild");
-	const pb_channel_collection = pb.collection("confess");
-
-	const guilds = client.guilds.cache;
-	for (const guild of guilds.values()) {
-		let member: GuildMember;
-		try {
-			member = await guild.members.fetch(msg.author.id);
-		} catch (error) {
-			continue;
-		}
-
-		if (member.isCommunicationDisabled()) {
-			confess_activated_guilds.push({
-				guild: guild,
-				tag: "Timed out.",
-			});
-			continue;
-		}
-		// checking mutually joined servers with user.
-		const pb_guild = await getRecord<PBGuild>(
-			pb_guild_collection,
-			hash(guild.id, 15)
-		);
-		if (pb_guild && pb_guild.confess) {
-			// checking if that guild has activated the feature.
-			const pb_confess = await getRecord<PBConfess>(
-				pb_channel_collection,
-				pb_guild.confess
-			);
-			if (!pb_confess) {
-				continue;
-			}
-			if (pb_confess.users.banned.find((id) => id === msg.author.id)) {
-				confess_activated_guilds.push({
-					guild: guild,
-					tag: "Banned.",
-				});
-				continue;
-			}
-			// quite confident it will be a GuildChannel because of the previous check (msg.channel.type === ChannelType.GuildText)
-			const confess_channel = (await guild.channels.fetch(pb_confess?.channel_id, { cache: true })) as TextChannel;
-			if (!confess_channel) {
-				continue;
-			}
-			confess_activated_guilds.push({
-				guild: guild,
-				channel: confess_channel,
-			});
-		}
-
-	}
-	return confess_activated_guilds;
-}
-
-async function sendConfessServerSelection(
-	msg: Message,
-	confess_activated_guilds: ConfessGuilds[]
-) {
+function sendConfessServerSelection(msg: Message, confess_activated_guilds: ServerList[]) {
 	const embed = new EmbedBuilder();
-	embed.setTitle("Choose a server to confess on: ");
-	for (let index = 0; index < confess_activated_guilds.length; index++) {
-		const guild = confess_activated_guilds[index];
+	embed.setTitle("Servers:");
+	let index = 0;
+	for (const server of confess_activated_guilds) {
 		embed.addFields({
-			name: `#${index} ${guild.guild.name}`,
-			value: guild.tag ? `-# ${guild.tag}` : `-# At: ${guild.channel!.name}`,
+			name: `#${index} ${server.guild_name}`,
+			value: `At: ${server.channel_name}`,
 			inline: true,
 		});
+		index++;
 	}
 	msg.author.send({
 		content:
-			"Choose with `??confess [index (without the #)] [text]`, e.g: `??confess 0 Example text.`",
+			"Choose with `??confess [index] [text]`, e.g: `??confess 0 Example text.`",
 		embeds: [embed],
 	});
+}
+
+function createGuildUserRecords(db: Database, msg: Message<false>) {
+	const insert_user_stmt = db.prepare<DBUsers>(sql`
+		INSERT OR IGNORE INTO users (id, name)
+		VALUES (@id, @name)
+	`.sql);
+	const insert_guild_user_stmt = db.prepare<DBGuildUser>(sql`
+		INSERT OR IGNORE INTO guild_user (id, name, confess_banned, user_id, guild_id) 
+		VALUES (@id, @name, @confess_banned, @user_id, @guild_id)
+	`.sql);
+	const get_confess_guild_ids = db.prepare(sql`
+		SELECT channel_id, guild_id 
+		FROM confess_channel
+	`.sql);
+	
+	insert_user_stmt.run({ 
+		id: msg.author.id, 
+		name: msg.author.globalName ?? msg.author.displayName 
+	});
+
+	const insert_guild_users = db.transaction((msg: Message<false>) => {
+		const db_guild_ids_with_confess = get_confess_guild_ids.all() as { channel_id: string, guild_id: string }[];
+		const discord_guilds = msg.client.guilds.cache;
+		for (const db_res of db_guild_ids_with_confess) {
+			for (const [_, guild] of discord_guilds) {
+				if (db_res.guild_id === guild.id) {
+					insert_guild_user_stmt.run({ 
+						id: hash(msg.author.id + guild.id, HASH_LENGTH),
+						name: msg.author.globalName ?? msg.author.displayName,
+						confess_banned: 0,
+						guild_id: guild.id,
+						user_id: msg.author.id,
+					});
+				}
+			}
+		}
+	});
+
+	insert_guild_users(msg as Message<false>);
 }
 
 function hash(content: string, hash_length: number) {
@@ -342,13 +403,9 @@ function hash(content: string, hash_length: number) {
 		.toString()
 		.slice(0, hash_length);
 }
-async function getRecord<T extends RecordModel>(
-	collection: RecordService<T>,
-	id: string
-): Promise<T | undefined> {
-	try {
-		return await collection.getOne(id);
-	} catch (error) {
-		return undefined;
-	}
+
+function dateToString(date: Date) {
+	const isoString = date.toISOString();
+	const formattedDate = isoString.split("T")[0];
+	return formattedDate;
 }
