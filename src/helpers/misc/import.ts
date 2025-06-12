@@ -14,9 +14,6 @@ export async function importCommandsFromDirectory(
 	dirname: string,
 	selected_path: string
 ) {
-	const list_aliases = new Map<string, string>();
-	const duplicate_aliases: Alias[] = [];
-
 	const commands = new Collection<string, CommandModule>();
 	const dir = url.pathToFileURL(path.join(dirname, selected_path));
 	const specialCommandFiles = readdirSync(dir).filter((file) =>
@@ -27,7 +24,6 @@ export async function importCommandsFromDirectory(
 		const command: CommandModule = await import(`${dir}\\${file}`);
 
 		try {
-			recheck_fields(command, list_aliases, duplicate_aliases);
 			commands.set(command.name, command);
 		} catch (err) {
 			console.log(err);
@@ -35,51 +31,57 @@ export async function importCommandsFromDirectory(
 		console.timeEnd(`${file}`);
 	}
 
-	let str = "";
-	for (const { name, alias } of duplicate_aliases) {
-		const command_name = list_aliases.get(alias);
-		if (command_name) {
-			const n = `${command_name}'s command has a duplicate command with alias: ${alias}\n`;
-			str += n;
-		}
-	}
-	if (duplicate_aliases.length >= 0) {
-		throw new Error(str);
-	}
 
 	return commands;
 }
 
-function recheck_fields(
-	command: CommandModule,
-	list_aliases: Map<string, string>,
-	duplicate_aliases: Alias[]
+export function commandsValidationCheck(commands: Collection<string, CommandModule>) {
+	const list_aliases = new Map<string, string>();
+	const duplicate_aliases: Alias[] = [];
+
+	const err = "";
+	for (const [_, command] of commands) {
+		// alias check.
+		aliasCheck(list_aliases, duplicate_aliases, err);
+		recheckFields(command, err);
+	}
+	
+	if (err.length > 0) {
+		throw new Error(err);
+	}
+}
+
+function aliasCheck(
+	list_aliases: Map<string, string>, 
+	duplicate_aliases: Alias[], 
+	err: string
 ) {
+	for (const { name, alias } of duplicate_aliases) {
+		const command_name = list_aliases.get(alias);
+		if (command_name) {
+			const n = `Alias Error: ${command_name}'s command has a duplicate command with alias: ${alias}\n`;
+			err += n;
+		}
+	}
+}
+
+function recheckFields(command: CommandModule, err: string) {
 	const dm: ChannelScope[] = ["DMs", "Guild", "Thread"];
 
 	if (command.name === undefined) {
-		throw new Error("Name missing for a command..");
+		err += "Name missing for a command.";
 	}
 	if (!command.channel.every((v) => dm.includes(v))) {
-		throw new Error(
-			`Channel missing or mispelled for ${command.name}, "${command.channel}"`
-		);
-	}
-	for (const alias of command.aliases ?? []) {
-		if (!list_aliases.has(alias)) {
-			list_aliases.set(alias, command.name);
-		} else {
-			duplicate_aliases.push({ name: command.name, alias });
-		}
+		err += `Channel missing or mispelled for ${command.name}, "${command.channel}"`;
 	}
 	if (command.cooldown === undefined) {
-		throw new Error(`Cooldown missing for ${command.name}`);
+		err += `Cooldown missing for ${command.name}`;
 	}
 	if (command.description === undefined) {
-		throw new Error(`Description missing for ${command.name}`);
+		err += `Description missing for ${command.name}`;
 	}
 	if (command.execute === undefined) {
-		throw new Error(`Execute function missing for ${command.name}`);
+		err += `Execute function missing for ${command.name}`;
 	}
 }
 

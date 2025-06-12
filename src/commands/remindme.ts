@@ -141,7 +141,8 @@ function userAddReminder(
 	reminder_emitter.pushReminder(msg.author.id, { to_date, contents });
 	reminders = reminder_emitter.getReminderFromUser(msg.author.id);
 
-	msg.react("\u23F0").catch(() => {});
+	const alarm_clock = "\u23F0";
+	msg.react(alarm_clock).catch(() => {});
 }
 
 function addDayToDate(date: Date, days: number) {
