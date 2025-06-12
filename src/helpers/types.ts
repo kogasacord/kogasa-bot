@@ -20,7 +20,6 @@ export type CommandModule = {
 
 	dyn_cooldown?: (args: string[]) => Promise<number>;
 	aliases?: string[];
-	checker?: (msg: Message, args: string[]) => Promise<boolean>;
 	noscope?: boolean; // avoids the scope check
 };
 // try using this sometimes (or replace everything with it :fear:)

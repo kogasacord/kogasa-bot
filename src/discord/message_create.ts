@@ -80,12 +80,6 @@ export async function messageCreate(
 			);
 			return;
 		}
-		if (command_module.checker) {
-			const has_passed_check = await command_module.checker(msg, args);
-			if (!has_passed_check) {
-				return;
-			}
-		}
 
 		if (
 			channel_types.some(
