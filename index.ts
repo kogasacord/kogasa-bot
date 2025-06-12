@@ -44,8 +44,8 @@ const client = new Client({
 });
 ///////////////////////////////////////////////////////////////////////////////////
 const commands = new Collection<string, CommandModule>().concat(
-	await helpers.importDirectories(__dirname, "/src/commands/"),
-	await helpers.importDirectories(__dirname, "/src/commands/specials/")
+	await helpers.importCommandsFromDirectory(__dirname, "/src/commands/"),
+	await helpers.importCommandsFromDirectory(__dirname, "/src/commands/specials/")
 );
 const websites: Website[] = await helpers.grabAllRandomWebsites(
 	path.join(__dirname, "./media/randomweb.jsonl")
@@ -55,14 +55,13 @@ const chat_buffer: ChatBuffer = new Map();
 const reminder_emitter = new ReminderEmitter(client);
 
 const other_dependencies: DiscordExternalDependencies = {
-	db,
-	commands,
-	aliases,
-	chat_buffer,
-	websites,
 	reminder_emitter,
+	chat_buffer,
+	commands,
+	websites,
+	aliases,
+	db,
 };
-//////////////////////////////////////////////////////////////////////////////////
 
 client.on(
 	"messageCreate",

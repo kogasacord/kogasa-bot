@@ -74,7 +74,7 @@ export async function execute(
 	const db = ext.db;
 
 	if (msg.channel.type === ChannelType.DM) {
-		createGuildUserRecords(db, msg);
+		createGuildUserRecords(db, msg as Message<false>);
 		const servers = listServers(db, msg.author.id);
 
 		const index = args.at(0);
@@ -263,6 +263,9 @@ async function confess(
 				embed.setDescription(text.length > 500 ? `${text.slice(0, 500)} ...` : text);
 				embed.setFooter({ text: "DM me `??confess` to send a confession." });
 			discord_channel.send({ embeds: [embed] });
+
+			const writing_hand = "\u270D";
+			msg.react(writing_hand).catch(() => {});
 		} else {
 			// deleting the channel if it couldn't be fetched.
 			delete_channel.run(confess_channel!.id!);
@@ -279,7 +282,10 @@ function disable(db: Database, msg: Message<true>) {
 	msg.reply("Disabled confess from this server.");
 }
 function setup(db: Database, msg: Message<true>) {
-	const insert_guild_stmt = db.prepare<DBGuild>(sql`INSERT OR IGNORE INTO guild (id, name) VALUES (@id, @name)`.sql);
+	const insert_guild_stmt = db.prepare<DBGuild>(sql`
+		INSERT OR IGNORE INTO guild (id, name) 
+		VALUES (@id, @name)
+	`.sql);
 	const insert_confess_channel_stmt = db.prepare<DBConfessChannel>(sql`
 		INSERT OR IGNORE INTO confess_channel (name, channel_id, guild_id, count) 
 		VALUES (@name, @channel_id, @guild_id, @count)
@@ -291,12 +297,25 @@ function setup(db: Database, msg: Message<true>) {
 		insert_guild_stmt.run({ id: msg.guild!.id, name: msg.guild!.name });
 	}
 
-	const confess_channel = db.prepare(sql`SELECT * FROM confess_channel WHERE guild_id = ? LIMIT 1`.sql)
+	const confess_channel = db.prepare(sql`
+		SELECT *
+		FROM confess_channel 
+		WHERE guild_id = ? 
+		LIMIT 1
+	`.sql)
 		.get(msg.guild!.id) as DBConfessChannel | undefined;
 	if (confess_channel) {
 		if (confess_channel.channel_id !== msg.channelId) {
-			db.prepare(sql`UPDATE confess_channel SET name = @name, channel_id = @to WHERE channel_id = @from`.sql)
-				.run({ name: msg.channel.name, to: msg.channelId, from: confess_channel.channel_id });
+			db.prepare(sql`
+				UPDATE confess_channel 
+				SET name = @name, channel_id = @to 
+				WHERE channel_id = @from
+			`.sql)
+				.run({ 
+					name: msg.channel.name, 
+					to: msg.channelId, 
+					from: confess_channel.channel_id 
+				});
 			// delete all confessions related to channel_id in database.
 			msg.reply(`Switched confess to ${msg.channel.name} channel.`);
 		} else {
@@ -337,28 +356,44 @@ function sendConfessServerSelection(msg: Message, confess_activated_guilds: Serv
 	});
 }
 
-function createGuildUserRecords(db: Database, msg: Message) {
-	const insert_user_stmt = db.prepare<DBUsers>(sql`INSERT OR IGNORE INTO users (id, name) VALUES (@id, @name)`.sql);
-	const insert_guild_user_stmt = db.prepare<DBGuildUser>(sql`INSERT OR IGNORE INTO guild_user (id, name, confess_banned, user_id, guild_id) VALUES (@id, @name, @confess_banned, @user_id, @guild_id)`.sql);
-	const get_confess_guild_ids = db.prepare(sql`SELECT channel_id, guild_id FROM confess_channel`.sql);
+function createGuildUserRecords(db: Database, msg: Message<false>) {
+	const insert_user_stmt = db.prepare<DBUsers>(sql`
+		INSERT OR IGNORE INTO users (id, name)
+		VALUES (@id, @name)
+	`.sql);
+	const insert_guild_user_stmt = db.prepare<DBGuildUser>(sql`
+		INSERT OR IGNORE INTO guild_user (id, name, confess_banned, user_id, guild_id) 
+		VALUES (@id, @name, @confess_banned, @user_id, @guild_id)
+	`.sql);
+	const get_confess_guild_ids = db.prepare(sql`
+		SELECT channel_id, guild_id 
+		FROM confess_channel
+	`.sql);
 	
-	insert_user_stmt.run({ id: msg.author.id, name: msg.author.globalName ?? msg.author.displayName });
+	insert_user_stmt.run({ 
+		id: msg.author.id, 
+		name: msg.author.globalName ?? msg.author.displayName 
+	});
 
-	const db_guild_ids_with_confess = get_confess_guild_ids.all() as { channel_id: string, guild_id: string }[];
-	const discord_guilds = msg.client.guilds.cache;
-	for (const db_res of db_guild_ids_with_confess) {
-		for (const [_, guild] of discord_guilds) {
-			if (db_res.guild_id === guild.id) {
-				insert_guild_user_stmt.run({ 
-					id: hash(msg.author.id + guild.id, HASH_LENGTH),
-					name: msg.author.globalName ?? msg.author.displayName,
-					confess_banned: 0,
-					guild_id: guild.id,
-					user_id: msg.author.id,
-				});
+	const insert_guild_users = db.transaction((msg: Message<false>) => {
+		const db_guild_ids_with_confess = get_confess_guild_ids.all() as { channel_id: string, guild_id: string }[];
+		const discord_guilds = msg.client.guilds.cache;
+		for (const db_res of db_guild_ids_with_confess) {
+			for (const [_, guild] of discord_guilds) {
+				if (db_res.guild_id === guild.id) {
+					insert_guild_user_stmt.run({ 
+						id: hash(msg.author.id + guild.id, HASH_LENGTH),
+						name: msg.author.globalName ?? msg.author.displayName,
+						confess_banned: 0,
+						guild_id: guild.id,
+						user_id: msg.author.id,
+					});
+				}
 			}
 		}
-	}
+	});
+
+	insert_guild_users(msg as Message<false>);
 }
 
 function hash(content: string, hash_length: number) {
