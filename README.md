@@ -4,6 +4,8 @@ A Discord bot dedicated to spurring activity in servers without being intrusive.
 
 It has a basic file structure to make commands easy to add.
 
+The bot is made in JS/TS, with SQLite as its backend. Image processing (??quote) uses golang, may switch to Rust due to performance.
+
 Status: Experimental and unstable, comnands and code structure may disappear or change dramatically when made available for testing.
 
 Prefix: `??`
