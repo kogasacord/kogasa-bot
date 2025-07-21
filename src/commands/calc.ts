@@ -52,8 +52,9 @@ export const description = "Basic calculator.";
 export const extended_description =
 	"If you want to use this: [Documentation](https://github.com/DoormatIka/calculator-interpreter)";
 export async function execute(_client: Client, msg: Message, args: string[]) {
-	const input = args.join(" ");
+	const input = msg.content.split(" ").slice(1).join(" "); // raw input, no command name.
 	if (input.length <= 0) {
+		msg.reply("[Usage](<https://github.com/DoormatIka/calculator-interpreter>) of the calculator");
 		return;
 	}
 	const res = run_interpreter(input);

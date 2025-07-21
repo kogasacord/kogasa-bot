@@ -1,21 +1,40 @@
-import { ExternalDependencies } from "@helpers/helpers.js";
+import dayjs, {Dayjs} from "dayjs";
+import advancedFormat from "dayjs/plugin/advancedFormat.js";
+import utc from "dayjs/plugin/utc.js";
+import timezone from "dayjs/plugin/timezone.js";
+import relativeTime from "dayjs/plugin/relativeTime.js";
 import { APIEmbedField, Client, EmbedBuilder, Message } from "discord.js";
-import { ChannelScope } from "@helpers/types";
-import { ReminderEmitter } from "@helpers/reminder/reminders";
+import Fuse from "fuse.js";
 
-const time_regex =
-	/(?=\d+d|\d+h|\d+m)(?:(?<days>\d+)d)?(?:(?<hours>\d+)h)?(?:(?<minutes>\d+)m)?/g;
+import tz from "@media/timezone.json" assert { type: "json" };
+import { abbr_to_utc } from "@helpers/reminder/data.js";
+import { ExternalDependencies } from "@helpers/helpers.js";
+import { ReminderEmitter } from "@helpers/reminder/reminders.js";
+import { ChannelScope } from "@helpers/types";
+
+dayjs.extend(advancedFormat);
+dayjs.extend(utc);
+dayjs.extend(timezone);
+dayjs.extend(relativeTime);
+
+const fuse = new Fuse(tz, {
+	keys: ["tz_id"],
+	includeScore: true,
+	shouldSort: true,
+});
+
 
 export const name = "remindme";
 export const aliases = ["rme", "remind"];
 export const cooldown = 8;
 export const channel: ChannelScope[] = ["Guild", "DMs", "Thread"];
-export const description = "Reminds you of a specific thing.";
+export const description = "Reminds you.";
 export const extended_description =
 	"\n**To add a reminder**" +
-	"\n- `??remindme [number]d[number]h[number]m`" +
-	"\n- `??remindme 1h Do the dishes`" +
-	"\n- `??remindme 7d Get a first meal.`" +
+	"\n- `??remindme time [number]d[number]h[number]m [content]`" +
+	"\n- `??remindme 2d1m Do the dishes`" +
+	"\n- `??remindme date Y[number]M[number]D[number]-[number]:[number][AM|PM] [timezone] [content]`" +
+	"\n- `??remindme date Y2026D10-5AM America Remind me at year 2026, current month, 10th day, at 5AM, timezone `" +
 	"\n**To delete a reminder**" +
 	"\n- `??remindme remove` to list the reminders you have." +
 	"\n- `??remindme remove [number]` to remove a reminder on that list.";
@@ -26,134 +45,7 @@ export async function execute(
 	external_data: ExternalDependencies
 ) {
 	const reminder_emitter = external_data.reminder_emitter;
-	const query = args[0];
-	if (query && query.length <= 0) {
-		msg.reply(
-			"Please consult `??help remindme` for more information regarding this command."
-		);
-		return;
-	}
-
-	if (query === "remove") {
-		userRemoveReminder(msg, reminder_emitter, args);
-	} else {
-		userAddReminder(msg, reminder_emitter, args);
-	}
+	// to be replaced by @helpers/reminders/parser.ts
 }
 
-function userRemoveReminder(
-	msg: Message,
-	reminder_emitter: ReminderEmitter,
-	args: string[]
-) {
-	const user_id = msg.author.id;
-	const index = Number(args.at(1));
 
-	if (isNaN(index) || !args.at(1)) {
-		msg.reply({ embeds: [listReminders(reminder_emitter, user_id)] });
-		return;
-	}
-	// remove reminder
-	const reminder = reminder_emitter.popReminder(user_id, Math.abs(index - 1));
-	if (reminder) {
-		msg.reply(
-			`Removed the reminder scheduled at ${reminder.to_date.toUTCString()}.`
-		);
-	} else {
-		msg.reply("Unable to remove the reminder you selected.");
-	}
-}
-function listReminders(
-	reminder_emitter: ReminderEmitter,
-	user_id: string
-): EmbedBuilder {
-	const reminder_contents = reminder_emitter.getReminderFromUser(user_id);
-	const embed = new EmbedBuilder();
-	if (!reminder_contents) {
-		embed.setTitle("No reminders found.");
-		return embed;
-	}
-	embed.setTitle("Reminders:");
-	const embed_fields: APIEmbedField[] = [];
-	for (let i = 0; i < reminder_contents.length; i++) {
-		const r = reminder_contents[i];
-		embed_fields.push({
-			name: `${i + 1}) ${r.to_date.toUTCString()}`,
-			value: r.contents,
-		});
-	}
-	embed.addFields(embed_fields);
-	return embed;
-}
-
-function userAddReminder(
-	msg: Message,
-	reminder_emitter: ReminderEmitter,
-	args: string[]
-) {
-	const query = args.at(0);
-	if (!query) {
-		return;
-	}
-
-	const contents = args.slice(1).join(" ");
-	const match = [...query.matchAll(time_regex)].at(0);
-	if (!match?.groups) {
-		msg.reply(
-			"Your query is malformed. The valid way to do it is: `??remindme [number]d[number]h[number]m [Message]`\nAs an example: `??remindme 1h Among us.`"
-		);
-		return;
-	}
-
-	const days = isNaN(Number(match.groups.days)) ? 0 : Number(match.groups.days);
-	const hours = isNaN(Number(match.groups.hours))
-		? 0
-		: Number(match.groups.hours);
-	const minutes = isNaN(Number(match.groups.minutes))
-		? 0
-		: Number(match.groups.minutes);
-
-	if (days > 30) {
-		msg.reply("Days specified was more than 30.");
-		return;
-	}
-	if (hours >= 24) {
-		msg.reply("Hours specified was more than or equal to 24.");
-		return;
-	}
-	if (minutes >= 60) {
-		msg.reply("Minutes specified was more than or equal to 60.");
-		return;
-	}
-
-	const to_date = new Date();
-	addDayToDate(to_date, days);
-	addHourToDate(to_date, hours);
-	addMinuteToDate(to_date, minutes);
-
-	let reminders = reminder_emitter.getReminderFromUser(msg.author.id);
-	if (reminders && reminders.length >= 20) {
-		msg.reply(
-			"You have too many reminders! Remove excess reminders using `??remindme remove`"
-		);
-	}
-
-	reminder_emitter.pushReminder(msg.author.id, { to_date, contents });
-	reminders = reminder_emitter.getReminderFromUser(msg.author.id);
-
-	const alarm_clock = "\u23F0";
-	msg.react(alarm_clock).catch(() => {});
-}
-
-function addDayToDate(date: Date, days: number) {
-	date.setUTCDate(date.getUTCDate() + days);
-	return date;
-}
-function addHourToDate(date: Date, hours: number) {
-	date.setUTCHours(date.getUTCHours() + hours);
-	return date;
-}
-function addMinuteToDate(date: Date, minutes: number) {
-	date.setUTCMinutes(date.getUTCMinutes() + minutes);
-	return date;
-}
