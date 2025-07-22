@@ -1,7 +1,17 @@
+
 import { Client } from "discord.js";
+import Fuse from "fuse.js";
 import EventEmitter from "node:events";
 import dayjs, {Dayjs} from "dayjs";
 import {Absolute, Expr, Recurring, Relative, Remove} from "@helpers/reminder/parser.js";
+
+import tz from "@media/timezone.json" assert { type: "json" };
+
+const fuse = new Fuse(tz, {
+	keys: ["tz_id"],
+	includeScore: true,
+	shouldSort: true,
+});
 
 type MainReminderCommand = AbsoluteCommand | RecurringCommand | RelativeCommand
 	| RemoveCommand | ListCommand;
@@ -156,6 +166,9 @@ export class ReminderEmitter {
 					minute: 0,
 					timezone: expr.timezone,
 				};
+				if (!this.verifyTimezone(expr.timezone)) {
+					throw new Error(`Unknown timezone "${expr.timezone}"`);
+				}
 				let result = time.tz(expr.timezone);
 				for (const unit of expr.units) {
 					switch (unit.unit) {
@@ -223,6 +236,16 @@ export class ReminderEmitter {
 				throw new Error(`Unknown expression! This isn't supposed to happen, ${input}`);
 		}
 	}
+	private verifyTimezone(str: string): boolean {
+		const matches = fuse.search(str).slice(0, 4);
+		console.log(`Timezone matches: ${JSON.stringify(matches, null, 4)}`);
+		for (const match of matches) {
+			if (match.score! > 0.001) {
+				return true;
+			}
+		}
+		return false;
+	}
 
 	activate() {
 		this.reminder_event.on("tickPassed", (user_reminders, client) => {
@@ -278,6 +301,9 @@ export class ReminderEmitter {
 		} else if (reminder.content.type === "Absolute") {
 			const { month, date, hour, minute } = reminder.content;
 			const timezone = reminder.content.timezone;
+			if (!this.verifyTimezone(timezone)) {
+				throw new Error(`Unknown timezone "${timezone}"`);
+			}
 			let next = dayjs().tz(timezone)
 				.set("hour", hour)
 				.set("minute", minute)
