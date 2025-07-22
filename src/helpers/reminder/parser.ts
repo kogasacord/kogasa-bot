@@ -3,7 +3,7 @@
 // 		however to make the code support small amounts of backtracking,
 // 		i used recursive descent again.
 /**
-	start         -> (relative | recurring | absolute, content) | (remove | list); 
+	start         -> (relative | recurring | absolute, ";", content) | (remove | list); 
 			// content covers every subsequent string.
 
 	relative      -> "in", relative_num;
@@ -12,7 +12,7 @@
 	remove        -> "remove", [number];
 	list          -> "list";
 
-	absolute_num  -> {absolute_unit, number}, [clock], timezone;
+	absolute_num  -> {absolute_unit, number}, [clock], ",", timezone;
 	relative_num  -> {number, relative_unit};
 	absolute_unit -> "Y" | "M" | "D";
 	relative_unit -> "d" | "h" | "m";
@@ -78,10 +78,12 @@ export class RemindParser {
 		if (!this.isAtEnd()) {
 			throw this.error(this.peek(), "Unexpected extra input.");
 		}
-		this.tokens = [];
-		this.current = 0;
 
 		return expr;
+	}
+	public resetParser() {
+		this.tokens = [];
+		this.current = 0;
 	}
 	private expression(): Expr {
 		if (this.match_and_advance([RemindTokenType.IN])) {
@@ -100,17 +102,6 @@ export class RemindParser {
 			return this.remove();
 		}
 		throw this.error(this.peek(), "Reminders should start with 'in', 'every', and 'at'.");
-	}
-	private parseContent(): string {
-		const str = [];
-		while (this.check(RemindTokenType.STRING)) {
-			str.push(this.advance());
-		}
-		const contents = str.map(v => v.text).join(" ");
-		if (contents.trim() === "") {
-			throw this.error(this.peek(), "Missing reminder content after time.");
-		}
-		return contents;
 	}
 	private parseRelative(): Literal[] {
 		const units: Literal[] = [];
@@ -137,7 +128,7 @@ export class RemindParser {
 		if (units.length <= 0) {
 			throw this.error(this.peek(), "You need to put at least one relative date. `in 1d`");
 		}
-		const content = this.parseContent();
+		const content = this.consume(RemindTokenType.STRING, "Missing reminder message!").text;
 		const expr: Relative = {
 			type: "Relative",
 			units,
@@ -172,7 +163,7 @@ export class RemindParser {
 			clock = this.clock();
 		}
 		const timezone = this.consume(RemindTokenType.STRING, "Expected timezone.").text;
-		const content = this.parseContent();
+		const content = this.consume(RemindTokenType.STRING, "Missing reminder message!").text;
 
 		const abs: Absolute = {
 			type: "Absolute",

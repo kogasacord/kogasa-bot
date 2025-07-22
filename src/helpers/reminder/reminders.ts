@@ -1,6 +1,6 @@
 
 import { Client } from "discord.js";
-import Fuse from "fuse.js";
+import Fuse, {FuseResult} from "fuse.js";
 import EventEmitter from "node:events";
 import dayjs, {Dayjs} from "dayjs";
 import {Absolute, Expr, Recurring, Relative, Remove} from "@helpers/reminder/parser.js";
@@ -59,6 +59,10 @@ type ListCommand = {
 function isMainRemindCommand(obj: object): obj is MainReminderCommand {
 	return (obj as MainReminderCommand).command !== undefined;
 }
+
+// atrocious performance. 
+// this loops through every single user and loops through their reminders,
+// 		then picks out the reminders that are due.
 
 export class ReminderEmitter {
 	private reminders: Reminders = new Map();
@@ -166,8 +170,9 @@ export class ReminderEmitter {
 					minute: 0,
 					timezone: expr.timezone,
 				};
-				if (!this.verifyTimezone(expr.timezone)) {
-					throw new Error(`Unknown timezone "${expr.timezone}"`);
+				const res = fuse.search(expr.timezone).slice(0, 2);
+				if (!this.isValidTimezone(res)) {
+					throw new Error(`Unknown timezone "${expr.timezone}", did you mean ${res.map(v => `"${v.item.tz_id}"`).join(", ")}`);
 				}
 				let result = time.tz(expr.timezone);
 				for (const unit of expr.units) {
@@ -193,10 +198,14 @@ export class ReminderEmitter {
 					if (clock.hour !== undefined) {
 						absolute.hour = clock.hour;
 						result = result.set("hour", clock.hour);
+					} else {
+						result = result.set("hour", 0);
 					}
 					if (clock.minute !== undefined) {
 						absolute.minute = clock.minute;
 						result = result.set("minute", clock.minute);
+					} else {
+						result = result.set("minute", 0);
 					}
 					if (clock.meridiem === "pm" && result.hour() < 12) {
 						absolute.hour += 12;
@@ -236,15 +245,15 @@ export class ReminderEmitter {
 				throw new Error(`Unknown expression! This isn't supposed to happen, ${input}`);
 		}
 	}
-	private verifyTimezone(str: string): boolean {
-		const matches = fuse.search(str).slice(0, 4);
-		console.log(`Timezone matches: ${JSON.stringify(matches, null, 4)}`);
-		for (const match of matches) {
-			if (match.score! > 0.001) {
-				return true;
-			}
+	private isValidTimezone<T>(matches: FuseResult<T>[]): boolean {
+		if (matches.length <= 0) {
+			return false;
 		}
-		return false;
+		const best = matches[0];
+		if (best.score! >= 0.001) {
+			return false;
+		}
+		return true;
 	}
 
 	activate() {
@@ -281,7 +290,7 @@ export class ReminderEmitter {
 			client.users.send(userid, `Reminder: ${reminder.message}`);
 
 			if (reminder.command === "Recurring") {
-				this.rescheduleRecurringReminder(reminder);
+				this.rescheduleRecurringReminder(client, userid, reminder);
 			} else {
 				this.popReminder(userid, index);
 			}
@@ -290,7 +299,7 @@ export class ReminderEmitter {
 		}
 	}
 
-	private rescheduleRecurringReminder(reminder: RecurringCommand) {
+	private rescheduleRecurringReminder(client: Client<true>, userid: string, reminder: RecurringCommand) {
 		if (reminder.content.type === "Relative") {
 			const { d, h, m } = reminder.content;
 			let newDate = reminder.to_date;
@@ -301,8 +310,11 @@ export class ReminderEmitter {
 		} else if (reminder.content.type === "Absolute") {
 			const { month, date, hour, minute } = reminder.content;
 			const timezone = reminder.content.timezone;
-			if (!this.verifyTimezone(timezone)) {
-				throw new Error(`Unknown timezone "${timezone}"`);
+
+			const res = fuse.search(timezone).slice(0, 2);
+			if (!this.isValidTimezone(res)) {
+				client.users.send(userid, `Unknown timezone "${timezone}", did you mean ${res.map(v => `"${v.item.tz_id}"`).join(", ")}`);
+				return;
 			}
 			let next = dayjs().tz(timezone)
 				.set("hour", hour)
