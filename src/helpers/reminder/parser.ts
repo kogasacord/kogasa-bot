@@ -25,10 +25,11 @@
 
 import {RemindTokenType, RemindToken} from "@helpers/reminder/lexer.js";
 
-export interface Expr {
-	type: "Relative" | "Recurring" | "Absolute" 
+export type ExprTypes = "Relative" | "Recurring" | "Absolute" 
 		| "Clock" | "Literal" | "Remove"
 		| "List";
+export interface Expr {
+	type: ExprTypes;
 }
 export interface Recurring extends Expr {
 	type: "Recurring",

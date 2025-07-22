@@ -1,18 +1,33 @@
 import { Client } from "discord.js";
 import EventEmitter from "node:events";
 import dayjs, {Dayjs} from "dayjs";
-import {Absolute, Expr, Literal, Recurring, Relative} from "@helpers/reminder/parser.js";
+import {Absolute, Expr, Recurring, Relative, Remove, List} from "@helpers/reminder/parser.js";
 
+type Reminders = Map<string, ReminderContents[]>;
+type MainReminderCommand = ReminderCommand | RemoveCommand | ListCommand;
 export type ReminderContents = {
 	to_date: Dayjs;
 	contents: string;
 	is_repeating: boolean;
 	timezone: string | "local";
-}; // this is used in a loop to periodically check if to_date has passed Date.now()
-type Reminders = Map<string, ReminderContents[]>;
-// Reminders gets looped through in order to check every user
-// It's a map because I want to get the ReminderContents via string
-
+};
+type RemoveContents = {
+	index: number;
+}
+type ReminderCommand = {
+	command: "Relative" | "Recurring" | "Absolute";
+	reminder: ReminderContents;
+}
+type RemoveCommand = {
+	command: "Remove";
+	reminder: RemoveContents;
+}
+type ListCommand = {
+	command: "List";
+}
+function isMainRemindCommand(obj: object): obj is MainReminderCommand {
+	return (obj as MainReminderCommand).command !== undefined;
+}
 
 export class ReminderEmitter {
 	private reminders: Reminders = new Map();
@@ -24,57 +39,22 @@ export class ReminderEmitter {
 		}, 10 * 1000);
 	}
 
-	public run(user_id: string, input: Expr) {
+	public parseExpr(user_id: string, input: Expr) {
 		const time = dayjs();
-		this.recursiveRun(user_id, input, time);
-	}
-	private recursiveRun(user_id: string, input: Expr, time: Dayjs) {
-		switch (input.type) {
+		const command = this.recursiveParse(input, time);
+		if (!isMainRemindCommand(command)) {
+			throw new Error("Expression returned from recursive run.");
+		}
+
+		switch (command.command) {
 			case "Relative": {
-				const relative_expr = input as Relative;
-				for (const unit of relative_expr.units) {
-					const lit = this.recursiveRun(user_id, unit, time) as Literal;
-					switch (lit.unit) {
-						case "d": time.add(lit.value, "day"); break;
-						case "h": time.add(lit.value, "hour"); break;
-						case "m": time.add(lit.value, "minute"); break;
-						default: 
-							throw new Error(`Unknown relative unit: "${lit.unit}"`);
-					}
-				}
-				this.pushReminder(user_id, {
-					to_date: time,
-					contents: relative_expr.content,
-					is_repeating: false,
-					timezone: "local"
-				});
 				break;
 			}
 			case "Recurring": {
-				const recurring = input as Recurring;
-				const expr = this.recursiveRun(user_id, recurring.expr, time);
-				switch (recurring.expr.type) {
-					case "Absolute":
-						const abs_expr = expr as Absolute;
-						abs_expr.content;
-						break;
-					case "Relative":
-						const rel_expr = expr as Relative;
-						break;
-
-					default:
-						break;
-				}
 				break;
 			}
 			case "Absolute": {
 				break;
-			}
-			case "Clock": {
-				return input;
-			}
-			case "Literal": {
-				return input;
 			}
 			case "Remove": {
 				break;
@@ -85,6 +65,94 @@ export class ReminderEmitter {
 
 			default:
 				break;
+		}
+	}
+	private recursiveParse(input: Expr, time: Dayjs): MainReminderCommand | Expr {
+		switch (input.type) {
+			case "Relative": {
+				const relative_expr = input as Relative;
+				for (const unit of relative_expr.units) {
+					switch (unit.unit) {
+						case "d": time.add(unit.value, "day"); break;
+						case "h": time.add(unit.value, "hour"); break;
+						case "m": time.add(unit.value, "minute"); break;
+						default: 
+							throw new Error(`Unknown relative unit: "${unit.unit}"`);
+					}
+				}
+				return {
+					command: "Relative",
+					reminder: {
+						to_date: time,
+						contents: relative_expr.content,
+						is_repeating: false,
+						timezone: "local"
+					},
+				};
+			}
+			case "Recurring": {
+				const recurring = input as Recurring;
+				if (["Relative", "Absolute"].includes(recurring.expr.type)) {
+					const rme_contents = this.recursiveParse(recurring.expr, time) as ReminderCommand;
+					rme_contents.command = "Recurring";
+					rme_contents.reminder.is_repeating = true;
+					return rme_contents;
+				} else {
+					throw new Error("Unknown recurring expression.");
+				}
+			}
+			case "Absolute": {
+				const expr = input as Absolute;
+				let result = time;
+				for (const unit of expr.units) {
+					switch (unit.unit) {
+						case "Y": result = result.set("year", unit.value); break;
+						case "M": result = result.set("month", unit.value - 1); break; // months are 0-indexed
+						case "D": result = result.set("date", unit.value); break;
+						default: throw new Error(`Unknown absolute unit: ${unit.unit}`);
+					}
+				}
+				if (expr.clock) {
+					const clock = expr.clock;
+					if (clock.hour !== undefined) result = result.set("hour", clock.hour);
+					if (clock.minute !== undefined) result = result.set("minute", clock.minute);
+					if (clock.meridiem === "pm" && result.hour() < 12) {
+						result = result.add(12, "hour");
+					}
+				}
+
+				return {
+					command: "Absolute",
+					reminder: {
+						to_date: result,
+						contents: expr.content,
+						timezone: expr.timezone,
+						is_repeating: false,
+					},
+				};
+			}
+			case "Remove": {
+				const expr = input as Remove;
+				return {
+					command: "Remove",
+					reminder: {
+						index: expr.index
+					}
+				};
+			}
+			case "List": {
+				const expr = input as List;
+				return {command: "List"};
+			}
+			case "Clock": {
+				return input;
+			}
+			case "Literal": {
+				return input;
+			}
+
+			default:
+				throw new Error(`Unknown expression! This isn't supposed to happen, ${input}`);
 		}
 	}
 
