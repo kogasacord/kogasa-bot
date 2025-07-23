@@ -17,6 +17,7 @@ export enum RemindTokenType {
 	NUMBER = "NUMBER",
 	STRING = "STRING",
 	MERIDIEM = "MERIDIEM",
+	TIMEZONE = "TIMEZONE",
 
 	EOF = "EOF",
 }
@@ -48,7 +49,7 @@ export class RemindLexer {
 				continue;
 			}
 			if (this.isMessage) {
-				this.run_to_end();
+				this.message();
 				break;
 			}
 			switch (char) {
@@ -108,7 +109,7 @@ export class RemindLexer {
 		this.isTimezone = false;
 	}
 
-	private run_to_end() {
+	private message() {
 		const raw = this.str.substring(this.current).trim();
 		this.current = this.str.length;
 
@@ -128,19 +129,20 @@ export class RemindLexer {
 		}
 		const text = this.str.substring(this.start, this.current).trim();
 
-		let token_type = this.keywords[text.toLowerCase()];
-		if (text === "am" || text === "pm") {
+		let token_type = this.keywords[text];
+		if (["am", "pm"].includes(text.toLowerCase())) {
 			token_type = RemindTokenType.MERIDIEM;
+		}
+		// Reset timezone mode after processing identifier in timezone context
+		if (this.isTimezone) {
+			token_type = RemindTokenType.TIMEZONE;
+			this.isTimezone = false;
 		}
 		if (token_type === undefined) {
 			token_type = RemindTokenType.STRING;
 		}
-		this.add_token(token_type);
 
-		// Reset timezone mode after processing identifier in timezone context
-		if (this.isTimezone) {
-			this.isTimezone = false;
-		}
+		this.add_token(token_type);
 	}
 
 	private is_alphanumeric(c: string) {

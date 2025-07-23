@@ -6,7 +6,8 @@
 	"scripts": {
 		"test": "echo \"Error: no test specified\" && exit 1",
 		"format": "npx eslint . --fix & npx prettier . --write --log-level silent",
-		"prestart": "npx tsc --project tsconfig.json --noEmit && tsx index.ts",
+		"prestart": "npm run check && npm run start",
+		"check": "npx tsc --project tsconfig.json --noEmit",
 		"start": "tsx index.ts",
 		"dev": "tsx watch index.ts"
 	},

@@ -74,6 +74,9 @@ export class RemindParser {
 
 	public parse(tokens: RemindToken[]) {
 		this.tokens = tokens;
+		if (this.tokens.length <= 1) {
+			throw this.error(this.peek(), "Empty input. Provide a command like `in 1d; message`, `at D25, Asia/Manila; message`");
+		}
 		const expr = this.expression();
 		if (!this.isAtEnd()) {
 			throw this.error(this.peek(), "Unexpected extra input.");
@@ -125,6 +128,16 @@ export class RemindParser {
 	}
 	private relative(): Relative {
 		const units = this.parseRelative();
+
+		if (this.match([RemindTokenType.IN, RemindTokenType.EVERY, RemindTokenType.AT])) {
+			throw this.error(this.peek(), `Unexpected "${this.peek().type}", already parsing relative date.`);
+		}
+		if (this.peek().type === RemindTokenType.ABS_UNIT) {
+			throw this.error(this.peek(), "You cannot use absolute units in an \"in\" command. Use relative (`25d`) syntax instead.");
+		}
+		if (this.peek().type === RemindTokenType.STRING) {
+			throw this.error(this.peek(), "Unknown relative unit, valid ones are `d, h, m`.");
+		}
 		if (units.length <= 0) {
 			throw this.error(this.peek(), "You need to put at least one relative date. `in 1d`");
 		}
@@ -154,15 +167,26 @@ export class RemindParser {
 	}
 	private absolute(): Absolute {
 		const units: Literal[] = [];
+
 		while (this.check(RemindTokenType.ABS_UNIT)) {
 			units.push(this.absolute_primary());
+		}
+		
+		if (this.match([RemindTokenType.IN, RemindTokenType.EVERY, RemindTokenType.AT])) {
+			throw this.error(this.peek(), `Unexpected "${this.peek().type}", already parsing relative date.`);
+		}
+		if (this.peek().type === RemindTokenType.NUMBER && this.peek_next().type === RemindTokenType.REL_UNIT) {
+			throw this.error(this.peek(), "You cannot use relative units in an \"at\" command. Use `D25` syntax instead.");
+		}
+		if (this.peek().type === RemindTokenType.STRING) {
+			throw this.error(this.peek(), "Unknown absolute unit, valid ones are `d, h, m`.");
 		}
 
 		let clock: Clock | undefined = undefined;
 		if (this.match_and_advance([RemindTokenType.DASH])) {
 			clock = this.clock();
 		}
-		const timezone = this.consume(RemindTokenType.STRING, "Expected timezone.").text;
+		const timezone = this.consume(RemindTokenType.TIMEZONE, "Expected timezone.").text;
 		const content = this.consume(RemindTokenType.STRING, "Missing reminder message!").text;
 
 		const abs: Absolute = {
@@ -179,7 +203,6 @@ export class RemindParser {
 		if (this.check(RemindTokenType.NUMBER)) {
 			hour = this.advance().literal!;
 		}
-
 		this.consume(RemindTokenType.COLON, "Expected ':' in clock.");
 
 		let minute: number | undefined = undefined;
@@ -187,15 +210,15 @@ export class RemindParser {
 			minute = this.advance().literal!;
 		}
 
+		if (this.check(RemindTokenType.STRING)) {
+			throw this.error(this.peek(), "Unknown meridiem!");
+		}
+
 		let meridiem: "am" | "pm" | undefined = undefined;
 		if (this.check(RemindTokenType.MERIDIEM)) {
 			const token = this.advance();
 			const text = token.text.toLowerCase();
-			if (["am", "pm"].includes(text)) {
-				meridiem = structuredClone(text) as "am" | "pm";
-			} else {
-				throw this.error(token, "Expected 'am' or 'pm'");
-			}
+			meridiem = structuredClone(text) as "am" | "pm";
 		}
 
 		if (hour === undefined && minute === undefined) {
@@ -214,7 +237,8 @@ export class RemindParser {
 	private relative_primary(): Literal {
 		if (this.check(RemindTokenType.NUMBER)) {
 			const num_value = this.advance().literal!;
-			const unit = this.consume(RemindTokenType.REL_UNIT, "needs a unit!").text;
+			const unit_text = this.peek().text;
+			const unit = this.consume(RemindTokenType.REL_UNIT, `Empty or unknown unit "${unit_text}"`).text;
 			const literal: Literal = { 
 				type: "Literal",
 				value: num_value,
@@ -227,7 +251,7 @@ export class RemindParser {
 	private absolute_primary(): Literal {
 		if (this.check(RemindTokenType.ABS_UNIT)) {
 			const unit = this.advance().text;
-			const num_value = this.consume(RemindTokenType.NUMBER, "needs a number!").literal!;
+			const num_value = this.consume(RemindTokenType.NUMBER, "Missing number!").literal!;
 			const literal: Literal = {
 				type: "Literal",
 				value: num_value,
@@ -238,6 +262,14 @@ export class RemindParser {
 		throw this.error(this.peek(), "Expected expression.");
 	}
 
+	private match(types: RemindTokenType[]): boolean {
+		for (const type of types) {
+			if (this.check(type)) {
+				return true;
+			}
+		}
+		return false;
+	}
 	private match_and_advance(types: RemindTokenType[]): boolean {
 		for (const type of types) {
 			if (this.check(type)) {
