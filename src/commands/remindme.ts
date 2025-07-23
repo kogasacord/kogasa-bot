@@ -3,13 +3,9 @@ import advancedFormat from "dayjs/plugin/advancedFormat.js";
 import utc from "dayjs/plugin/utc.js";
 import timezone from "dayjs/plugin/timezone.js";
 import relativeTime from "dayjs/plugin/relativeTime.js";
-import { APIEmbedField, Client, EmbedBuilder, Message } from "discord.js";
-import Fuse from "fuse.js";
+import { Client, Message } from "discord.js";
 
-import tz from "@media/timezone.json" assert { type: "json" };
-import { abbr_to_utc } from "@helpers/reminder/data.js";
 import { ExternalDependencies } from "@helpers/helpers.js";
-import { ReminderEmitter } from "@helpers/reminder/reminders.js";
 import { ChannelScope } from "@helpers/types";
 import {RemindLexer} from "@helpers/reminder/lexer.js";
 import {RemindParser} from "@helpers/reminder/parser.js";

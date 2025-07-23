@@ -32,7 +32,7 @@ export async function execute(
 					? command.aliases.join(" ")
 					: "None";
 			let description =
-				"**Description**: " + command.description ?? "No description.";
+				"**Description**: " + command.description;
 			description +=
 				"\n**Extended Description**: " +
 				(command.extended_description ?? "No extended description.");

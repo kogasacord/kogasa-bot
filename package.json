@@ -5,13 +5,10 @@
 	"main": "index.js",
 	"scripts": {
 		"test": "echo \"Error: no test specified\" && exit 1",
-		"prestart": "node build/index.js",
 		"format": "npx eslint . --fix & npx prettier . --write --log-level silent",
-		"build": "npx tsc && npx tsc-alias -p tsconfig.json",
-		"poststart-windows": "npx tsc --project tsconfig.json && npx tsc-alias -p tsconfig.json && npm run copy-windows && node build/index.js",
-		"poststart-linux": "npx tsc --project tsconfig.json && npx tsc-alias -p tsconfig.json && npm run copy-linux && node build/index.js",
-		"copy-windows": "xcopy /E /I /Y \".\\media\" \".\\build\\media\" ",
-		"copy-linux": "cp -r ./media ./build/media"
+		"prestart": "npx tsc --project tsconfig.json --noEmit && tsx index.ts",
+		"start": "tsx index.ts",
+		"dev": "tsx watch index.ts"
 	},
 	"author": "",
 	"license": "ISC",
@@ -27,16 +24,14 @@
 		"eslint-config-prettier": "^9.1.0",
 		"prettier": "3.1.0",
 		"tsc-alias": "^1.8.8",
+		"tsx": "^4.20.3",
 		"typescript": "^5.3.3"
 	},
 	"dependencies": {
 		"better-sqlite3": "^11.10.0",
-		"chalk": "^5.3.0",
 		"dayjs": "^1.11.13",
 		"discord.js": "^14.12.1",
 		"fuse.js": "^7.1.0",
-		"googlethis": "^1.7.1",
-		"humanize-duration": "^3.29.0",
 		"mime-types": "^2.1.35",
 		"node-fetch": "^3.3.2",
 		"random": "^4.1.0",

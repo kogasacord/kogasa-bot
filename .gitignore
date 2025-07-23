@@ -4,3 +4,4 @@ build/
 *.db
 *.db-*
 media/engines/*
+.tsbuildinfo
