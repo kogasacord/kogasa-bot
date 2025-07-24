@@ -25,8 +25,6 @@ export enum RemindTokenType {
 export class RemindLexer {
 	private start = 0;
 	private current = 0;
-	private isTimezone = false;
-	private isMessage = false;
 	private tokens: RemindToken[] = [];
 	private keywords: { [key: string]: RemindTokenType } = {
 		in: RemindTokenType.IN,
@@ -44,14 +42,6 @@ export class RemindLexer {
 		while (!this.is_at_end()) {
 			this.start = this.current;
 			const char = this.advance();
-			if (this.isTimezone) {
-				this.identifier();
-				continue;
-			}
-			if (this.isMessage) {
-				this.message();
-				break;
-			}
 			switch (char) {
 				case "\r":
 				case "\t":
@@ -65,10 +55,10 @@ export class RemindLexer {
 					this.add_token(RemindTokenType.DASH);
 					break;
 				case ";":
-					this.isMessage = true;
+					this.message();
 					break;
 				case ",":
-					this.isTimezone = true;
+					this.timezone();
 					break;
 				case "Y":
 				case "M":
@@ -105,8 +95,6 @@ export class RemindLexer {
 		this.start = 0;
 		this.current = 0;
 		this.tokens = [];
-		this.isMessage = false;
-		this.isTimezone = false;
 	}
 
 	private message() {
@@ -117,6 +105,22 @@ export class RemindLexer {
 			this.tokens.push({
 				type: RemindTokenType.STRING,
 				text: raw,
+				literal: undefined,
+			});
+		}
+	}
+	private timezone() {
+		while (this.peek() !== ";") {
+			this.advance();
+		}
+		// skips the leading comma by slicing from start + 1
+		// this.start = this.current hasn't ran so we're offsetting this.start
+		// this shouldn't affect the main loop i think?
+		const text = this.str.substring(this.start + 1, this.current).trim();
+		if (text.length > 0) {
+			this.tokens.push({
+				type: RemindTokenType.TIMEZONE,
+				text: text,
 				literal: undefined,
 			});
 		}
@@ -132,11 +136,6 @@ export class RemindLexer {
 		let token_type = this.keywords[text];
 		if (["am", "pm"].includes(text.toLowerCase())) {
 			token_type = RemindTokenType.MERIDIEM;
-		}
-		// Reset timezone mode after processing identifier in timezone context
-		if (this.isTimezone) {
-			token_type = RemindTokenType.TIMEZONE;
-			this.isTimezone = false;
 		}
 		if (token_type === undefined) {
 			token_type = RemindTokenType.STRING;

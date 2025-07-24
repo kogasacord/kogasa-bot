@@ -120,7 +120,7 @@ export class RemindParser {
 		};
 	}
 	private remove(): Remove {
-		const index = this.consume(RemindTokenType.NUMBER, "Expected a number for the index.").literal!;
+		const index = this.consume(RemindTokenType.NUMBER, "Expected a number for the index. Did you mean `remove 1`?").literal!;
 		return {
 			type: "Remove",
 			index,
@@ -129,19 +129,21 @@ export class RemindParser {
 	private relative(): Relative {
 		const units = this.parseRelative();
 
-		if (this.match([RemindTokenType.IN, RemindTokenType.EVERY, RemindTokenType.AT])) {
-			throw this.error(this.peek(), `Unexpected "${this.peek().type}", already parsing relative date.`);
-		}
+		this.checkCommands();
 		if (this.peek().type === RemindTokenType.ABS_UNIT) {
 			throw this.error(this.peek(), "You cannot use absolute units in an \"in\" command. Use relative (`25d`) syntax instead.");
 		}
 		if (this.peek().type === RemindTokenType.STRING) {
 			throw this.error(this.peek(), "Unknown relative unit, valid ones are `d, h, m`.");
 		}
+		this.match_and_advance([RemindTokenType.TIMEZONE]); // ignore timezone.
+
 		if (units.length <= 0) {
 			throw this.error(this.peek(), "You need to put at least one relative date. `in 1d`");
 		}
+
 		const content = this.consume(RemindTokenType.STRING, "Missing reminder message!").text;
+
 		const expr: Relative = {
 			type: "Relative",
 			units,
@@ -171,15 +173,16 @@ export class RemindParser {
 		while (this.check(RemindTokenType.ABS_UNIT)) {
 			units.push(this.absolute_primary());
 		}
-		
-		if (this.match([RemindTokenType.IN, RemindTokenType.EVERY, RemindTokenType.AT])) {
-			throw this.error(this.peek(), `Unexpected "${this.peek().type}", already parsing relative date.`);
-		}
+
+		this.checkCommands();
 		if (this.peek().type === RemindTokenType.NUMBER && this.peek_next().type === RemindTokenType.REL_UNIT) {
 			throw this.error(this.peek(), "You cannot use relative units in an \"at\" command. Use `D25` syntax instead.");
 		}
 		if (this.peek().type === RemindTokenType.STRING) {
 			throw this.error(this.peek(), "Unknown absolute unit, valid ones are `d, h, m`.");
+		}
+		if (this.match([RemindTokenType.NUMBER])) {
+			throw this.error(this.peek(), "Number provided without a unit.");
 		}
 
 		let clock: Clock | undefined = undefined;
@@ -188,6 +191,10 @@ export class RemindParser {
 		}
 		const timezone = this.consume(RemindTokenType.TIMEZONE, "Expected timezone.").text;
 		const content = this.consume(RemindTokenType.STRING, "Missing reminder message!").text;
+
+		if (this.match([RemindTokenType.STRING])) {
+			throw this.error(this.peek(), "Timezones can only have one word in them.");
+		}
 
 		const abs: Absolute = {
 			type: "Absolute",
@@ -262,6 +269,12 @@ export class RemindParser {
 		throw this.error(this.peek(), "Expected expression.");
 	}
 
+
+	private checkCommands() {
+		if (this.match([RemindTokenType.IN, RemindTokenType.EVERY, RemindTokenType.AT, RemindTokenType.LIST, RemindTokenType.REMOVE])) {
+			throw this.error(this.peek(), `Unexpected command "${this.peek().type}".`);
+		}
+	}
 	private match(types: RemindTokenType[]): boolean {
 		for (const type of types) {
 			if (this.check(type)) {
