@@ -2,8 +2,19 @@
 import { Client } from "discord.js";
 import Fuse, {FuseResult} from "fuse.js";
 import EventEmitter from "node:events";
+
 import dayjs, {Dayjs} from "dayjs";
+import advancedFormat from "dayjs/plugin/advancedFormat.js";
+import utc from "dayjs/plugin/utc.js";
+import timezone from "dayjs/plugin/timezone.js";
+import relativeTime from "dayjs/plugin/relativeTime.js";
+
 import {Absolute, Expr, Recurring, Relative, Remove} from "@helpers/reminder/parser.js";
+
+dayjs.extend(advancedFormat);
+dayjs.extend(utc);
+dayjs.extend(timezone);
+dayjs.extend(relativeTime);
 
 import tz from "@media/timezone.json" assert { type: "json" };
 
@@ -138,6 +149,10 @@ export class ReminderEmitter {
 							throw new Error(`Unknown relative unit: "${unit.unit}"`);
 					}
 				}
+				const time_difference = result_time.diff(dayjs(), "day", true);
+				if (time_difference > 30) {
+					throw new Error(`Too much time! You put in a reminder that triggers ${result_time.fromNow()}, it should be below 30 days.`);
+				}
 				return {
 					command: "Relative",
 					content: relative,
@@ -214,7 +229,11 @@ export class ReminderEmitter {
 				}
 
 				if (!result.isValid() || result.isBefore(dayjs().tz(expr.timezone))) {
-					throw new Error("Cannot set reminder in the past, interpreter.");
+					throw new Error("Cannot set reminder in the past.");
+				}
+				const time_difference = result.diff(dayjs().tz(expr.timezone), "year", true);
+				if (time_difference > 2) {
+					throw new Error(`Too much time! You put in a reminder that triggers ${result.fromNow()}!`);
 				}
 
 				return {

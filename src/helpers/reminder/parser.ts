@@ -106,14 +106,6 @@ export class RemindParser {
 		}
 		throw this.error(this.peek(), "Reminders should start with 'in', 'every', and 'at'.");
 	}
-	private parseRelative(): Literal[] {
-		const units: Literal[] = [];
-		while (this.check(RemindTokenType.NUMBER)) {
-			units.push(this.relative_primary());
-		}
-
-		return units;
-	}
 	private list(): List {
 		return {
 			type: "List"
@@ -132,9 +124,6 @@ export class RemindParser {
 		this.checkCommands();
 		if (this.peek().type === RemindTokenType.ABS_UNIT) {
 			throw this.error(this.peek(), "You cannot use absolute units in an \"in\" command. Use relative (`25d`) syntax instead.");
-		}
-		if (this.peek().type === RemindTokenType.STRING) {
-			throw this.error(this.peek(), "Unknown relative unit, valid ones are `d, h, m`.");
 		}
 		this.match_and_advance([RemindTokenType.TIMEZONE]); // ignore timezone.
 
@@ -168,18 +157,11 @@ export class RemindParser {
 		throw this.error(this.peek(), "Invalid recurring string.");
 	}
 	private absolute(): Absolute {
-		const units: Literal[] = [];
-
-		while (this.check(RemindTokenType.ABS_UNIT)) {
-			units.push(this.absolute_primary());
-		}
+		const units: Literal[] = this.parseAbsolute();
 
 		this.checkCommands();
 		if (this.peek().type === RemindTokenType.NUMBER && this.peek_next().type === RemindTokenType.REL_UNIT) {
 			throw this.error(this.peek(), "You cannot use relative units in an \"at\" command. Use `D25` syntax instead.");
-		}
-		if (this.peek().type === RemindTokenType.STRING) {
-			throw this.error(this.peek(), "Unknown absolute unit, valid ones are `d, h, m`.");
 		}
 		if (this.match([RemindTokenType.NUMBER])) {
 			throw this.error(this.peek(), "Number provided without a unit.");
@@ -241,11 +223,28 @@ export class RemindParser {
 		
 		return clock;
 	}
+
+	private parseRelative(): Literal[] {
+		const units: Literal[] = [];
+		while (this.check(RemindTokenType.NUMBER)) {
+			units.push(this.relative_primary());
+		}
+
+		return units;
+	}
+	private parseAbsolute(): Literal[] {
+		const units: Literal[] = [];
+		while (this.check(RemindTokenType.NUMBER)) {
+			units.push(this.absolute_primary());
+		}
+
+		return units;
+	}
 	private relative_primary(): Literal {
 		if (this.check(RemindTokenType.NUMBER)) {
 			const num_value = this.advance().literal!;
 			const unit_text = this.peek().text;
-			const unit = this.consume(RemindTokenType.REL_UNIT, `Empty or unknown unit "${unit_text}"`).text;
+			const unit = this.consume(RemindTokenType.REL_UNIT, `Empty or unknown unit "${unit_text}". Did you mean \`d, h, m\`?`).text;
 			const literal: Literal = { 
 				type: "Literal",
 				value: num_value,

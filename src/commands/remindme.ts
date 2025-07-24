@@ -1,8 +1,3 @@
-import dayjs, {Dayjs} from "dayjs";
-import advancedFormat from "dayjs/plugin/advancedFormat.js";
-import utc from "dayjs/plugin/utc.js";
-import timezone from "dayjs/plugin/timezone.js";
-import relativeTime from "dayjs/plugin/relativeTime.js";
 import { Client, Message } from "discord.js";
 
 import { ExternalDependencies } from "@helpers/helpers.js";
@@ -10,10 +5,6 @@ import { ChannelScope } from "@helpers/types";
 import {RemindLexer} from "@helpers/reminder/lexer.js";
 import {RemindParser} from "@helpers/reminder/parser.js";
 
-dayjs.extend(advancedFormat);
-dayjs.extend(utc);
-dayjs.extend(timezone);
-dayjs.extend(relativeTime);
 
 const lexer = new RemindLexer();
 const parser = new RemindParser();
