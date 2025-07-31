@@ -24,7 +24,7 @@ const fuse = new Fuse(tz, {
 	shouldSort: true,
 });
 
-type MainReminderCommand = AbsoluteCommand | RecurringCommand | RelativeCommand
+export type MainReminderCommand = AbsoluteCommand | RecurringCommand | RelativeCommand
 	| RemoveCommand | ListCommand;
 type Reminders = Map<string, MainReminderCommand[]>;
 type RelativeContent = {
@@ -85,11 +85,29 @@ export class ReminderEmitter {
 		}, 10 * 1000);
 	}
 
-	public parseExpr(user_id: string, input: Expr): { action: "push" | "pop" | "list", content: MainReminderCommand[] } {
+	/**
+	* Attaches the main reminding function to the global timer.
+	*/
+	public activate() {
+		this.reminder_event.on("tickPassed", (user_reminders, client) => {
+			for (const [userid, reminders] of user_reminders) {
+				this.processUserReminders(userid, reminders, client);
+			}
+		});
+	}
+
+	/**
+	* Used to run the expression from the parser.
+	*
+	* @param user_id - The id of the user to store reminders in.
+	* @param input - The result of the parser.
+	* @returns 
+	*/
+	public runExpr(user_id: string, input: Expr): { action: "push" | "pop" | "list", content: MainReminderCommand[] } {
 		const time = dayjs();
 		const command = this.recursiveParse(input, time);
 		if (!isMainRemindCommand(command)) {
-			throw new Error("Expression returned from recursive run.");
+			throw new Error("Something went horribly wrong. The interpreter only supports recurring, relative, and absolute reminders. Something changed in the parser.");
 		}
 
 		switch (command.command) {
@@ -265,23 +283,17 @@ export class ReminderEmitter {
 		}
 	}
 	private isValidTimezone<T>(matches: FuseResult<T>[]): boolean {
+		const not_exact_match_threshold = 0.001;
 		if (matches.length <= 0) {
 			return false;
 		}
 		const best = matches[0];
-		if (best.score! >= 0.001) {
+		if (best.score! >= not_exact_match_threshold) {
 			return false;
 		}
 		return true;
 	}
 
-	activate() {
-		this.reminder_event.on("tickPassed", (user_reminders, client) => {
-			for (const [userid, reminders] of user_reminders) {
-				this.processUserReminders(userid, reminders, client);
-			}
-		});
-	}
 	private processUserReminders(userid: string, reminders: MainReminderCommand[], client: Client<true>) {
 		for (let i = reminders.length - 1; i >= 0; i--) {
 			const reminder = reminders[i];
@@ -289,8 +301,8 @@ export class ReminderEmitter {
 			if (reminder.command === "Remove" || reminder.command === "List") continue;
 
 			// Timezone aware for absolute reminders
-			const current_time = (reminder.command === "Absolute" || reminder.command === "Recurring" && reminder.content.type === "Absolute")
-				? dayjs.tz(dayjs().format(), )
+			const current_time = reminder.content.type === "Absolute"
+				? dayjs.tz(dayjs().format(), (reminder.content as AbsoluteContent).timezone)
 				: dayjs();
 
 			if (reminder.to_date.isBefore(current_time) || reminder.to_date.isSame(current_time)) {
@@ -360,14 +372,14 @@ export class ReminderEmitter {
 			reminder.to_date = next;
 		}
 	}
-	pushReminder(user_id: string, user_reminder: MainReminderCommand) {
+	private pushReminder(user_id: string, user_reminder: MainReminderCommand) {
 		if (!this.reminders.has(user_id)) {
 			this.reminders.set(user_id, []);
 		}
 		const reminder = this.reminders.get(user_id)!;
 		reminder.push(user_reminder);
 	}
-	popReminder(user_id: string, index: number): MainReminderCommand | undefined {
+	private popReminder(user_id: string, index: number): MainReminderCommand | undefined {
 		const reminder = this.reminders.get(user_id);
 		if (reminder) {
 			if (reminder.length >= 2) {

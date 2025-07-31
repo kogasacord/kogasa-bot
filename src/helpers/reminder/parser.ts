@@ -148,7 +148,7 @@ export class RemindParser {
 				expr: this.relative(),
 			};
 		}
-		if (next.type === RemindTokenType.ABS_UNIT) {
+		if (next.type === RemindTokenType.ABS_UNIT || next.type === RemindTokenType.DASH) {
 			return {
 				type: "Recurring",
 				expr: this.absolute(),
@@ -173,10 +173,6 @@ export class RemindParser {
 		}
 		const timezone = this.consume(RemindTokenType.TIMEZONE, "Expected timezone.").text;
 		const content = this.consume(RemindTokenType.STRING, "Missing reminder message!").text;
-
-		if (this.match([RemindTokenType.STRING])) {
-			throw this.error(this.peek(), "Timezones can only have one word in them.");
-		}
 
 		const abs: Absolute = {
 			type: "Absolute",
@@ -225,23 +221,8 @@ export class RemindParser {
 	}
 
 	private parseRelative(): Literal[] {
-		const units: Literal[] = [];
+		const literals: Literal[] = [];
 		while (this.check(RemindTokenType.NUMBER)) {
-			units.push(this.relative_primary());
-		}
-
-		return units;
-	}
-	private parseAbsolute(): Literal[] {
-		const units: Literal[] = [];
-		while (this.check(RemindTokenType.NUMBER)) {
-			units.push(this.absolute_primary());
-		}
-
-		return units;
-	}
-	private relative_primary(): Literal {
-		if (this.check(RemindTokenType.NUMBER)) {
 			const num_value = this.advance().literal!;
 			const unit_text = this.peek().text;
 			const unit = this.consume(RemindTokenType.REL_UNIT, `Empty or unknown unit "${unit_text}". Did you mean \`d, h, m\`?`).text;
@@ -250,12 +231,14 @@ export class RemindParser {
 				value: num_value,
 				unit: unit,
 			};
-			return literal;
+			literals.push(literal);
 		}
-		throw this.error(this.peek(), "Expected expression.");
+
+		return literals;
 	}
-	private absolute_primary(): Literal {
-		if (this.check(RemindTokenType.ABS_UNIT)) {
+	private parseAbsolute(): Literal[] {
+		const literals: Literal[] = [];
+		while (this.check(RemindTokenType.ABS_UNIT)) {
 			const unit = this.advance().text;
 			const num_value = this.consume(RemindTokenType.NUMBER, "Missing number!").literal!;
 			const literal: Literal = {
@@ -263,9 +246,10 @@ export class RemindParser {
 				value: num_value,
 				unit: unit,
 			};
-			return literal;
+			literals.push(literal);
 		}
-		throw this.error(this.peek(), "Expected expression.");
+
+		return literals;
 	}
 
 

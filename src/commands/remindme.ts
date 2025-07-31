@@ -1,9 +1,10 @@
-import { Client, Message } from "discord.js";
+import { ButtonBuilder, ButtonStyle, Client, EmbedBuilder, Message } from "discord.js";
 
 import { ExternalDependencies } from "@helpers/helpers.js";
 import { ChannelScope } from "@helpers/types";
 import {RemindLexer} from "@helpers/reminder/lexer.js";
 import {RemindParser} from "@helpers/reminder/parser.js";
+import {MainReminderCommand} from "@helpers/reminder/reminders";
 
 
 const lexer = new RemindLexer();
@@ -17,7 +18,8 @@ export const description = "Reminds you.";
 export const extended_description =
 	"\n**To add a reminder**" +
 	"\n- `??remindme in 2d3h1m; Do the dishes`" +
-	"\n- `??remindme at Y2026D10-5AM, America; Remind me at year 2026, current month, 10th day, at 5AM, timezone `" +
+	"\n- `??remindme at Y2026D10-5:AM, America; Remind me at year 2026, current month, 10th day, at 5AM`" +
+	"\n- `??remindme every 10h; Reminds every 10h.`" +
 	"\n**To delete a reminder**" +
 	"\n- `??remindme list` to list the reminders you have." +
 	"\n- `??remindme remove [number]` to remove a reminder on that list.";
@@ -32,11 +34,8 @@ export async function execute(
 	
 	try {
 		const tokens = lexer.parse(args.join(" "));
-		msg.reply(`$tokens: ${JSON.stringify(tokens)}`);
 		const expr = parser.parse(tokens);
-		msg.reply(`$expr: ${JSON.stringify(expr, null, 4)}`);
-		const res = reminder_emitter.parseExpr(msg.author.id, expr);
-		msg.reply(JSON.stringify(res, null, 4));
+		const res = reminder_emitter.runExpr(msg.author.id, expr);
 		switch (res.action) {
 			case "push": {
 				msg.reply("Added to reminders!");
@@ -47,14 +46,7 @@ export async function execute(
 				break;
 			}
 			case "list": {
-				const v = res.content
-					.map(v => {
-						if (v.command === "Absolute" || v.command === "Relative" || v.command === "Recurring") {
-							return `${v.to_date.format("MMM DD YYYY HH:mm ZZ")} (${v.command})`;
-						}
-					})
-					.join("\n");
-				msg.reply(v);
+				msg.reply({ embeds: [formatReminders(res.content)] });
 				break;
 			}
 
@@ -69,4 +61,49 @@ export async function execute(
 	parser.resetParser();
 }
 
+// pagination.
+
+function formatReminders(reminders: MainReminderCommand[]): EmbedBuilder {
+	const embed = new EmbedBuilder()
+		.setColor("White");
+
+	if (reminders.length >= 1) {
+		let index = 0;
+		for (const reminder of reminders.slice(0, 10)) {
+			if (reminder.command === "Remove" || reminder.command === "List") {
+				continue; // how the hell did a remove or list command get in.
+			}
+			embed.addFields({ 
+				name: `#${index} - ${formatFieldName(reminder)}`,
+				value: limitString(reminder.message, 100),
+				inline: true,
+			});
+			index++;
+		}
+		embed.setTitle("Your reminders.");
+		embed.setFooter({text: "You can remove these by doing `??remindme remove [index]`"});
+	} else {
+		embed.setTitle("No reminders!");
+	}
+	return embed;
+}
+
+function formatFieldName(reminder: MainReminderCommand): string {
+	const isRecurring = reminder.command === "Recurring";
+	const command = isRecurring
+		? "Recurring, " + reminder.content.type
+		: reminder.command;
+	if (reminder.command !== "Remove" && reminder.command !== "List") {
+		const base = `${reminder.to_date.format("MMM DD YYYY hh:mm z")} ${reminder.to_date.fromNow()} (${command})`;
+		return base;
+	} else {
+		throw new Error("Format field name error, reminder command is a remove/list instead of relative, absolute, or recurring.");
+	}
+}
+
+function limitString(str: string, allowable_length: number) {
+	return str.length > allowable_length
+		? str.slice(0, allowable_length) + " ..."
+		: str;
+}
 
