@@ -32,6 +32,12 @@ export class RemindLexer {
 		at: RemindTokenType.AT,
 		remove: RemindTokenType.REMOVE,
 		list: RemindTokenType.LIST,
+		Y: RemindTokenType.ABS_UNIT,
+		M: RemindTokenType.ABS_UNIT,
+		D: RemindTokenType.ABS_UNIT,
+		d: RemindTokenType.REL_UNIT,
+		h: RemindTokenType.REL_UNIT,
+		m: RemindTokenType.REL_UNIT,
 	};
 	private str: string = "";
 	constructor() {}
@@ -128,7 +134,7 @@ export class RemindLexer {
 
 	// Fix handling of semicolon and whitespace
 	private identifier() {
-		while (this.is_alphanumeric(this.peek())) {
+		while (this.is_alpha(this.peek())) {
 			this.advance();
 		}
 		const text = this.str.substring(this.start, this.current).trim();
@@ -144,9 +150,6 @@ export class RemindLexer {
 		this.add_token(token_type);
 	}
 
-	private is_alphanumeric(c: string) {
-		return this.is_alpha(c) || this.is_digit(c);
-	}
 	private is_alpha(c: string) {
 		return (
 			(c >= "a" && c <= "z") || (c >= "A" && c <= "Z") || c === "_" || c === "/"

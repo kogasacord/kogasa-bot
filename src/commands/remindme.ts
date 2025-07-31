@@ -1,10 +1,10 @@
-import { ButtonBuilder, ButtonStyle, Client, EmbedBuilder, Message } from "discord.js";
+import { Client, EmbedBuilder, Message } from "discord.js";
 
 import { ExternalDependencies } from "@helpers/helpers.js";
 import { ChannelScope } from "@helpers/types";
 import {RemindLexer} from "@helpers/reminder/lexer.js";
 import {RemindParser} from "@helpers/reminder/parser.js";
-import {MainReminderCommand} from "@helpers/reminder/reminders";
+import {MainReminderCommand} from "@helpers/reminder/command.js";
 
 
 const lexer = new RemindLexer();
@@ -34,7 +34,9 @@ export async function execute(
 	
 	try {
 		const tokens = lexer.parse(args.join(" "));
+		msg.reply(JSON.stringify(tokens, null, 4));
 		const expr = parser.parse(tokens);
+		msg.reply(JSON.stringify(expr, null, 4));
 		const res = reminder_emitter.runExpr(msg.author.id, expr);
 		switch (res.action) {
 			case "push": {
