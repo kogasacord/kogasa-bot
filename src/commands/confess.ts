@@ -262,10 +262,11 @@ async function confess(
 				embed.setTitle(`Confession #${confess_channel?.count ?? "unknown"}`);
 				embed.setDescription(text.length > 500 ? `${text.slice(0, 500)} ...` : text);
 				embed.setFooter({ text: "DM me `??confess` to send a confession." });
-			discord_channel.send({ embeds: [embed] });
-
-			const writing_hand = "\u270D";
-			msg.react(writing_hand).catch(() => {});
+			discord_channel.send({ embeds: [embed] })
+				.then(() => {
+					const writing_hand = "\u270D";
+					msg.react(writing_hand).catch(() => {});
+				});
 		} else {
 			// deleting the channel if it couldn't be fetched.
 			delete_channel.run(confess_channel!.id!);

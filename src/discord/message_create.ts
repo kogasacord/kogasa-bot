@@ -123,8 +123,49 @@ function aliasNameToCommand(
 
 function separateCommands(message_content: string, prefix: string) {
 	// maybe i should write something better for this (O~O)
-	const split_message = message_content.split(" ");
-	const args = split_message.slice(1);
-	const alias_command_name = split_message[0].replace(prefix, "");
-	return { args, alias_command_name };
+	const args = parseArgs(message_content);
+	const alias_command_name = args[0].replace(prefix, "");
+	return { args: args.slice(1), alias_command_name };
+}
+
+/**
+	* Splits by whitespace while preserving quotation marks with whitespace in them.
+	* example: arg0 "argu ment 1" args2
+*/
+function parseArgs(inp: string) {
+	const args: string[] = [];
+	let buffer = "";
+	let in_quote = false;
+	for (const ch of inp) {
+		switch (ch) {
+			case "\"": {
+				if (in_quote && buffer.length > 0) {
+					args.push(buffer.trim());
+					buffer = "";
+				}
+				in_quote = !in_quote;
+				break;
+			}
+			case " ": {
+				if (!in_quote && buffer.length > 0) {
+					args.push(buffer);
+					buffer = "";
+				}
+				if (in_quote) {
+					buffer += ch;
+				}
+				break;
+			}
+			default: {
+				buffer += ch;
+				break;
+			}
+		}
+	}
+
+	if (!in_quote && buffer.length > 0) {
+		args.push(buffer.trim());
+	}
+
+	return args;
 }

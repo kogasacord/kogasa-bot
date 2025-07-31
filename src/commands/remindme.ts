@@ -1,23 +1,27 @@
-import { ExternalDependencies } from "@helpers/helpers.js";
-import { APIEmbedField, Client, EmbedBuilder, Message } from "discord.js";
-import { ChannelScope } from "@helpers/types";
-import { ReminderEmitter } from "@helpers/reminder/reminders";
+import { ButtonBuilder, ButtonStyle, Client, EmbedBuilder, Message } from "discord.js";
 
-const time_regex =
-	/(?=\d+d|\d+h|\d+m)(?:(?<days>\d+)d)?(?:(?<hours>\d+)h)?(?:(?<minutes>\d+)m)?/g;
+import { ExternalDependencies } from "@helpers/helpers.js";
+import { ChannelScope } from "@helpers/types";
+import {RemindLexer} from "@helpers/reminder/lexer.js";
+import {RemindParser} from "@helpers/reminder/parser.js";
+import {MainReminderCommand} from "@helpers/reminder/reminders";
+
+
+const lexer = new RemindLexer();
+const parser = new RemindParser();
 
 export const name = "remindme";
 export const aliases = ["rme", "remind"];
 export const cooldown = 8;
 export const channel: ChannelScope[] = ["Guild", "DMs", "Thread"];
-export const description = "Reminds you of a specific thing.";
+export const description = "Reminds you.";
 export const extended_description =
 	"\n**To add a reminder**" +
-	"\n- `??remindme [number]d[number]h[number]m`" +
-	"\n- `??remindme 1h Do the dishes`" +
-	"\n- `??remindme 7d Get a first meal.`" +
+	"\n- `??remindme in 2d3h1m; Do the dishes`" +
+	"\n- `??remindme at Y2026D10-5:AM, America; Remind me at year 2026, current month, 10th day, at 5AM`" +
+	"\n- `??remindme every 10h; Reminds every 10h.`" +
 	"\n**To delete a reminder**" +
-	"\n- `??remindme remove` to list the reminders you have." +
+	"\n- `??remindme list` to list the reminders you have." +
 	"\n- `??remindme remove [number]` to remove a reminder on that list.";
 export async function execute(
 	_client: Client,
@@ -26,134 +30,81 @@ export async function execute(
 	external_data: ExternalDependencies
 ) {
 	const reminder_emitter = external_data.reminder_emitter;
-	const query = args[0];
-	if (query && query.length <= 0) {
-		msg.reply(
-			"Please consult `??help remindme` for more information regarding this command."
-		);
-		return;
+	// to be replaced by @helpers/reminders/parser.ts
+	
+	try {
+		const tokens = lexer.parse(args.join(" "));
+		const expr = parser.parse(tokens);
+		const res = reminder_emitter.runExpr(msg.author.id, expr);
+		switch (res.action) {
+			case "push": {
+				msg.reply("Added to reminders!");
+				break;
+			}
+			case "pop": {
+				msg.reply("Removed reminder.");
+				break;
+			}
+			case "list": {
+				msg.reply({ embeds: [formatReminders(res.content)] });
+				break;
+			}
+
+			default: {
+				msg.reply("This is a bug. Internal unsupported action.");
+			}
+		}
+	} catch (error) {
+		msg.reply(`#: ${error}`);
 	}
 
-	if (query === "remove") {
-		userRemoveReminder(msg, reminder_emitter, args);
-	} else {
-		userAddReminder(msg, reminder_emitter, args);
-	}
+	lexer.resetLexer();
+	parser.resetParser();
 }
 
-function userRemoveReminder(
-	msg: Message,
-	reminder_emitter: ReminderEmitter,
-	args: string[]
-) {
-	const user_id = msg.author.id;
-	const index = Number(args.at(1));
+// pagination.
 
-	if (isNaN(index) || !args.at(1)) {
-		msg.reply({ embeds: [listReminders(reminder_emitter, user_id)] });
-		return;
-	}
-	// remove reminder
-	const reminder = reminder_emitter.popReminder(user_id, Math.abs(index - 1));
-	if (reminder) {
-		msg.reply(
-			`Removed the reminder scheduled at ${reminder.to_date.toUTCString()}.`
-		);
+function formatReminders(reminders: MainReminderCommand[]): EmbedBuilder {
+	const embed = new EmbedBuilder()
+		.setColor("White");
+
+	if (reminders.length >= 1) {
+		let index = 0;
+		for (const reminder of reminders.slice(0, 10)) {
+			if (reminder.command === "Remove" || reminder.command === "List") {
+				continue; // how the hell did a remove or list command get in.
+			}
+			embed.addFields({ 
+				name: `#${index} - ${formatFieldName(reminder)}`,
+				value: limitString(reminder.message, 100),
+				inline: true,
+			});
+			index++;
+		}
+		embed.setTitle("Your reminders.");
+		embed.setFooter({text: "You can remove these by doing `??remindme remove [index]`"});
 	} else {
-		msg.reply("Unable to remove the reminder you selected.");
+		embed.setTitle("No reminders!");
 	}
-}
-function listReminders(
-	reminder_emitter: ReminderEmitter,
-	user_id: string
-): EmbedBuilder {
-	const reminder_contents = reminder_emitter.getReminderFromUser(user_id);
-	const embed = new EmbedBuilder();
-	if (!reminder_contents) {
-		embed.setTitle("No reminders found.");
-		return embed;
-	}
-	embed.setTitle("Reminders:");
-	const embed_fields: APIEmbedField[] = [];
-	for (let i = 0; i < reminder_contents.length; i++) {
-		const r = reminder_contents[i];
-		embed_fields.push({
-			name: `${i + 1}) ${r.to_date.toUTCString()}`,
-			value: r.contents,
-		});
-	}
-	embed.addFields(embed_fields);
 	return embed;
 }
 
-function userAddReminder(
-	msg: Message,
-	reminder_emitter: ReminderEmitter,
-	args: string[]
-) {
-	const query = args.at(0);
-	if (!query) {
-		return;
+function formatFieldName(reminder: MainReminderCommand): string {
+	const isRecurring = reminder.command === "Recurring";
+	const command = isRecurring
+		? "Recurring, " + reminder.content.type
+		: reminder.command;
+	if (reminder.command !== "Remove" && reminder.command !== "List") {
+		const base = `${reminder.to_date.format("MMM DD YYYY hh:mm z")} ${reminder.to_date.fromNow()} (${command})`;
+		return base;
+	} else {
+		throw new Error("Format field name error, reminder command is a remove/list instead of relative, absolute, or recurring.");
 	}
-
-	const contents = args.slice(1).join(" ");
-	const match = [...query.matchAll(time_regex)].at(0);
-	if (!match?.groups) {
-		msg.reply(
-			"Your query is malformed. The valid way to do it is: `??remindme [number]d[number]h[number]m [Message]`\nAs an example: `??remindme 1h Among us.`"
-		);
-		return;
-	}
-
-	const days = isNaN(Number(match.groups.days)) ? 0 : Number(match.groups.days);
-	const hours = isNaN(Number(match.groups.hours))
-		? 0
-		: Number(match.groups.hours);
-	const minutes = isNaN(Number(match.groups.minutes))
-		? 0
-		: Number(match.groups.minutes);
-
-	if (days > 30) {
-		msg.reply("Days specified was more than 30.");
-		return;
-	}
-	if (hours >= 24) {
-		msg.reply("Hours specified was more than or equal to 24.");
-		return;
-	}
-	if (minutes >= 60) {
-		msg.reply("Minutes specified was more than or equal to 60.");
-		return;
-	}
-
-	const to_date = new Date();
-	addDayToDate(to_date, days);
-	addHourToDate(to_date, hours);
-	addMinuteToDate(to_date, minutes);
-
-	let reminders = reminder_emitter.getReminderFromUser(msg.author.id);
-	if (reminders && reminders.length >= 20) {
-		msg.reply(
-			"You have too many reminders! Remove excess reminders using `??remindme remove`"
-		);
-	}
-
-	reminder_emitter.pushReminder(msg.author.id, { to_date, contents });
-	reminders = reminder_emitter.getReminderFromUser(msg.author.id);
-
-	const alarm_clock = "\u23F0";
-	msg.react(alarm_clock).catch(() => {});
 }
 
-function addDayToDate(date: Date, days: number) {
-	date.setUTCDate(date.getUTCDate() + days);
-	return date;
+function limitString(str: string, allowable_length: number) {
+	return str.length > allowable_length
+		? str.slice(0, allowable_length) + " ..."
+		: str;
 }
-function addHourToDate(date: Date, hours: number) {
-	date.setUTCHours(date.getUTCHours() + hours);
-	return date;
-}
-function addMinuteToDate(date: Date, minutes: number) {
-	date.setUTCMinutes(date.getUTCMinutes() + minutes);
-	return date;
-}
+

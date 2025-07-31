@@ -89,11 +89,11 @@ export interface VarStmt extends Stmt { // declares a variable.
 }
 
 export function isExprStmt(num: Stmt): num is Expression {
-	return num.type === "Expression"
+	return num.type === "Expression";
 }
 export function isPrintStmt(num: Stmt): num is Print {
-	return num.type === "Print"
+	return num.type === "Print";
 }
 export function isVarStmt(num: Stmt): num is VarStmt {
-	return num.type === "Var"
+	return num.type === "Var";
 }

@@ -1,4 +1,4 @@
-import { Client, Message } from "discord.js";
+import { Client, Message, ChannelType } from "discord.js";
 import helpers, { ExternalDependencies } from "@helpers/helpers.js";
 import settings from "@root/settings.json" assert { type: "json" };
 import { ChannelScope } from "@helpers/types";
@@ -24,6 +24,13 @@ export async function execute(
 	args: string[],
 	ext: ExternalDependencies
 ) {
+	if (!(
+		msg.channel.type === ChannelType.DM 
+		|| msg.channel.type === ChannelType.GuildText
+		|| msg.channel.type === ChannelType.PublicThread
+	)) {
+		return;
+	}
 	await msg.channel.sendTyping();
 	const doctor_results: DoctorResults = {
 		canvas: false,

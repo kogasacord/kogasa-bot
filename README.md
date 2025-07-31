@@ -18,7 +18,6 @@ Prefix: `??`
 - `buffer`: Find deleted or edited messages.
 - `calc`: A recursive descent parsing calculator.
 - `confess`: Share your secrets in servers without anyone knowing.
-- `img [search query]`: Gets google searches and images.
 - `quote`: Reply to someone to quote their message on a dramatic picture. Requires [canvas-go](https://github.com/kogasacord/canvas-go).
 - `remindme`: Reminds you something in a specified time.
 - `randomweb`: Sends you a random website with gacha elements snuck in.
