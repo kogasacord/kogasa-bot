@@ -180,17 +180,17 @@ export class ReminderEmitter {
 			}
 			case "Recurring": {
 				const recurring = input as Recurring;
-				if (["Relative", "Absolute"].includes(recurring.expr.type)) {
-					const command = this.recursiveParse(recurring.expr, time) as RelativeCommand | AbsoluteCommand;
-					return {
-						command: "Recurring",
-						to_date: command.to_date,
-						content: command.content,
-						message: command.message,
-					};
-				} else {
-					throw new Error("Unknown recurring expression.");
+				if (recurring.expr.type !== "Relative") {
+					throw new Error(`${recurring.expr.type} types not supported yet!`);
 				}
+
+				const command = this.recursiveParse(recurring.expr, time) as RelativeCommand;
+				return {
+					command: "Recurring",
+					to_date: command.to_date,
+					content: command.content,
+					message: command.message,
+				};
 			}
 			case "Absolute": {
 				const expr = input as Absolute;
@@ -321,7 +321,7 @@ export class ReminderEmitter {
 			client.users.send(userid, `Reminder: ${reminder.message}`);
 
 			if (reminder.command === "Recurring") {
-				this.rescheduleRecurringReminder(client, userid, reminder);
+				this.rescheduleRecurringReminder(userid, reminder);
 			} else {
 				this.popReminder(userid, index);
 			}
@@ -330,23 +330,24 @@ export class ReminderEmitter {
 		}
 	}
 
-	private rescheduleRecurringReminder(client: Client<true>, userid: string, reminder: RecurringCommand) {
+	private rescheduleRecurringReminder(userid: string, reminder: RecurringCommand) {
 		if (reminder.content.type === "Relative") {
-			const { d, h, m } = reminder.content;
+			const {d, h, m} = reminder.content;
 			let newDate = reminder.to_date;
 			if (d) newDate = newDate.add(d, "day");
 			if (h) newDate = newDate.add(h, "hour");
 			if (m) newDate = newDate.add(m, "minute");
 			reminder.to_date = newDate;
+		} else {
+			throw new Error("Reminder type is not relative.");
+		}
+		/*
+		buggy absolute logic.
 		} else if (reminder.content.type === "Absolute") {
 			const { month, date, hour, minute } = reminder.content;
 			const timezone = reminder.content.timezone;
 
-			const res = fuse.search(timezone).slice(0, 2);
-			if (!this.isValidTimezone(res)) {
-				client.users.send(userid, `Unknown timezone "${timezone}", did you mean ${res.map(v => `"${v.item.tz_id}"`).join(", ")}`);
-				return;
-			}
+			// there must be at least one day to do a recurring reminder.
 			let next = dayjs().tz(timezone)
 				.set("hour", hour)
 				.set("minute", minute)
@@ -371,6 +372,7 @@ export class ReminderEmitter {
 
 			reminder.to_date = next;
 		}
+		*/
 	}
 	private pushReminder(user_id: string, user_reminder: MainReminderCommand) {
 		if (!this.reminders.has(user_id)) {

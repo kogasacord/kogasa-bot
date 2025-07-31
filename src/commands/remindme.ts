@@ -50,8 +50,9 @@ export async function execute(
 				break;
 			}
 
-			default:
-				break;
+			default: {
+				msg.reply("This is a bug. Internal unsupported action.");
+			}
 		}
 	} catch (error) {
 		msg.reply(`#: ${error}`);

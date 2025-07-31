@@ -7,7 +7,7 @@
 			// content covers every subsequent string.
 
 	relative      -> "in", relative_num;
-	recurring     -> "every", (absolute_num | relative_num);
+	recurring     -> "every", relative_num;
 	absolute      -> "at", absolute_num;
 	remove        -> "remove", [number];
 	list          -> "list";
@@ -148,13 +148,16 @@ export class RemindParser {
 				expr: this.relative(),
 			};
 		}
+		/*
+		hmmm, absolute recurring reminders later.
 		if (next.type === RemindTokenType.ABS_UNIT || next.type === RemindTokenType.DASH) {
 			return {
 				type: "Recurring",
 				expr: this.absolute(),
 			};
 		}
-		throw this.error(this.peek(), "Invalid recurring string.");
+		*/
+		throw this.error(this.peek(), "Recurring reminders only accepts relative times. `??rme every 2d; Message.`");
 	}
 	private absolute(): Absolute {
 		const units: Literal[] = this.parseAbsolute();
