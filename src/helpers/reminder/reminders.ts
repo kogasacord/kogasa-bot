@@ -98,7 +98,7 @@ export class ReminderEmitter {
 
 			// Timezone aware for absolute reminders
 			const current_time = reminder.content.type === "Absolute"
-				? dayjs.tz(dayjs().format(), (reminder.content as AbsoluteContent).timezone)
+				? dayjs().tz((reminder.content as AbsoluteContent).timezone)
 				: dayjs();
 
 			if (reminder.to_date.isBefore(current_time) || reminder.to_date.isSame(current_time)) {
