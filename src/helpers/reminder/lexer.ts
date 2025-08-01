@@ -3,6 +3,8 @@ export type RemindToken = {
 	type: RemindTokenType;
 	text: string;
 	literal: number | undefined;
+	start: number,
+	end: number,
 };
 export enum RemindTokenType {
 	IN = "IN",
@@ -17,7 +19,6 @@ export enum RemindTokenType {
 	NUMBER = "NUMBER",
 	STRING = "STRING",
 	MERIDIEM = "MERIDIEM",
-	TIMEZONE = "TIMEZONE",
 
 	EOF = "EOF",
 }
@@ -32,6 +33,12 @@ export class RemindLexer {
 		at: RemindTokenType.AT,
 		remove: RemindTokenType.REMOVE,
 		list: RemindTokenType.LIST,
+		Y: RemindTokenType.ABS_UNIT,
+		M: RemindTokenType.ABS_UNIT,
+		D: RemindTokenType.ABS_UNIT,
+		d: RemindTokenType.REL_UNIT,
+		h: RemindTokenType.REL_UNIT,
+		m: RemindTokenType.REL_UNIT,
 	};
 	private str: string = "";
 	constructor() {}
@@ -54,12 +61,6 @@ export class RemindLexer {
 				case "-":
 					this.add_token(RemindTokenType.DASH);
 					break;
-				case ";":
-					this.message();
-					break;
-				case ",":
-					this.timezone();
-					break;
 				case "Y":
 				case "M":
 				case "D":
@@ -81,11 +82,7 @@ export class RemindLexer {
 					}
 			}
 		}
-		this.tokens.push({
-			type: RemindTokenType.EOF,
-			text: "",
-			literal: undefined,
-		});
+		this.add_token(RemindTokenType.EOF);
 
 		const tokens = structuredClone(this.tokens);
 		return tokens;
@@ -97,38 +94,9 @@ export class RemindLexer {
 		this.tokens = [];
 	}
 
-	private message() {
-		const raw = this.str.substring(this.current).trim();
-		this.current = this.str.length;
-
-		if (raw.length > 0) {
-			this.tokens.push({
-				type: RemindTokenType.STRING,
-				text: raw,
-				literal: undefined,
-			});
-		}
-	}
-	private timezone() {
-		while (this.peek() !== ";") {
-			this.advance();
-		}
-		// skips the leading comma by slicing from start + 1
-		// this.start = this.current hasn't ran so we're offsetting this.start
-		// this shouldn't affect the main loop i think?
-		const text = this.str.substring(this.start + 1, this.current).trim();
-		if (text.length > 0) {
-			this.tokens.push({
-				type: RemindTokenType.TIMEZONE,
-				text: text,
-				literal: undefined,
-			});
-		}
-	}
-
 	// Fix handling of semicolon and whitespace
 	private identifier() {
-		while (this.is_alphanumeric(this.peek())) {
+		while (this.is_alpha(this.peek())) {
 			this.advance();
 		}
 		const text = this.str.substring(this.start, this.current).trim();
@@ -144,13 +112,8 @@ export class RemindLexer {
 		this.add_token(token_type);
 	}
 
-	private is_alphanumeric(c: string) {
-		return this.is_alpha(c) || this.is_digit(c);
-	}
 	private is_alpha(c: string) {
-		return (
-			(c >= "a" && c <= "z") || (c >= "A" && c <= "Z") || c === "_" || c === "/"
-		);
+		return /^[\p{L}_/]$/u.test(c);
 	}
 	private is_at_end() {
 		return this.current >= this.str.length;
@@ -185,6 +148,8 @@ export class RemindLexer {
 			type: token_type,
 			text: this.str.substring(this.start, this.current).trim(),
 			literal: literal,
+			start: this.start,
+			end: this.current,
 		};
 		this.tokens.push(token);
 	}
