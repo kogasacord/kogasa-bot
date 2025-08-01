@@ -42,7 +42,7 @@ export async function execute(
 	try {
 		const recieved_quote = await helpers.quoteDefault(
 			parsed_content,
-			"- " + replied.author.displayName,
+			"- " + replied.author.username,
 			avatar_url
 		);
 		msg.reply({
