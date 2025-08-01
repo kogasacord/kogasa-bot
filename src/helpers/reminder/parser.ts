@@ -70,10 +70,12 @@ export interface List extends Expr {
 export class RemindParser {
 	private current = 0;
 	private tokens: RemindToken[] = [];
+	private original_string: string = "";
 	constructor() {}
 
-	public parse(tokens: RemindToken[]) {
+	public parse(original_string: string, tokens: RemindToken[]) {
 		this.tokens = tokens;
+		this.original_string = original_string;
 		if (this.tokens.length <= 1) {
 			throw this.error(this.peek(), "Empty input. Provide a command like `in 1d; message`, `at D25, Asia/Manila; message`");
 		}
@@ -87,6 +89,7 @@ export class RemindParser {
 	public resetParser() {
 		this.tokens = [];
 		this.current = 0;
+		this.original_string = "";
 	}
 	private expression(): Expr {
 		if (this.match_and_advance([RemindTokenType.IN])) {
@@ -125,13 +128,12 @@ export class RemindParser {
 		if (this.peek().type === RemindTokenType.ABS_UNIT) {
 			throw this.error(this.peek(), "You cannot use absolute units in an \"in\" command. Use relative (`25d`) syntax instead.");
 		}
-		this.match_and_advance([RemindTokenType.TIMEZONE]); // ignore timezone.
 
 		if (units.length <= 0) {
 			throw this.error(this.peek(), "You need to put at least one relative date. `in 1d`");
 		}
 
-		const content = this.consume(RemindTokenType.STRING, "Missing reminder message!").text;
+		const content = this.parseContent("No message found!");
 
 		const expr: Relative = {
 			type: "Relative",
@@ -174,8 +176,8 @@ export class RemindParser {
 		if (this.match_and_advance([RemindTokenType.DASH])) {
 			clock = this.clock();
 		}
-		const timezone = this.consume(RemindTokenType.TIMEZONE, "Expected timezone.").text;
-		const content = this.consume(RemindTokenType.STRING, "Missing reminder message!").text;
+		const timezone = this.consume(RemindTokenType.STRING, "Expected timezone.").text;
+		const content = this.parseContent(`No message found! Did you forget to add a message after the timezone "${timezone}"?`);
 
 		const abs: Absolute = {
 			type: "Absolute",
@@ -185,6 +187,20 @@ export class RemindParser {
 			content
 		};
 		return abs;
+	}
+
+	private parseContent(err: string): string {
+		const start = this.peek().start;
+		while (!this.isAtEnd()) {
+			this.advance();
+		}
+		const end = this.peek().end;
+		const substr = this.original_string.slice(start, end);
+		if (substr.length <= 0) {
+			throw this.error(this.peek(), err);
+		}
+
+		return substr;
 	}
 	private clock(): Clock {
 		let hour: number | undefined = undefined; // augh i miss rust's expressions.
