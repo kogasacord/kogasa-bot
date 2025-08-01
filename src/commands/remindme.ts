@@ -37,9 +37,7 @@ export async function execute(
 	
 	try {
 		const tokens = lexer.parse(command);
-		msg.reply(JSON.stringify(tokens, null, 4));
 		const expr = parser.parse(command, tokens);
-		msg.reply(JSON.stringify(expr, null, 4));
 		const res = reminder_emitter.runExpr(msg.author.id, expr);
 		switch (res.action) {
 			case "push": {
