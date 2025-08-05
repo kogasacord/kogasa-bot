@@ -62,9 +62,9 @@ export const channel: ChannelScope[] = ["DMs", "Guild"];
 export const cooldown = 1;
 export const description = "Secretly send a message.";
 export const extended_description =
-	"To confess, you must do `??confess` in DMs first and follow the instructions listed there." +
-	"\nFor server owners, `??confess mute-toggle (confession number)` and `??confess mute-toggle @User` to moderate it." +
-	"\n`??confess` in a channel to set it up.";
+	"To confess, you must do `<prefix>confess` in DMs first and follow the instructions listed there." +
+	"\nFor server owners, `<prefix>confess mute-toggle (confession number)` and `<prefix>confess mute-toggle @User` to moderate it." +
+	"\n`<prefix>confess` in a channel to set it up.";
 export async function execute(
 	client: Client<true>,
 	msg: Message,

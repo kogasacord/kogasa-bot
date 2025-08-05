@@ -9,7 +9,7 @@
 		"safestart": "npm run check && npm run start",
 		"check": "npx tsc --project tsconfig.json --noEmit",
 		"start": "tsx index.ts",
-		"dev": "tsx watch index.ts"
+		"dev": "tsx watch --exclude sqlitev1.db index.ts"
 	},
 	"author": "",
 	"license": "ISC",

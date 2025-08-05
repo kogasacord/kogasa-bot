@@ -9,7 +9,7 @@ import timezone from "dayjs/plugin/timezone.js";
 import relativeTime from "dayjs/plugin/relativeTime.js";
 
 import {Expr} from "@helpers/reminder/parser.js";
-import {ReminderCommand, MainReminderCommand, RelativeCommand, AbsoluteCommand, RecurringCommand, AbsoluteContent} from "@helpers/reminder/command.js";
+import {ReminderCommand, MainReminderCommand, RelativeCommand, AbsoluteCommand, RecurringCommand, AbsoluteContent, RelativeContent} from "@helpers/reminder/command.js";
 
 dayjs.extend(advancedFormat);
 dayjs.extend(utc);
@@ -128,15 +128,21 @@ export class ReminderEmitter {
 
 	private rescheduleRecurringReminder(reminder: RecurringCommand) {
 		if (reminder.content.type === "Relative") {
-			const {d, h, m} = reminder.content;
-			let newDate = reminder.to_date;
-			if (d) newDate = newDate.add(d, "day");
-			if (h) newDate = newDate.add(h, "hour");
-			if (m) newDate = newDate.add(m, "minute");
-			reminder.to_date = newDate;
+			this.recurringRelativeReminder(reminder);
 		} else {
 			throw new Error("Reminder type is not relative.");
 		}
+	}
+	private recurringRelativeReminder(reminder: RecurringCommand) {
+		const {d, h, m} = reminder.content as RelativeContent;
+		let newDate = reminder.to_date;
+		if (d) newDate = newDate.add(d, "day");
+		if (h) newDate = newDate.add(h, "hour");
+		if (m) newDate = newDate.add(m, "minute");
+		reminder.to_date = newDate;
+	}
+	private recurringAbsoluteReminder(reminder: RecurringCommand) {
+		const content = reminder.content as AbsoluteContent;
 	}
 	private pushReminder(user_id: string, user_reminder: MainReminderCommand) {
 		if (!this.reminders.has(user_id)) {

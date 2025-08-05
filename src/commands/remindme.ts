@@ -17,14 +17,15 @@ export const channel: ChannelScope[] = ["Guild", "DMs", "Thread"];
 export const description = "Reminds you.";
 export const extended_description =
 	"\n**To add a reminder**" +
-	"\n- `??remindme in 2d3h1m Do the dishes`" +
-	"\n- `??remindme at Y2026D10-5:AM America/Anchorage Remind me at year 2026, current month, 10th day, at 5AM`" +
-	"\n- `??remindme every 10h Reminds every 10h.`" +
+	"\n- `<prefix>remindme in 2d3h1m Do the dishes`" +
+	"\n- `<prefix>remindme at Y2026D10-5:AM America/Anchorage Remind me at year 2026, current month, 10th day, at 5AM`" +
+	"\n- `<prefix>remindme every 10h Reminds every 10h.`" +
 	"\n**To delete a reminder**" +
-	"\n- `??remindme list` to list the reminders you have." +
-	"\n- `??remindme remove [number]` to remove a reminder on that list." +
-	"\nNote: For specifying timezones, take a look at the [IANA timezone](https://en.wikipedia.org/wiki/List_of_tz_database_time_zones)." +
-		" Though, you can make mistakes as you get suggestions from this command.";
+	"\n- `<prefix>remindme list` to list the reminders you have." +
+	"\n- `<prefix>remindme remove [number]` to remove a reminder on that list." +
+	"\n-# Note: For specifying timezones, take a look at the [IANA timezone](https://en.wikipedia.org/wiki/List_of_tz_database_time_zones)." +
+		" Though, you can make mistakes as you get suggestions from this command." +
+	"\n-# This command only supports the Gregorian calendar.";
 export async function execute(
 	_client: Client,
 	msg: Message,
@@ -33,11 +34,12 @@ export async function execute(
 ) {
 	const reminder_emitter = external_data.reminder_emitter;
 	const command = args.join(" ");
-	// to be replaced by @helpers/reminders/parser.ts
 	
 	try {
 		const tokens = lexer.parse(command);
+		// msg.reply(JSON.stringify(tokens, null, 4));
 		const expr = parser.parse(command, tokens);
+		// msg.reply(JSON.stringify(expr, null, 4));
 		const res = reminder_emitter.runExpr(msg.author.id, expr);
 		switch (res.action) {
 			case "push": {
@@ -58,6 +60,7 @@ export async function execute(
 			}
 		}
 	} catch (error) {
+		// console.log(error);
 		msg.reply(`#: ${error}`);
 	}
 

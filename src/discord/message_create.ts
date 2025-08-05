@@ -8,7 +8,6 @@ import {
 } from "discord.js";
 import { pushMessageToBuffer } from "@helpers/buffer/buffer.js";
 import {
-	CommandModule,
 	Tiers,
 	Cooldown,
 	ExternalDependencies,
@@ -20,6 +19,7 @@ import {
 	setCooldown,
 } from "@helpers/cooldown/cooldown_single.js";
 import { ChannelScope } from "@helpers/types.js";
+import { aliasNameToCommand } from "@helpers/misc/discordhelpers";
 
 const user_cooldowns = new Collection<string, Cooldown>();
 
@@ -109,17 +109,6 @@ export async function messageCreate(
 	}
 }
 
-function aliasNameToCommand(
-	aliases: Map<string, string>,
-	commands: Collection<string, CommandModule>,
-	alias: string
-) {
-	const command_name = aliases.get(alias);
-	if (command_name) {
-		return commands.get(command_name);
-	}
-	return commands.get(alias);
-}
 
 function separateCommands(message_content: string, prefix: string) {
 	// maybe i should write something better for this (O~O)

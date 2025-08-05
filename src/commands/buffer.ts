@@ -10,9 +10,9 @@ export const cooldown = 20;
 export const channel: ChannelScope[] = ["Guild", "Thread"];
 export const description = "See edited or deleted messages in a channel, limited to the latest 20 messages.";
 export const extended_description =
-	"`??buffer delete` sends the deleted messages.\n" +
-	"`??buffer edit` sends the edited messages.\n" +
-	"`??buffer` sends everything the bot has logged in this channel.\n";
+	"`<prefix>buffer delete` sends the deleted messages.\n" +
+	"`<prefix>buffer edit` sends the edited messages.\n" +
+	"`<prefix>buffer` sends everything the bot has logged in this channel.\n";
 export async function execute(
 	_: Client,
 	msg: Message,

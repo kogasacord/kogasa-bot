@@ -1,4 +1,4 @@
-import helpers, { ExternalDependencies } from "@helpers/helpers.js";
+import { ExternalDependencies } from "@helpers/helpers.js";
 import {
 	Client,
 	Message,
@@ -14,10 +14,10 @@ export const cooldown = 5;
 export const special = true;
 export const channel: ChannelScope[] = ["Guild", "DMs", "Thread"];
 export const description = "Check what I can do.";
-export const extended_description = "??help [command], you can specify now.";
+export const extended_description = "<prefix>help [command], you can specify now.";
 export const noscope = true;
 export async function execute(
-	client: Client,
+	_client: Client,
 	msg: Message,
 	args: string[],
 	ext: ExternalDependencies
@@ -31,12 +31,14 @@ export async function execute(
 				command.aliases && command.aliases.length >= 1
 					? command.aliases.join(" ")
 					: "None";
-			let description =
-				"**Description**: " + command.description;
-			description +=
-				"\n**Extended Description**: " +
-				(command.extended_description ?? "No extended description.");
+			let description = "**Description**: " + command.description
+				.replace("<prefix>", ext.prefix);
+			description += (command.extended_description ?? "No extended description.");
 			description += "\n**Aliases**: " + aliases;
+
+			description = description
+				.replace("<prefix>", ext.prefix);
+
 			const embed = new EmbedBuilder()
 				.setTitle(`??${command.name}`)
 				.setDescription(description);

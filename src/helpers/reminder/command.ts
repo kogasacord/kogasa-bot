@@ -59,6 +59,7 @@ export type ListCommand = {
 }
 
 import tz from "@media/timezone.json" assert { type: "json" };
+import {RemindTokenType} from "./lexer";
 const fuse = new Fuse(tz, {
 	keys: ["tz_id"],
 	includeScore: true,
@@ -81,7 +82,7 @@ export class ReminderCommand {
 			case "List": 
 				return {command: "List"};
 			case "Clock":
-			case "Literal":
+			case "Unit":
 				return input;
 
 			default:
@@ -100,15 +101,15 @@ export class ReminderCommand {
 		let result_time = time;
 		for (const unit of relative_expr.units) {
 			switch (unit.unit) {
-				case "d": 
+				case RemindTokenType.DAY:
 					relative.d = unit.value;
 					result_time = result_time.add(unit.value, "day");
 					break;
-				case "h": 
+				case RemindTokenType.HOUR:
 					relative.h = unit.value;
 					result_time = result_time.add(unit.value, "hour"); 
 					break;
-				case "m": 
+				case RemindTokenType.MINUTE:
 					relative.m = unit.value;
 					result_time = result_time.add(unit.value, "minute"); 
 					break;
@@ -160,15 +161,15 @@ export class ReminderCommand {
 		let result = time.tz(expr.timezone);
 		for (const unit of expr.units) {
 			switch (unit.unit) {
-				case "Y": 
+				case RemindTokenType.YEAR:
 					absolute.year = unit.value;
 					result = result.set("year", unit.value); 
 					break;
-				case "M": 
+				case RemindTokenType.MONTH:
 					absolute.month = unit.value;
 					result = result.set("month", unit.value - 1); 
 					break; // months are 0-indexed
-				case "D": 
+				case RemindTokenType.DATE:
 					absolute.date = unit.value;
 					result = result.set("date", unit.value); 
 					break;

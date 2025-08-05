@@ -1,6 +1,6 @@
 import path from "path";
 import * as url from "url";
-import { Client, Collection, Options, Partials, User } from "discord.js";
+import { Client, Collection, Options, Partials } from "discord.js";
 
 import {
 	ChatBuffer,
@@ -21,7 +21,7 @@ import {createDatabase} from "@helpers/db/create.js";
 
 ///////////////////////////////////////////////////////////////////////////////////
 
-const db = createDatabase(settings.test ? ":memory:" : "sqlitev1.db");
+const db = createDatabase(settings.db_on_memory ? ":memory:" : "sqlitev1.db");
 
 const __dirname = url.fileURLToPath(new URL(".", import.meta.url));
 const client = new Client({

@@ -12,7 +12,7 @@ export const aliases = [];
 export const cooldown = 5;
 export const channel: ChannelScope[] = ["Guild", "Thread", "DMs"];
 export const description = "Calculate your love.";
-export const extended_description = "`??love [name1] [name2] [name3] ...`";
+export const extended_description = "`<prefix>love [name1] [name2] [name3] ...`";
 export async function execute(
 	_client: Client,
 	msg: Message<true>,

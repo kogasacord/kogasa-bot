@@ -4,6 +4,7 @@ import fs from "fs";
 import * as url from "url";
 import { Client, Message } from "discord.js";
 import { ChannelScope } from "@helpers/types";
+import { ExternalDependencies } from "@helpers/helpers.js";
 
 // \u001b[{format};{color}m
 
@@ -14,10 +15,15 @@ const bible_list = await importBibleCSV();
 export const name = "isthisinthebible";
 export const cooldown = 5;
 export const description = "Reply or type a message to check if any of those words are in the bible. ";
-export const extended_description = "`??isthisinthebible [content?]` or reply to a message.\nThis command scans through every word in the bible and your text and compares them.";
+export const extended_description = "`<prefix>isthisinthebible [content?]` or reply to a message.\nThis command scans through every word in the bible and your text and compares them.";
 export const channel: ChannelScope[] = ["Guild"];
 export const aliases = ["biblecheck"];
-export async function execute(_client: Client, msg: Message, args: string[]) {
+export async function execute(
+	_client: Client, 
+	msg: Message, 
+	args: string[],
+	ext: ExternalDependencies
+) {
 	let res: Words | undefined;
 	if (msg.reference?.messageId !== undefined) {
 		const replied = await msg.channel.messages.fetch(msg.reference.messageId);
@@ -26,7 +32,7 @@ export async function execute(_client: Client, msg: Message, args: string[]) {
 	} else if (args.length > 0) {
 		res = formatMessage(bible_list, args);
 	} else {
-		msg.reply("Do `??isthisinthebible [content]` or reply to a message with `??isthisinthebible`.");
+		msg.reply(`Do \`${ext.prefix}isthisinthebible [content]\` or reply to a message with \`${ext.prefix}isthisinthebible\`.`);
 		return;
 	}
 

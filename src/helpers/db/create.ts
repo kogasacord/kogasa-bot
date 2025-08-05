@@ -1,6 +1,9 @@
 
 import sqlite3, {Database} from "better-sqlite3";
-import sql from "sql-template-tag";
+import {creation} from "./migrations/creation";
+import {readFile} from "node:fs/promises";
+
+type DBFn = (db: Database) => void;
 
 export function createDatabase(path: ":memory:" | string): Database {
 	const db = new sqlite3(path);
@@ -8,66 +11,28 @@ export function createDatabase(path: ":memory:" | string): Database {
 	db.pragma("journal_mode = WAL");
 	db.pragma("cache_size = -2048");
 	db.pragma("page_size = 4096");
-	db.pragma("user_version = 1");
 
-	const createTables = db.transaction(() => {
-		db.prepare(sql`
-			CREATE TABLE IF NOT EXISTS users (
-				id TEXT NOT NULL PRIMARY KEY,
-				name TEXT NOT NULL
-			)
-		`.sql).run();
-		db.prepare(sql`
-			CREATE TABLE IF NOT EXISTS guild (
-			   id TEXT NOT NULL PRIMARY KEY,
-			   name TEXT NOT NULL
-			)
-		`.sql).run();
-		db.prepare(sql`
-			CREATE TABLE IF NOT EXISTS guild_user (
-				id TEXT NOT NULL PRIMARY KEY,
-				name TEXT NOT NULL,
-				confess_banned BOOLEAN NOT NULL,
-				user_id TEXT NOT NULL,
-				guild_id TEXT NOT NULL,
+	const db_version = (db.pragma("user_version") as [{ user_version: number }])[0].user_version;
 
-				FOREIGN KEY (user_id)
-					REFERENCES users (id),
-				FOREIGN KEY (guild_id)
-					REFERENCES guild (id)
-			)
-		`.sql).run();
-		db.prepare(sql`
-			CREATE TABLE IF NOT EXISTS confess_channel (
-				id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
-				name TEXT NOT NULL,
-				count INTEGER NOT NULL,
-				channel_id TEXT NOT NULL,
-				guild_id TEXT NOT NULL,
+	// this has to be in-order or else the migration script will DIE :sob: please please please
+	const migrations: DBFn[] = [
+		creation,
+	];
+	migrations
+		.slice(db_version)
+		.forEach((mig, index) => {
+			const new_version = db_version + index + 1;
+			db.transaction(() => mig(db))();
+			db.pragma(`user_version = ${new_version}`);
+			console.log(`Upgraded to version ${new_version}`);
+		});
 
-				FOREIGN KEY (guild_id)
-					REFERENCES guild (id)
-			)
-		`.sql).run();
-		db.prepare(sql`
-			CREATE TABLE IF NOT EXISTS confession (
-				id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
-				confession_number INTEGER NOT NULL,
-				timestamp DATE NOT NULL,
-				confess_channel_id INTEGER NOT NULL,
-				guild_user_id TEXT NOT NULL,
-
-				FOREIGN KEY (confess_channel_id)
-					REFERENCES confess_channel (id) ON DELETE CASCADE
-				FOREIGN KEY (guild_user_id)
-					REFERENCES guild_user (id)
-			)
-		`.sql).run();
-	});
-	createTables();
-	/* eslint-disable  @typescript-eslint/no-explicit-any */
-	const user_version = db.pragma("user_version") as any;
-	console.log(`Running ${path === ":memory:" ? "test in-memory" : "public file system"} database "${path}". Tables on version ${user_version[0].user_version}.`);
+	console.log(`Running ${path === ":memory:" ? "test in-memory" : "public file system"} database "${path}". Tables on version ${db_version}.`);
+	
+	// how do i incrementally update from any existing database version?
 
 	return db;
 }
+
+
+

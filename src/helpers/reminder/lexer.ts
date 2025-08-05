@@ -12,13 +12,18 @@ export enum RemindTokenType {
 	AT = "AT",
 	REMOVE = "REMOVE",
 	LIST = "LIST",
-	ABS_UNIT = "ABS_UNIT",
-	REL_UNIT = "REL_UNIT",
 	COLON = "COLON",
 	DASH = "DASH",
 	NUMBER = "NUMBER",
 	STRING = "STRING",
 	MERIDIEM = "MERIDIEM",
+
+	YEAR = "YEAR",
+	MONTH = "MONTH",
+	DATE = "DATE",
+	DAY = "DAY",
+	HOUR = "HOUR",
+	MINUTE = "MINUTE",
 
 	EOF = "EOF",
 }
@@ -33,12 +38,23 @@ export class RemindLexer {
 		at: RemindTokenType.AT,
 		remove: RemindTokenType.REMOVE,
 		list: RemindTokenType.LIST,
-		Y: RemindTokenType.ABS_UNIT,
-		M: RemindTokenType.ABS_UNIT,
-		D: RemindTokenType.ABS_UNIT,
-		d: RemindTokenType.REL_UNIT,
-		h: RemindTokenType.REL_UNIT,
-		m: RemindTokenType.REL_UNIT,
+
+		Y: RemindTokenType.YEAR,
+		year: RemindTokenType.YEAR,
+		M: RemindTokenType.MONTH,
+		month: RemindTokenType.MONTH,
+		D: RemindTokenType.DATE,
+		date: RemindTokenType.DATE,
+
+		d: RemindTokenType.DAY,
+		day: RemindTokenType.DAY,
+		days: RemindTokenType.DAY,
+		h: RemindTokenType.HOUR,
+		hour: RemindTokenType.HOUR,
+		hours: RemindTokenType.HOUR,
+		m: RemindTokenType.MINUTE,
+		minute: RemindTokenType.MINUTE,
+		minutes: RemindTokenType.MINUTE,
 	};
 	private str: string = "";
 	constructor() {}
@@ -61,16 +77,6 @@ export class RemindLexer {
 				case "-":
 					this.add_token(RemindTokenType.DASH);
 					break;
-				case "Y":
-				case "M":
-				case "D":
-					this.add_token(RemindTokenType.ABS_UNIT);
-					break;
-				case "d":
-				case "h":
-				case "m":
-					this.add_token(RemindTokenType.REL_UNIT);
-					break;
 				default:
 					if (this.is_digit(char)) {
 						this.number();
@@ -82,7 +88,14 @@ export class RemindLexer {
 					}
 			}
 		}
-		this.add_token(RemindTokenType.EOF);
+		const eof: RemindToken = {
+			type: RemindTokenType.EOF,
+			text: "",
+			literal: undefined,
+			start: this.current,
+			end: this.current,
+		};
+		this.tokens.push(eof);
 
 		const tokens = structuredClone(this.tokens);
 		return tokens;
@@ -154,3 +167,4 @@ export class RemindLexer {
 		this.tokens.push(token);
 	}
 }
+

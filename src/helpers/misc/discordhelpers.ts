@@ -1,4 +1,5 @@
-import { Client, ChannelType, Message } from "discord.js";
+import { Client, ChannelType, Message, Collection } from "discord.js";
+import { CommandModule } from "@helpers/types.js";
 
 export async function completePartialMessage(
 	client: Client,
@@ -20,4 +21,16 @@ export async function completePartialMessage(
 	} catch (err) {
 		return null;
 	}
+}
+
+export function aliasNameToCommand(
+	aliases: Map<string, string>,
+	commands: Collection<string, CommandModule>,
+	alias: string
+) {
+	const command_name = aliases.get(alias);
+	if (command_name) {
+		return commands.get(command_name);
+	}
+	return commands.get(alias);
 }

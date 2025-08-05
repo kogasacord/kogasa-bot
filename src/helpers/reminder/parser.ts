@@ -26,7 +26,7 @@
 import {RemindTokenType, RemindToken} from "@helpers/reminder/lexer.js";
 
 export type ExprTypes = "Relative" | "Recurring" | "Absolute" 
-		| "Clock" | "Literal" | "Remove"
+		| "Clock" | "Unit" | "Remove"
 		| "List";
 export interface Expr {
 	type: ExprTypes;
@@ -37,19 +37,19 @@ export interface Recurring extends Expr {
 }
 export interface Relative extends Expr {
 	type: "Relative",
-	units: Literal[],
+	units: Unit[],
 	content: string,
 }
 export interface Absolute extends Expr {
 	type: "Absolute",
-	units: Literal[],
+	units: Unit[],
 	clock?: Clock,
 	timezone: string,
 	content: string,
 }
-export interface Literal extends Expr {
-	type: "Literal",
-	unit: string,
+export interface Unit extends Expr {
+	type: "Unit",
+	unit: RemindTokenType,
 	value: number,
 };
 export interface Clock extends Expr {
@@ -71,13 +71,16 @@ export class RemindParser {
 	private current = 0;
 	private tokens: RemindToken[] = [];
 	private original_string: string = "";
+
+	private readonly ABS_UNITS = [RemindTokenType.YEAR, RemindTokenType.MONTH, RemindTokenType.DATE];
+	private readonly REL_UNITS = [RemindTokenType.DAY, RemindTokenType.HOUR, RemindTokenType.MINUTE];
 	constructor() {}
 
 	public parse(original_string: string, tokens: RemindToken[]) {
 		this.tokens = tokens;
 		this.original_string = original_string;
 		if (this.tokens.length <= 1) {
-			throw this.error(this.peek(), "Empty input. Provide a command like `in 1d; message`, `at D25, Asia/Manila; message`");
+			throw this.error(this.peek(), "Empty input. Provide a command like `in 1d message`, `at D25 Asia/Manila message`");
 		}
 		const expr = this.expression();
 		if (!this.isAtEnd()) {
@@ -92,19 +95,19 @@ export class RemindParser {
 		this.original_string = "";
 	}
 	private expression(): Expr {
-		if (this.match_and_advance([RemindTokenType.IN])) {
+		if (this.matchAndAdvance([RemindTokenType.IN])) {
 			return this.relative();
 		}
-		if (this.match_and_advance([RemindTokenType.EVERY])) {
+		if (this.matchAndAdvance([RemindTokenType.EVERY])) {
 			return this.recurring();
 		}
-		if (this.match_and_advance([RemindTokenType.AT])) {
+		if (this.matchAndAdvance([RemindTokenType.AT])) {
 			return this.absolute();
 		}
-		if (this.match_and_advance([RemindTokenType.LIST])) {
+		if (this.matchAndAdvance([RemindTokenType.LIST])) {
 			return this.list();
 		}
-		if (this.match_and_advance([RemindTokenType.REMOVE])) {
+		if (this.matchAndAdvance([RemindTokenType.REMOVE])) {
 			return this.remove();
 		}
 		throw this.error(this.peek(), "Reminders should start with 'in', 'every', and 'at'.");
@@ -115,7 +118,7 @@ export class RemindParser {
 		};
 	}
 	private remove(): Remove {
-		const index = this.consume(RemindTokenType.NUMBER, "Expected a number for the index. Did you mean `remove 1`?").literal!;
+		const index = this.consume([RemindTokenType.NUMBER], "Expected a number for the index. Did you mean `remove 1`?").literal!;
 		return {
 			type: "Remove",
 			index,
@@ -125,7 +128,7 @@ export class RemindParser {
 		const units = this.parseRelative();
 
 		this.checkCommands();
-		if (this.peek().type === RemindTokenType.ABS_UNIT) {
+		if (this.match(this.ABS_UNITS)) {
 			throw this.error(this.peek(), "You cannot use absolute units in an \"in\" command. Use relative (`25d`) syntax instead.");
 		}
 
@@ -159,13 +162,13 @@ export class RemindParser {
 			};
 		}
 		*/
-		throw this.error(this.peek(), "Recurring reminders only accepts relative times. `??rme every 2d; Message.`");
+		throw this.error(this.peek(), "Recurring reminders only accepts relative times. `??rme every 2d Message.`");
 	}
 	private absolute(): Absolute {
-		const units: Literal[] = this.parseAbsolute();
+		const units: Unit[] = this.parseAbsolute();
 
 		this.checkCommands();
-		if (this.peek().type === RemindTokenType.NUMBER && this.peek_next().type === RemindTokenType.REL_UNIT) {
+		if (this.peek().type === RemindTokenType.NUMBER && this.matchNext(this.REL_UNITS)) {
 			throw this.error(this.peek(), "You cannot use relative units in an \"at\" command. Use `D25` syntax instead.");
 		}
 		if (this.match([RemindTokenType.NUMBER])) {
@@ -173,10 +176,10 @@ export class RemindParser {
 		}
 
 		let clock: Clock | undefined = undefined;
-		if (this.match_and_advance([RemindTokenType.DASH])) {
+		if (this.matchAndAdvance([RemindTokenType.DASH])) {
 			clock = this.clock();
 		}
-		const timezone = this.consume(RemindTokenType.STRING, "Expected timezone.").text;
+		const timezone = this.consume([RemindTokenType.STRING], "Expected timezone.").text;
 		const content = this.parseContent(`No message found! Did you forget to add a message after the timezone "${timezone}"?`);
 
 		const abs: Absolute = {
@@ -207,7 +210,7 @@ export class RemindParser {
 		if (this.check(RemindTokenType.NUMBER)) {
 			hour = this.advance().literal!;
 		}
-		this.consume(RemindTokenType.COLON, "Expected ':' in clock.");
+		this.consume([RemindTokenType.COLON], "Expected ':' in clock.");
 
 		let minute: number | undefined = undefined;
 		if (this.check(RemindTokenType.NUMBER)) {
@@ -239,31 +242,31 @@ export class RemindParser {
 		return clock;
 	}
 
-	private parseRelative(): Literal[] {
-		const literals: Literal[] = [];
+	private parseRelative(): Unit[] {
+		const literals: Unit[] = [];
 		while (this.check(RemindTokenType.NUMBER)) {
 			const num_value = this.advance().literal!;
 			const unit_text = this.peek().text;
-			const unit = this.consume(RemindTokenType.REL_UNIT, `Empty or unknown unit "${unit_text}". Did you mean \`d, h, m\`?`).text;
-			const literal: Literal = { 
-				type: "Literal",
+			const unit = this.consume(this.REL_UNITS, `Empty or unknown unit "${unit_text}". Did you mean \`d, h, m\`?`);
+			const literal: Unit = { 
+				type: "Unit",
 				value: num_value,
-				unit: unit,
+				unit: unit.type,
 			};
 			literals.push(literal);
 		}
 
 		return literals;
 	}
-	private parseAbsolute(): Literal[] {
-		const literals: Literal[] = [];
-		while (this.check(RemindTokenType.ABS_UNIT)) {
-			const unit = this.advance().text;
-			const num_value = this.consume(RemindTokenType.NUMBER, "Missing number!").literal!;
-			const literal: Literal = {
-				type: "Literal",
+	private parseAbsolute(): Unit[] {
+		const literals: Unit[] = [];
+		while (this.match(this.ABS_UNITS)) {
+			const unit = this.advance();
+			const num_value = this.consume([RemindTokenType.NUMBER], "Missing number!").literal!;
+			const literal: Unit = {
+				type: "Unit",
 				value: num_value,
-				unit: unit,
+				unit: unit.type,
 			};
 			literals.push(literal);
 		}
@@ -285,7 +288,15 @@ export class RemindParser {
 		}
 		return false;
 	}
-	private match_and_advance(types: RemindTokenType[]): boolean {
+	private matchNext(types: RemindTokenType[]): boolean {
+		for (const type of types) {
+			if (this.peek_next().type === type) {
+				return true;
+			}
+		}
+		return false;
+	}
+	private matchAndAdvance(types: RemindTokenType[]): boolean {
 		for (const type of types) {
 			if (this.check(type)) {
 				this.advance();
@@ -319,8 +330,8 @@ export class RemindParser {
 		return this.tokens[this.current - 1];
 	}
 	
-	private consume(type: RemindTokenType, message: string): RemindToken {
-		if (this.check(type)) {
+	private consume(types: RemindTokenType[], message: string): RemindToken {
+		if (this.match(types)) {
 			return this.advance();
 		}
 		throw this.error(this.previous(), message);

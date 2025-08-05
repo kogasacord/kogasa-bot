@@ -3,7 +3,7 @@
 import { quoteDefault } from "./quote/default.js";
 
 import { importCommandsFromDirectory, postProcessAliases } from "./misc/import.js";
-import { completePartialMessage } from "./misc/fetch.js";
+import { completePartialMessage, aliasNameToCommand } from "./misc/discordhelpers.js";
 import { checkIfLink } from "./misc/link.js";
 import { pingURL } from "./misc/ping.js";
 import {
@@ -38,6 +38,7 @@ const mod = {
 	gachaSpecificWebsite,
 
 	completePartialMessage,
+	aliasNameToCommand,
 	pickRandom,
 	Queue,
 };

@@ -13,9 +13,9 @@ export const description = "Sends a random website to you, scaled by rarity. ";
 export const extended_description =
 	"The more rare it is, the more obscure (or goofy) the website is. Goes from Common to Super Rare. Currently using a strong random number generator.";
 export async function execute(
-	client: Client,
+	_client: Client,
 	msg: Message,
-	args: string[],
+	_args: string[],
 	external_data: ExternalDependencies
 ) {
 	const websites = external_data.websites;

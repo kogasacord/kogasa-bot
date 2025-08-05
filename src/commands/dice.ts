@@ -5,6 +5,7 @@ import {
 } from "discord.js";
 import { ChannelScope } from "@helpers/types.js";
 import {getRandomInt} from "@helpers/misc/random.js";
+import { ExternalDependencies } from "@helpers/helpers.js";
 
 const dice_regex = /(?<amount>\d+)d(?<sides>\d+)/g;
 
@@ -15,13 +16,14 @@ export const channel: ChannelScope[] = ["Guild", "Thread", "DMs"];
 export const description =
 	"DnD-styled dice rolls.";
 export const extended_description =
-	"\n`??dice [number of dice]d[number of sides]`"
-	+ "\n- `??dice 1d6`";
-	+ "\n- `??dice` is equivalent to a normal sided dice `1d6`.";
+	"\n`<prefix>dice [number of dice]d[number of sides]`"
+	+ "\n- `<prefix>dice 1d6`";
+	+ "\n- `<prefix>dice` is equivalent to a normal sided dice `1d6`.";
 export async function execute(
 	_client: Client,
 	msg: Message<true>,
-	args: string[]
+	args: string[],
+	ext: ExternalDependencies
 ) {
 	const query = args.join(" ");
 	if (query.length <= 0) {
@@ -32,7 +34,7 @@ export async function execute(
 	const match = [...query.matchAll(dice_regex)].at(0);
 	if (!match?.groups) {
 		msg.reply(
-			"Your query is malformed. The valid way to do it is: `??dice [number of dice]d[number of sides]`"
+			`Your query is malformed. The valid way to do it is: \`${ext.prefix}dice [number of dice]d[number of sides]\``
 		);
 		return;
 	}
