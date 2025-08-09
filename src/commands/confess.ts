@@ -8,9 +8,9 @@ import {
 	TextChannel,
 } from "discord.js";
 import { ChannelScope } from "@helpers/types";
-import { createHash } from "node:crypto";
 import sql from "sql-template-tag";
 import { Database } from "better-sqlite3";
+import {hash, HASH_LENGTH} from "@helpers/db/hash";
 
 // cache data on first run?
 
@@ -54,8 +54,6 @@ type ServerList = {
 	guild_name: FromGuild["name"]
 }
 
-const HASH_LENGTH = 25;
-
 export const name = "confess";
 export const aliases = [];
 export const channel: ChannelScope[] = ["DMs", "Guild"];
@@ -66,7 +64,7 @@ export const extended_description =
 	"\nFor server owners, `<prefix>confess mute-toggle (confession number)` and `<prefix>confess mute-toggle @User` to moderate it." +
 	"\n`<prefix>confess` in a channel to set it up.";
 export async function execute(
-	client: Client<true>,
+	_client: Client<true>,
 	msg: Message,
 	args: string[],
 	ext: ExternalDependencies
@@ -395,14 +393,6 @@ function createGuildUserRecords(db: Database, msg: Message<false>) {
 	});
 
 	insert_guild_users(msg as Message<false>);
-}
-
-function hash(content: string, hash_length: number) {
-	return createHash("sha256")
-		.update(content)
-		.digest("hex")
-		.toString()
-		.slice(0, hash_length);
 }
 
 function dateToString(date: Date) {

@@ -1,6 +1,9 @@
 
 import { Client } from "discord.js";
+import sql from "sql-template-tag";
 import EventEmitter from "node:events";
+
+import { Database } from "better-sqlite3";
 
 import dayjs from "dayjs";
 import advancedFormat from "dayjs/plugin/advancedFormat.js";
@@ -10,6 +13,7 @@ import relativeTime from "dayjs/plugin/relativeTime.js";
 
 import {Expr} from "@helpers/reminder/parser.js";
 import {ReminderCommand, MainReminderCommand, RelativeCommand, AbsoluteCommand, RecurringCommand, AbsoluteContent, RelativeContent} from "@helpers/reminder/command.js";
+import {AbsoluteContentTable, RelativeContentTable, ReminderTable} from "@helpers/db/migrations/reminder";
 
 dayjs.extend(advancedFormat);
 dayjs.extend(utc);
@@ -29,22 +33,154 @@ export class ReminderEmitter {
 	private reminders: Reminders = new Map();
 	private reminder_event = new EventEmitter();
 	private command_maker = new ReminderCommand();
-	constructor(client: Client<boolean>) {
+	constructor(client: Client<boolean>, db: Database) {
 		setInterval(() => {
 			// global timer for the reminders.
 			this.reminder_event.emit("tickPassed", this.reminders, client);
 		}, 10 * 1000);
+		setInterval(() => {
+			// global timer for db backups
+			this.reminder_event.emit("backupDB", this.reminders, db);
+		}, 60 * 1000);
 	}
 
 	/**
 	* Attaches the main reminding function to the global timer.
 	*/
 	public activate() {
-		this.reminder_event.on("tickPassed", (user_reminders, client) => {
+		this.reminder_event.on("tickPassed", (user_reminders: Reminders, client: Client<true>) => {
 			for (const [userid, reminders] of user_reminders) {
 				this.processUserReminders(userid, reminders, client);
 			}
 		});
+	}
+	/**
+	* Attaches the function for persistent reminders.
+	*/
+	public activateDatabase() {
+		this.reminder_event.on("backupDB", this.backupDB);
+	}
+
+	private restoreRemindersFromDB(db: Database) {
+		const reminders = db.transaction(() => {
+			const get_reminder = db.prepare(sql`
+				SELECT id, user_id, type 
+				FROM reminder 
+			`.sql);
+			const get_relative = db.prepare<number>(sql`
+				SELECT *
+				FROM relative_content
+				WHERE reminder_id = ?
+				LIMIT 1
+			`.sql);
+			const get_absolute = db.prepare<number>(sql`
+				SELECT *
+				FROM absolute_content
+				WHERE reminder_id = ?
+				LIMIT 1
+			`.sql);
+			const reminders = get_reminder.all() as Pick<ReminderTable, "id" | "user_id" | "type">[];
+			for (const reminder of reminders) {
+				if (reminder.type === "Relative") {
+					// display relative from get_relative
+					const relative = get_relative.get(reminder.id) as RelativeContentTable;
+					// somehow sort that index.
+					this.pushReminder(reminder.user_id, { index: 0 });
+					this.reminders.set(, value)
+				}
+				if (reminder.type === "Absolute") {
+					// display absolute from get_absolute
+					const absolute = get_absolute.get(reminder.id) as AbsoluteContentTable;
+				}
+			}
+		});
+	}
+
+	private backupDB(user_reminders: Reminders, db: Database) {
+		const backup = db.transaction((user_reminders: Reminders) => {
+			const insert_reminder = db.prepare<Pick<ReminderTable, "user_id" | "type" | "message">>(sql`
+				INSERT reminder (user_id, type, message)
+				VALUES (@user_id, @type, @message)
+				RETURNING id
+			`.sql);
+			const insert_relative = db.prepare<Omit<RelativeContentTable, "id">>(sql`
+				INSERT relative_content (
+					reminder_id,
+					d, h, m,
+					is_recurring
+				)
+				VALUES (
+					@reminder_id,
+					@d, @h, @m,
+					@is_recurring
+				)
+			`.sql);
+			const insert_absolute = db.prepare<Omit<AbsoluteContentTable, "id">>(sql`
+				INSERT absolute_content (
+					reminder_id,
+					year, month, date,
+					hour, minute,
+					timezone,
+					is_recurring
+				)
+				VALUES (
+					@reminder_id,
+					@year, @month, @date,
+					@hour, @minute,
+					@timezone,
+					@is_recurring
+				)
+			`.sql);
+			const delete_table = db.prepare(sql`DELETE FROM reminder`.sql);
+
+			// perf issue: this deletes everything 
+			// 		in the database and puts it back.
+			// I have no way to track what's in the database and what isn't
+			// 		without a "reminder id" for this class and the reminder table.
+			//
+			// This isn't a massive cause for concern due to low traffic
+			// but im leaving this note in case this becomes a problem.
+			delete_table.run();
+
+			for (const [user_id, reminders] of user_reminders) {
+				for (const reminder of reminders) {
+					const rme = reminder as RecurringCommand | RelativeCommand | AbsoluteCommand;
+					const is_recurring = reminder.command === "Recurring";
+					if (rme.command === "Relative") {
+						const reminder = insert_reminder.get({
+							user_id: user_id, 
+							type: rme.command,
+							message: rme.message,
+						}) as Pick<ReminderTable, "id">;
+						insert_relative.run({
+							reminder_id: reminder.id,
+							d: rme.content.d,
+							h: rme.content.h,
+							m: rme.content.m,
+							is_recurring: is_recurring,
+						});
+					}
+					if (rme.command === "Absolute") {
+						const reminder = insert_reminder.get({
+							user_id: user_id, 
+							type: rme.command,
+							message: rme.message,
+						}) as Pick<ReminderTable, "id">;
+						insert_absolute.run({
+							"year": rme.content.year,
+							"month": rme.content.month,
+							"date": rme.content.date,
+							"hour": rme.content.hour,
+							"minute": rme.content.minute,
+							"timezone": rme.content.timezone,
+							"reminder_id": reminder.id,
+							"is_recurring": is_recurring,
+						});
+					}
+				}
+			}
+		});
+		backup(user_reminders);
 	}
 
 	/**

@@ -1,7 +1,6 @@
 
 import sqlite3, {Database} from "better-sqlite3";
 import {creation} from "./migrations/creation";
-import {readFile} from "node:fs/promises";
 
 type DBFn = (db: Database) => void;
 
