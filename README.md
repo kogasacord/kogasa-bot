@@ -19,7 +19,7 @@ Prefix: `??`
 - `calc`: A recursive descent parsing calculator.
 - `confess`: Share your secrets in servers without anyone knowing.
 - `quote`: Reply to someone to quote their message on a dramatic picture. Requires [canvas-go](https://github.com/kogasacord/canvas-go).
-- `remindme`: Reminds you something in a specified time.
+- `remindme`: Reminds you something in a specified time. These are persistent, saved every minute.
 - `randomweb`: Sends you a random website with gacha elements snuck in.
 
 Instructions to use these are in the `help` command.
