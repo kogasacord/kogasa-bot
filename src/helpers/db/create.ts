@@ -1,6 +1,7 @@
 
 import sqlite3, {Database} from "better-sqlite3";
 import {creation} from "./migrations/creation";
+import {reminder} from "./migrations/reminder";
 
 type DBFn = (db: Database) => void;
 
@@ -16,6 +17,7 @@ export function createDatabase(path: ":memory:" | string): Database {
 	// this has to be in-order or else the migration script will DIE :sob: please please please
 	const migrations: DBFn[] = [
 		creation,
+		reminder,
 	];
 	migrations
 		.slice(db_version)

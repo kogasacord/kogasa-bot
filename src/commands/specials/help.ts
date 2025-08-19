@@ -40,7 +40,7 @@ export async function execute(
 				.replace("<prefix>", ext.prefix);
 
 			const embed = new EmbedBuilder()
-				.setTitle(`??${command.name}`)
+				.setTitle(`${ext.prefix}${command.name}`)
 				.setDescription(description);
 			msg.reply({ embeds: [embed] });
 		}
@@ -56,7 +56,7 @@ export async function execute(
 		[ThreadChannel, "Thread"],
 	];
 	const embed = new EmbedBuilder().setTitle(
-		"Do ??help [command name] to get an extended description."
+		`Do ${ext.prefix}help [command name] to get an extended description.`
 	);
 	let command_list = "";
 	for (const [name, command] of ext.commands) {

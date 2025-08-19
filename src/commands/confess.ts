@@ -72,7 +72,7 @@ export async function execute(
 	const db = ext.db;
 
 	if (msg.channel.type === ChannelType.DM) {
-		createGuildUserRecords(db, msg as Message<false>);
+		await createGuildUserRecords(db, msg as Message<false>);
 		const servers = listServers(db, msg.author.id);
 
 		const index = args.at(0);
@@ -355,7 +355,7 @@ function sendConfessServerSelection(msg: Message, confess_activated_guilds: Serv
 	});
 }
 
-function createGuildUserRecords(db: Database, msg: Message<false>) {
+async function createGuildUserRecords(db: Database, msg: Message<false>) {
 	const insert_user_stmt = db.prepare<DBUsers>(sql`
 		INSERT OR IGNORE INTO users (id, name)
 		VALUES (@id, @name)
@@ -373,22 +373,33 @@ function createGuildUserRecords(db: Database, msg: Message<false>) {
 		id: msg.author.id, 
 		name: msg.author.globalName ?? msg.author.displayName 
 	});
+	
+	const guilds_joined = new Set<string>();
+	for (const guild of msg.client.guilds.cache.values()) {
+			try {
+				if (guild.members.cache.get(msg.author.id)
+					?? await guild.members.fetch(msg.author.id)) {
+					guilds_joined.add(guild.id);
+				};
+			} catch {
+				// not in this guild
+			}
+	}
 
+	// probably more bugs here from guilds disappearing.
 	const insert_guild_users = db.transaction((msg: Message<false>) => {
 		const db_guild_ids_with_confess = get_confess_guild_ids.all() as { channel_id: string, guild_id: string }[];
-		const discord_guilds = msg.client.guilds.cache;
 		for (const db_res of db_guild_ids_with_confess) {
-			for (const [_, guild] of discord_guilds) {
-				if (db_res.guild_id === guild.id) {
-					insert_guild_user_stmt.run({ 
-						id: hash(msg.author.id + guild.id, HASH_LENGTH),
-						name: msg.author.globalName ?? msg.author.displayName,
-						confess_banned: 0,
-						guild_id: guild.id,
-						user_id: msg.author.id,
-					});
-				}
+			if (!guilds_joined.has(db_res.guild_id)) {
+				continue;
 			}
+			insert_guild_user_stmt.run({ 
+				id: hash(msg.author.id + db_res.guild_id, HASH_LENGTH),
+				name: msg.author.globalName ?? msg.author.displayName,
+				confess_banned: 0,
+				guild_id: db_res.guild_id,
+				user_id: msg.author.id,
+			});
 		}
 	});
 

@@ -17,7 +17,7 @@ import { messageDelete } from "./src/discord/message_delete.js";
 import { messageCreate } from "./src/discord/message_create.js";
 import { ready } from "./src/discord/ready.js";
 import { ReminderEmitter } from "@helpers/reminder/reminders.js";
-import {createDatabase} from "@helpers/db/create.js";
+import { createDatabase } from "@helpers/db/create.js";
 
 ///////////////////////////////////////////////////////////////////////////////////
 
@@ -52,7 +52,7 @@ const websites: Website[] = await helpers.grabAllRandomWebsites(
 );
 const aliases = helpers.postProcessAliases(commands);
 const chat_buffer: ChatBuffer = new Map();
-const reminder_emitter = new ReminderEmitter(client);
+const reminder_emitter = new ReminderEmitter(client, db);
 
 const other_dependencies: DiscordExternalDependencies = {
 	reminder_emitter,

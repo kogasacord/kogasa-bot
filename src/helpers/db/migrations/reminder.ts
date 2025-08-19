@@ -14,7 +14,8 @@ export interface RelativeContentTable {
 	d: number,
 	h: number,
 	m: number,
-	is_recurring: boolean,
+	to_date: string, // DATE ISO STRING
+	is_recurring: number, // BOOLEAN
 }
 export interface AbsoluteContentTable {
 	id: number,
@@ -24,8 +25,9 @@ export interface AbsoluteContentTable {
 	date: number,
 	hour: number,
 	minute: number,
+	to_date: string, // DATE ISO STRING
 	timezone: string,
-	is_recurring: boolean,
+	is_recurring: number, // BOOLEAN
 }
 
 export function reminder(db: Database) {
@@ -36,7 +38,7 @@ export function reminder(db: Database) {
 				user_id TEXT NOT NULL,
 				type TEXT CHECK (type IN ('Relative', 'Absolute')) NOT NULL,
 				message TEXT NOT NULL,
-				FOREIGN KEY (user_id) REFERENCES user(id) ON DELETE CASCADE
+				FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 			);
 		`.sql).run();
 		db.prepare(sql`
@@ -46,6 +48,7 @@ export function reminder(db: Database) {
 				d INTEGER NOT NULL,
 				h INTEGER NOT NULL,
 				m INTEGER NOT NULL,
+				to_date STRING NOT NULL,
 				is_recurring INTEGER NOT NULL,
 				FOREIGN KEY (reminder_id) REFERENCES reminder(id) ON DELETE CASCADE
 			);
@@ -59,6 +62,7 @@ export function reminder(db: Database) {
 				date INTEGER NOT NULL,
 				hour INTEGER NOT NULL,
 				minute INTEGER NOT NULL,
+				to_date STRING NOT NULL,
 				timezone TEXT NOT NULL,
 				is_recurring INTEGER NOT NULL,
 				FOREIGN KEY (reminder_id) REFERENCES reminder(id) ON DELETE CASCADE
