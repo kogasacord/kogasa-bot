@@ -52,7 +52,7 @@ const websites: Website[] = await helpers.grabAllRandomWebsites(
 );
 const aliases = helpers.postProcessAliases(commands);
 const chat_buffer: ChatBuffer = new Map();
-const reminder_emitter = new ReminderEmitter(client, db);
+const reminder_emitter = new ReminderEmitter();
 
 const other_dependencies: DiscordExternalDependencies = {
 	reminder_emitter,
@@ -83,8 +83,8 @@ client.on(
 );
 client.on("ready", (client) => {
 	ready(client, settings);
-	reminder_emitter.activate();
-	reminder_emitter.activateBackups(db);
+	reminder_emitter.restoreRemindersFromDB(db);
+	reminder_emitter.activate(client, db, settings.test);
 });
 if (settings.offlineMode) {
 	console.log("Running in offline mode. Exiting...");

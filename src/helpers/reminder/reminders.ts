@@ -33,39 +33,34 @@ export class ReminderEmitter {
 	private reminders: Reminders = new Map();
 	private reminder_event = new EventEmitter();
 	private command_maker = new ReminderCommand();
-	constructor(client: Client<boolean>, db: Database) {
-		setInterval(() => {
-			if (client.isReady()) {
-				this.printReminders(client, db);
-				this.reminder_event.emit("tickPassed", this.reminders, client);
-			}
-			// global timer for the reminders.
-		}, 10 * 1000);
-		setInterval(() => {
-			// global timer for db backups
-			this.reminder_event.emit("backupDB", client, db, this.reminders);
-		}, 5 * 1000);
-	}
-
-	/**
-	* Attaches the main reminding function to the global timer.
-	*/
-	public activate() {
+	constructor() {
 		this.reminder_event.on("tickPassed", (user_reminders: Reminders, client: Client<true>) => {
 			for (const [userid, reminders] of user_reminders) {
 				this.processUserReminders(userid, reminders, client);
 			}
 		});
-	}
-	/**
-	 * BROKEN!! needs to be tested with other users.
-	 */
-	public activateBackups(db: Database) {
-		this.restoreRemindersFromDB(db);
 		this.reminder_event.on("backupDB", this.backupDB);
 	}
 
-	private restoreRemindersFromDB(db: Database) {
+	/**
+	* Attaches the main reminding function and backup function to the global timer.
+	*/
+	public activate(client: Client<true>, db: Database, test: boolean) {
+		setInterval(() => {
+			this.reminder_event.emit("backupDB", client, db, this.reminders);
+		}, 60 * 1000);
+		setInterval(() => {
+			if (test) {
+				this.printReminders(client, db);
+			}
+			this.reminder_event.emit("tickPassed", this.reminders, client);
+		}, 10 * 1000);
+	}
+
+	/**
+	* Restores reminders from the database.
+	*/
+	public restoreRemindersFromDB(db: Database) {
 		const reminders = db.transaction(() => {
 			const get_reminder = db.prepare(sql`
 				SELECT *
@@ -145,7 +140,7 @@ export class ReminderEmitter {
 			LIMIT 1
 		`.sql);
 		const db_reminder = get_reminder.all() as ReminderTable[];
-		const reminders = db_reminder.map((v, index) => {
+		const reminders = db_reminder.map((v) => {
 			if (v.type === "Absolute") {
 				const absolute = get_absolute.get(v.id) as AbsoluteContentTable;
 				return absolute;
