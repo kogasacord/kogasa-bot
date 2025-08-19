@@ -84,6 +84,7 @@ client.on(
 client.on("ready", (client) => {
 	ready(client, settings);
 	reminder_emitter.activate();
+	reminder_emitter.activateBackups(db);
 });
 if (settings.offlineMode) {
 	console.log("Running in offline mode. Exiting...");

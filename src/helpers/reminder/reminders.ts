@@ -36,7 +36,7 @@ export class ReminderEmitter {
 	constructor(client: Client<boolean>, db: Database) {
 		setInterval(() => {
 			if (client.isReady()) {
-				// this.printReminders(client, db);
+				this.printReminders(client, db);
 				this.reminder_event.emit("tickPassed", this.reminders, client);
 			}
 			// global timer for the reminders.
@@ -58,7 +58,7 @@ export class ReminderEmitter {
 		});
 	}
 	/**
-	 * BROKEN!! IDs autoincrement every deletion.
+	 * BROKEN!! needs to be tested with other users.
 	 */
 	public activateBackups(db: Database) {
 		this.restoreRemindersFromDB(db);
@@ -103,7 +103,6 @@ export class ReminderEmitter {
 					this.pushReminder(reminder.user_id, rme_absolute);
 				}
 				if (reminder.type === "Absolute") {
-					// display absolute from get_absolute
 					const absolute = get_absolute.get(reminder.id) as AbsoluteContentTable;
 					const rme_content: AbsoluteContent = {
 						"year": absolute.year,
@@ -147,14 +146,13 @@ export class ReminderEmitter {
 		`.sql);
 		const db_reminder = get_reminder.all() as ReminderTable[];
 		const reminders = db_reminder.map((v, index) => {
-			console.log(index, v);
 			if (v.type === "Absolute") {
-				const relative = get_relative.get(v.id) as RelativeContentTable;
-				return relative;
-			}
-			if (v.type === "Relative") {
 				const absolute = get_absolute.get(v.id) as AbsoluteContentTable;
 				return absolute;
+			}
+			if (v.type === "Relative") {
+				const relative = get_relative.get(v.id) as RelativeContentTable;
+				return relative;
 			}
 			throw new Error(`debug: not supposed to be here. ${JSON.stringify(v)}`);
 		});
@@ -178,14 +176,14 @@ export class ReminderEmitter {
 				INSERT INTO relative_content (
 					reminder_id,
 					d, h, m,
-					is_recurring,
-					to_date
+					to_date,
+					is_recurring
 				)
 				VALUES (
 					@reminder_id,
 					@d, @h, @m,
-					@is_recurring,
-					@to_date
+					@to_date,
+					@is_recurring
 				)
 			`.sql);
 			const insert_absolute = db.prepare<Omit<AbsoluteContentTable, "id">>(sql`
@@ -194,19 +192,18 @@ export class ReminderEmitter {
 					year, month, date,
 					hour, minute,
 					timezone,
-					is_recurring,
-					to_date
+					to_date,
+					is_recurring
 				)
 				VALUES (
 					@reminder_id,
 					@year, @month, @date,
 					@hour, @minute,
 					@timezone,
-					@is_recurring,
-					@to_date
+					@to_date,
+					@is_recurring
 				)
 			`.sql);
-			const delete_table = db.prepare(sql`DELETE FROM reminder`.sql);
 
 			// perf issue: this deletes everything 
 			// 		in the database and puts it back.
@@ -215,36 +212,36 @@ export class ReminderEmitter {
 			//
 			// This isn't a massive cause for concern due to low traffic
 			// but im leaving this note in case this becomes a problem.
-			delete_table.run();
+			[
+				sql`DELETE FROM reminder`.sql,
+				sql`DELETE FROM sqlite_sequence WHERE name='reminder'`.sql,
+				sql`DELETE FROM sqlite_sequence WHERE name='relative_content'`.sql,
+				sql`DELETE FROM sqlite_sequence WHERE name='absolute_content'`.sql,
+			].map(v => db.prepare(v).run());
 
 			for (const [user_id, reminders] of user_reminders) {
 				const user = client.users.cache.get(user_id);
-
 				insert_user_if_exists.run({ id: user_id, name: user?.username ?? "unknown" })
+
 				for (const reminder of reminders) {
 					const rme = reminder as RecurringCommand | RelativeCommand | AbsoluteCommand;
-					const is_recurring = reminder.command === "Recurring";
-					if (rme.command === "Relative") {
-						const reminder = insert_reminder.get({
-							user_id: user_id, 
-							type: rme.command,
-							message: rme.message,
-						}) as Pick<ReminderTable, "id">;
+					const is_recurring = rme.command === "Recurring";
+					const reminder_record = insert_reminder.get({
+						user_id: user_id, 
+						type: rme.content.type,
+						message: rme.message,
+					}) as Pick<ReminderTable, "id">;
+					if (rme.content.type === "Relative") {
 						insert_relative.run({
-							reminder_id: reminder.id,
+							reminder_id: reminder_record.id,
 							d: rme.content.d,
 							h: rme.content.h,
 							m: rme.content.m,
-							is_recurring: is_recurring ? 0 : 1,
+							is_recurring: is_recurring ? 1 : 0,
 							to_date: rme.to_date.toISOString()
 						});
 					}
-					if (rme.command === "Absolute") {
-						const reminder = insert_reminder.get({
-							user_id: user_id, 
-							type: rme.command,
-							message: rme.message,
-						}) as Pick<ReminderTable, "id">;
+					if (rme.content.type === "Absolute") {
 						insert_absolute.run({
 							year: rme.content.year,
 							month: rme.content.month,
@@ -252,8 +249,8 @@ export class ReminderEmitter {
 							hour: rme.content.hour,
 							minute: rme.content.minute,
 							timezone: rme.content.timezone,
-							reminder_id: reminder.id,
-							is_recurring: is_recurring ? 0 : 1,
+							reminder_id: reminder_record.id,
+							is_recurring: is_recurring ? 1 : 0,
 							to_date: rme.to_date.toISOString()
 						});
 					}

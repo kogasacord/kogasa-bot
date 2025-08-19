@@ -27,7 +27,7 @@ export interface AbsoluteContentTable {
 	minute: number,
 	to_date: string, // DATE ISO STRING
 	timezone: string,
-	is_recurring: number, // BOOLEAN
+	is_recurring: number,
 }
 
 export function reminder(db: Database) {

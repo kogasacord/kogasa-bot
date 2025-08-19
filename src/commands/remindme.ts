@@ -12,7 +12,7 @@ const parser = new RemindParser();
 
 export const name = "remindme";
 export const aliases = ["rme", "remind"];
-export const cooldown = 8;
+export const cooldown = 1;
 export const channel: ChannelScope[] = ["Guild", "DMs", "Thread"];
 export const description = "Reminds you.";
 export const extended_description =
