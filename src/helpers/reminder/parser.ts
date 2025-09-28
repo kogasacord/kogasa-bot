@@ -210,8 +210,10 @@ export class RemindParser {
 		}
 
 		let minute: number | undefined = undefined;
-		if (this.match([RemindTokenType.COLON, RemindTokenType.NUMBER])) {
-			minute = this.advance().literal!;
+		if (this.match([RemindTokenType.COLON])) {
+			this.advance();
+			const token = this.consume([RemindTokenType.NUMBER], "You need to indicate the minute hand when you put a colon!");
+			minute = token.literal!;
 		}
 
 		if (this.check(RemindTokenType.STRING)) {
