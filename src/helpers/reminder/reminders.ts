@@ -352,6 +352,7 @@ export class ReminderEmitter {
 	}
 	private recurringAbsoluteReminder(reminder: RecurringCommand) {
 		const content = reminder.content as AbsoluteContent;
+		const priorities = [content.year, content.month, content.date, content.hour, content.minute];
 	}
 	private pushReminder(user_id: string, user_reminder: MainReminderCommand) {
 		if (!this.reminders.has(user_id)) {

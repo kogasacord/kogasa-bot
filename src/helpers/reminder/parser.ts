@@ -153,15 +153,13 @@ export class RemindParser {
 				expr: this.relative(),
 			};
 		}
-		/*
-		hmmm, absolute recurring reminders later.
-		if (next.type === RemindTokenType.ABS_UNIT || next.type === RemindTokenType.DASH) {
+		// hmmm, absolute recurring reminders NOW!!
+		if (this.matchNext([...this.ABS_UNITS, RemindTokenType.DASH])) {
 			return {
 				type: "Recurring",
 				expr: this.absolute(),
 			};
 		}
-		*/
 		throw this.error(this.peek(), "Recurring reminders only accepts relative times. `??rme every 2d Message.`");
 	}
 	private absolute(): Absolute {
@@ -210,10 +208,9 @@ export class RemindParser {
 		if (this.check(RemindTokenType.NUMBER)) {
 			hour = this.advance().literal!;
 		}
-		this.consume([RemindTokenType.COLON], "Expected ':' in clock.");
 
 		let minute: number | undefined = undefined;
-		if (this.check(RemindTokenType.NUMBER)) {
+		if (this.match([RemindTokenType.COLON, RemindTokenType.NUMBER])) {
 			minute = this.advance().literal!;
 		}
 
