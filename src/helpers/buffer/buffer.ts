@@ -9,7 +9,7 @@ export function makeMessageBuffer(msg: Message): ChatBufferMessage {
 	const attachments = msg.attachments.map((v) => v.url);
 	return {
 		id: msg.id,
-		display_name: msg.author.displayName,
+		display_name: msg.author.displayName ?? msg.author.globalName ?? msg.author.username,
 		content: msg.content,
 		attachments: attachments,
 		is_deleted: false,
