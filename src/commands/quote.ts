@@ -6,6 +6,7 @@ import {
 	User,
 } from "discord.js";
 import { ChannelScope } from "@helpers/types";
+import { getAvatarURL } from "@helpers/misc/link";
 
 export const name = "quote";
 export const aliases = ["q"];
@@ -37,13 +38,18 @@ export async function execute(
 		guild.members.cache.get(replied.author.id) ??
 		(await guild.members.fetch(replied.author.id));
 
-	const avatar_url = getAvatarURL(replied.author, guild_member);
+	const avatar_url = await getAvatarURL(replied.author, guild_member);
+
+	console.log(avatar_url);
+	if (avatar_url.type === "gif") {
+		throw new Error("GIF avatars not supported yet.");
+	}
 
 	try {
 		const recieved_quote = await helpers.quoteDefault(
 			parsed_content,
 			"- " + replied.author.username,
-			avatar_url
+			avatar_url.url
 		);
 		msg.reply({
 			files: [{ attachment: recieved_quote }],
@@ -52,14 +58,6 @@ export async function execute(
 		msg.reply("Something went wrong.");
 		console.log(err);
 	}
-}
-
-function getAvatarURL(user: User, guild_member: GuildMember) {
-	return (
-		guild_member.avatarURL({ size: 1024, extension: "png" }) ??
-		user.avatarURL({ size: 1024, extension: "png" }) ??
-		user.displayAvatarURL({ size: 1024, extension: "png" })
-	);
 }
 
 /**
