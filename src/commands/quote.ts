@@ -1,10 +1,5 @@
 import helpers from "@helpers/helpers.js";
-import {
-	Client,
-	GuildMember,
-	Message,
-	User,
-} from "discord.js";
+import { Client, GuildMember, Message, User } from "discord.js";
 import { ChannelScope } from "@helpers/types";
 
 export const name = "quote";
@@ -20,13 +15,14 @@ export async function execute(
 	msg: Message<true>,
 	_args: string[]
 ) {
-	if (!(msg.reference && msg.reference.messageId) && msg.content.length <= 0) {
+	const messageId = msg.reference?.messageId;
+	if (!messageId || msg.content.length <= 0) {
 		msg.reply("You need to reply to a message in order to quote it.");
 		return;
 	}
 	const replied =
-		msg.channel.messages.cache.get(msg.reference!.messageId!) ??
-		(await msg.channel.messages.fetch(msg.reference!.messageId!));
+		msg.channel.messages.cache.get(messageId) ??
+		(await msg.channel.messages.fetch(messageId));
 
 	const parsed_content = await parseQuotes(client, replied.content);
 
