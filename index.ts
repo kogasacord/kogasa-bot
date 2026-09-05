@@ -45,7 +45,10 @@ const client = new Client({
 ///////////////////////////////////////////////////////////////////////////////////
 const commands = new Collection<string, CommandModule>().concat(
 	await helpers.importCommandsFromDirectory(__dirname, "/src/commands/"),
-	await helpers.importCommandsFromDirectory(__dirname, "/src/commands/specials/")
+	await helpers.importCommandsFromDirectory(
+		__dirname,
+		"/src/commands/specials/"
+	)
 );
 const websites: Website[] = await helpers.grabAllRandomWebsites(
 	path.join(__dirname, "./media/randomweb.jsonl")

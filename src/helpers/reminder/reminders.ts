@@ -1,4 +1,3 @@
-
 import { Client } from "discord.js";
 import sql from "sql-template-tag";
 import EventEmitter from "node:events";
@@ -11,9 +10,21 @@ import utc from "dayjs/plugin/utc.js";
 import timezone from "dayjs/plugin/timezone.js";
 import relativeTime from "dayjs/plugin/relativeTime.js";
 
-import {Expr} from "@helpers/reminder/parser.js";
-import {ReminderCommand, MainReminderCommand, RelativeCommand, AbsoluteCommand, RecurringCommand, AbsoluteContent, RelativeContent} from "@helpers/reminder/command.js";
-import {AbsoluteContentTable, RelativeContentTable, ReminderTable} from "@helpers/db/migrations/reminder";
+import { Expr } from "@helpers/reminder/parser.js";
+import {
+	ReminderCommand,
+	MainReminderCommand,
+	RelativeCommand,
+	AbsoluteCommand,
+	RecurringCommand,
+	AbsoluteContent,
+	RelativeContent,
+} from "@helpers/reminder/command.js";
+import {
+	AbsoluteContentTable,
+	RelativeContentTable,
+	ReminderTable,
+} from "@helpers/db/migrations/reminder";
 
 dayjs.extend(advancedFormat);
 dayjs.extend(utc);
@@ -25,7 +36,7 @@ function isMainRemindCommand(obj: object): obj is MainReminderCommand {
 	return (obj as MainReminderCommand).command !== undefined;
 }
 
-// atrocious performance. 
+// atrocious performance.
 // this loops through every single user and loops through their reminders,
 // 		then picks out the reminders that are due.
 
@@ -34,17 +45,24 @@ export class ReminderEmitter {
 	private reminder_event = new EventEmitter();
 	private command_maker = new ReminderCommand();
 	constructor() {
-		this.reminder_event.on("tickPassed", (user_reminders: Reminders, client: Client<true>) => {
-			for (const [userid, reminders] of user_reminders) {
-				this.processUserReminders(userid, reminders, client);
+		this.reminder_event.on(
+			"tickPassed",
+			async (user_reminders: Reminders, client: Client<true>) => {
+				try {
+					for (const [userid, reminders] of user_reminders) {
+						await this.processUserReminders(userid, reminders, client);
+					}
+				} catch (error) {
+					console.error("[ERROR] in ReminderEmitter..\n", error);
+				}
 			}
-		});
+		);
 		this.reminder_event.on("backupDB", this.backupDB);
 	}
 
 	/**
-	* Attaches the main reminding function and backup function to the global timer.
-	*/
+	 * Attaches the main reminding function and backup function to the global timer.
+	 */
 	public activate(client: Client<true>, db: Database, test: boolean) {
 		setInterval(() => {
 			this.reminder_event.emit("backupDB", client, db, this.reminders);
@@ -58,87 +76,102 @@ export class ReminderEmitter {
 	}
 
 	/**
-	* Restores reminders from the database.
-	*/
+	 * Restores reminders from the database.
+	 */
 	public restoreRemindersFromDB(db: Database) {
 		const reminders = db.transaction(() => {
-			const get_reminder = db.prepare(sql`
+			const get_reminder = db.prepare(
+				sql`
 				SELECT *
 				FROM reminder 
-			`.sql);
-			const get_relative = db.prepare<number>(sql`
+			`.sql
+			);
+			const get_relative = db.prepare<number>(
+				sql`
 				SELECT *
 				FROM relative_content
 				WHERE reminder_id = ?
 				LIMIT 1
-			`.sql);
-			const get_absolute = db.prepare<number>(sql`
+			`.sql
+			);
+			const get_absolute = db.prepare<number>(
+				sql`
 				SELECT *
 				FROM absolute_content
 				WHERE reminder_id = ?
 				LIMIT 1
-			`.sql);
+			`.sql
+			);
 
 			const reminders = get_reminder.all() as ReminderTable[];
 			for (const reminder of reminders) {
 				if (reminder.type === "Relative") {
-					const relative = get_relative.get(reminder.id) as RelativeContentTable;
+					const relative = get_relative.get(
+						reminder.id
+					) as RelativeContentTable;
 					const rme_content: RelativeContent = {
-						"d": relative.d,
-						"h": relative.h,
-						"m": relative.m,
-						"type": "Relative",
+						d: relative.d,
+						h: relative.h,
+						m: relative.m,
+						type: "Relative",
 					};
 					const rme_absolute: RelativeCommand | RecurringCommand = {
-						"command": relative.is_recurring ? "Recurring" : "Relative",
-						"content": rme_content,
-						"message": reminder.message,
-						"to_date": dayjs(relative.to_date),
+						command: relative.is_recurring ? "Recurring" : "Relative",
+						content: rme_content,
+						message: reminder.message,
+						to_date: dayjs(relative.to_date),
 					};
 					this.pushReminder(reminder.user_id, rme_absolute);
 				}
 				if (reminder.type === "Absolute") {
-					const absolute = get_absolute.get(reminder.id) as AbsoluteContentTable;
+					const absolute = get_absolute.get(
+						reminder.id
+					) as AbsoluteContentTable;
 					const rme_content: AbsoluteContent = {
-						"year": absolute.year,
-						"month": absolute.month,
-						"date": absolute.date,
-						"hour": absolute.hour,
-						"minute": absolute.minute,
-						"timezone": absolute.timezone,
-						"type": "Absolute",
-					}
+						year: absolute.year,
+						month: absolute.month,
+						date: absolute.date,
+						hour: absolute.hour,
+						minute: absolute.minute,
+						timezone: absolute.timezone,
+						type: "Absolute",
+					};
 					const rme_absolute: AbsoluteCommand | RecurringCommand = {
-						"command": absolute.is_recurring ? "Recurring" : "Absolute",
-						"content": rme_content,
-						"message": reminder.message,
-						"to_date": dayjs(absolute.to_date).tz(absolute.timezone),
+						command: absolute.is_recurring ? "Recurring" : "Absolute",
+						content: rme_content,
+						message: reminder.message,
+						to_date: dayjs(absolute.to_date).tz(absolute.timezone),
 					};
 					this.pushReminder(reminder.user_id, rme_absolute);
 				}
 			}
-
 		});
 		reminders();
 	}
 
 	private printReminders(client: Client<true>, db: Database) {
-		const get_reminder = db.prepare(sql`
+		const get_reminder = db.prepare(
+			sql`
 			SELECT *
 			FROM reminder 
-		`.sql);
-		const get_relative = db.prepare<number>(sql`
+		`.sql
+		);
+		const get_relative = db.prepare<number>(
+			sql`
 			SELECT *
 			FROM relative_content
 			WHERE reminder_id = ?
 			LIMIT 1
-		`.sql);
-		const get_absolute = db.prepare<number>(sql`
+		`.sql
+		);
+		const get_absolute = db.prepare<number>(
+			sql`
 			SELECT *
 			FROM absolute_content
 			WHERE reminder_id = ?
 			LIMIT 1
-		`.sql);
+		`.sql
+		);
 		const db_reminder = get_reminder.all() as ReminderTable[];
 		const reminders = db_reminder.map((v) => {
 			if (v.type === "Absolute") {
@@ -151,23 +184,37 @@ export class ReminderEmitter {
 			}
 			throw new Error(`debug: not supposed to be here. ${JSON.stringify(v)}`);
 		});
-		client.users.createDM("509683395224141827")
-			.then(v => { v.send(JSON.stringify(reminders, null, 4)) })
+		client.users
+			.createDM("509683395224141827")
+			.then((v) => {
+				v.send(JSON.stringify(reminders, null, 4));
+			})
 			.catch(console.log);
 	}
 
-	private backupDB(client: Client<true>, db: Database, user_reminders: Reminders) {
+	private backupDB(
+		client: Client<true>,
+		db: Database,
+		user_reminders: Reminders
+	) {
 		const backup = db.transaction((user_reminders: Reminders) => {
-			const insert_user_if_exists = db.prepare(sql`
+			const insert_user_if_exists = db.prepare(
+				sql`
 				INSERT OR IGNORE INTO users (id, name)
 				VALUES (@id, @name)
-			`.sql);
-			const insert_reminder = db.prepare<Pick<ReminderTable, "user_id" | "type" | "message">>(sql`
+			`.sql
+			);
+			const insert_reminder = db.prepare<
+				Pick<ReminderTable, "user_id" | "type" | "message">
+			>(
+				sql`
 				INSERT INTO reminder (user_id, type, message)
 				VALUES (@user_id, @type, @message)
 				RETURNING id
-			`.sql);
-			const insert_relative = db.prepare<Omit<RelativeContentTable, "id">>(sql`
+			`.sql
+			);
+			const insert_relative = db.prepare<Omit<RelativeContentTable, "id">>(
+				sql`
 				INSERT INTO relative_content (
 					reminder_id,
 					d, h, m,
@@ -180,8 +227,10 @@ export class ReminderEmitter {
 					@to_date,
 					@is_recurring
 				)
-			`.sql);
-			const insert_absolute = db.prepare<Omit<AbsoluteContentTable, "id">>(sql`
+			`.sql
+			);
+			const insert_absolute = db.prepare<Omit<AbsoluteContentTable, "id">>(
+				sql`
 				INSERT INTO absolute_content (
 					reminder_id,
 					year, month, date,
@@ -198,9 +247,10 @@ export class ReminderEmitter {
 					@to_date,
 					@is_recurring
 				)
-			`.sql);
+			`.sql
+			);
 
-			// perf issue: this deletes everything 
+			// perf issue: this deletes everything
 			// 		in the database and puts it back.
 			// I have no way to track what's in the database and what isn't
 			// 		without a "reminder id" for this class and the reminder table.
@@ -212,17 +262,23 @@ export class ReminderEmitter {
 				sql`DELETE FROM sqlite_sequence WHERE name='reminder'`.sql,
 				sql`DELETE FROM sqlite_sequence WHERE name='relative_content'`.sql,
 				sql`DELETE FROM sqlite_sequence WHERE name='absolute_content'`.sql,
-			].map(v => db.prepare(v).run());
+			].map((v) => db.prepare(v).run());
 
 			for (const [user_id, reminders] of user_reminders) {
 				const user = client.users.cache.get(user_id);
-				insert_user_if_exists.run({ id: user_id, name: user?.username ?? "unknown" })
+				insert_user_if_exists.run({
+					id: user_id,
+					name: user?.username ?? "unknown",
+				});
 
 				for (const reminder of reminders) {
-					const rme = reminder as RecurringCommand | RelativeCommand | AbsoluteCommand;
+					const rme = reminder as
+						| RecurringCommand
+						| RelativeCommand
+						| AbsoluteCommand;
 					const is_recurring = rme.command === "Recurring";
 					const reminder_record = insert_reminder.get({
-						user_id: user_id, 
+						user_id: user_id,
 						type: rme.content.type,
 						message: rme.message,
 					}) as Pick<ReminderTable, "id">;
@@ -233,7 +289,7 @@ export class ReminderEmitter {
 							h: rme.content.h,
 							m: rme.content.m,
 							is_recurring: is_recurring ? 1 : 0,
-							to_date: rme.to_date.toISOString()
+							to_date: rme.to_date.toISOString(),
 						});
 					}
 					if (rme.content.type === "Absolute") {
@@ -246,7 +302,7 @@ export class ReminderEmitter {
 							timezone: rme.content.timezone,
 							reminder_id: reminder_record.id,
 							is_recurring: is_recurring ? 1 : 0,
-							to_date: rme.to_date.toISOString()
+							to_date: rme.to_date.toISOString(),
 						});
 					}
 				}
@@ -257,17 +313,22 @@ export class ReminderEmitter {
 	}
 
 	/**
-	* Used to run the expression from the parser.
-	*
-	* @param user_id - The id of the user to store reminders in.
-	* @param input - The result of the parser.
-	* @returns 
-	*/
-	public runExpr(user_id: string, input: Expr): { action: "push" | "pop" | "list", content: MainReminderCommand[] } {
+	 * Used to run the expression from the parser.
+	 *
+	 * @param user_id - The id of the user to store reminders in.
+	 * @param input - The result of the parser.
+	 * @returns
+	 */
+	public runExpr(
+		user_id: string,
+		input: Expr
+	): { action: "push" | "pop" | "list"; content: MainReminderCommand[] } {
 		const time = dayjs();
 		const command = this.command_maker.recursiveParse(input, time);
 		if (!isMainRemindCommand(command)) {
-			throw new Error("Something went horribly wrong. The interpreter only supports recurring, relative, and absolute reminders. Something changed in the parser.");
+			throw new Error(
+				"Something went horribly wrong. The interpreter only supports recurring, relative, and absolute reminders. Something changed in the parser."
+			);
 		}
 
 		switch (command.command) {
@@ -299,31 +360,43 @@ export class ReminderEmitter {
 		}
 	}
 
-	private processUserReminders(userid: string, reminders: MainReminderCommand[], client: Client<true>) {
+	private async processUserReminders(
+		userid: string,
+		reminders: MainReminderCommand[],
+		client: Client<true>
+	) {
 		for (let i = reminders.length - 1; i >= 0; i--) {
 			const reminder = reminders[i];
 
-			if (reminder.command === "Remove" || reminder.command === "List") continue;
+			if (reminder.command === "Remove" || reminder.command === "List")
+				continue;
 
 			// Timezone aware for absolute reminders
-			const current_time = reminder.content.type === "Absolute"
-				? dayjs().tz((reminder.content as AbsoluteContent).timezone)
-				: dayjs();
+			const current_time =
+				reminder.content.type === "Absolute"
+					? dayjs().tz((reminder.content as AbsoluteContent).timezone)
+					: dayjs();
 
-			if (reminder.to_date.isBefore(current_time) || reminder.to_date.isSame(current_time)) {
-				this.handleReminderTrigger(userid, reminder, i, client);
+			if (
+				reminder.to_date.isBefore(current_time) ||
+				reminder.to_date.isSame(current_time)
+			) {
+				await this.handleReminderTrigger(userid, reminder, i, client);
 			}
 		}
 	}
 
-	private handleReminderTrigger(
+	private async handleReminderTrigger(
 		userid: string,
-		reminder: Extract<MainReminderCommand, AbsoluteCommand | RelativeCommand | RecurringCommand>,
+		reminder: Extract<
+			MainReminderCommand,
+			AbsoluteCommand | RelativeCommand | RecurringCommand
+		>,
 		index: number,
 		client: Client<true>
 	) {
 		try {
-			client.users.send(userid, `Reminder: ${reminder.message}`);
+			await client.users.send(userid, `Reminder: ${reminder.message}`);
 
 			if (reminder.command === "Recurring") {
 				this.rescheduleRecurringReminder(reminder);
@@ -343,16 +416,22 @@ export class ReminderEmitter {
 		}
 	}
 	private recurringRelativeReminder(reminder: RecurringCommand) {
-		const {d, h, m} = reminder.content as RelativeContent;
+		const { d, h, m } = reminder.content as RelativeContent;
 		let newDate = reminder.to_date;
-		if (d) newDate = newDate.add(d, "day");
-		if (h) newDate = newDate.add(h, "hour");
-		if (m) newDate = newDate.add(m, "minute");
+		do {
+			newDate = newDate.add(d, "day").add(h, "hour").add(m, "minute");
+		} while (newDate.isBefore(dayjs()));
 		reminder.to_date = newDate;
 	}
 	private recurringAbsoluteReminder(reminder: RecurringCommand) {
 		const content = reminder.content as AbsoluteContent;
-		const priorities = [content.year, content.month, content.date, content.hour, content.minute];
+		const priorities = [
+			content.year,
+			content.month,
+			content.date,
+			content.hour,
+			content.minute,
+		];
 	}
 	private pushReminder(user_id: string, user_reminder: MainReminderCommand) {
 		if (!this.reminders.has(user_id)) {
@@ -361,7 +440,10 @@ export class ReminderEmitter {
 		const reminder = this.reminders.get(user_id)!;
 		reminder.push(user_reminder);
 	}
-	private popReminder(user_id: string, index: number): MainReminderCommand | undefined {
+	private popReminder(
+		user_id: string,
+		index: number
+	): MainReminderCommand | undefined {
 		const reminder = this.reminders.get(user_id);
 		if (reminder) {
 			if (reminder.length >= 2) {
@@ -399,5 +481,3 @@ export function rehash(s: string): number {
 	}
 	return base >>> 0;
 }
-
-
