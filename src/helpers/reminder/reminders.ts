@@ -335,6 +335,9 @@ export class ReminderEmitter {
 			case "Absolute":
 			case "Recurring":
 			case "Relative": {
+				if (this.isReminderFull(user_id)) {
+					throw new Error("Your reminders are full! Please remove some.");
+				}
 				this.pushReminder(user_id, command);
 				return {
 					action: "push",
@@ -432,6 +435,12 @@ export class ReminderEmitter {
 			content.hour,
 			content.minute,
 		];
+	}
+	private isReminderFull(user_id: string) {
+		if (!this.reminders.has(user_id)) {
+			this.reminders.set(user_id, []);
+		}
+		return this.reminders.get(user_id)!.length > 10;
 	}
 	private pushReminder(user_id: string, user_reminder: MainReminderCommand) {
 		if (!this.reminders.has(user_id)) {
