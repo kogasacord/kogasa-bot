@@ -5,7 +5,11 @@ import { ChannelScope } from "@helpers/types";
 
 let latency = 0;
 setInterval(async () => {
-	latency = await getAverageLatency("discord.com", 3);
+	try {
+		latency = await getAverageLatency("discord.com", 3);
+	} catch (error) {
+		console.error(error);
+	}
 }, 60 * 3000);
 
 type DoctorResults = {
@@ -24,11 +28,13 @@ export async function execute(
 	args: string[],
 	ext: ExternalDependencies
 ) {
-	if (!(
-		msg.channel.type === ChannelType.DM 
-		|| msg.channel.type === ChannelType.GuildText
-		|| msg.channel.type === ChannelType.PublicThread
-	)) {
+	if (
+		!(
+			msg.channel.type === ChannelType.DM ||
+			msg.channel.type === ChannelType.GuildText ||
+			msg.channel.type === ChannelType.PublicThread
+		)
+	) {
 		return;
 	}
 	await msg.channel.sendTyping();
@@ -37,7 +43,7 @@ export async function execute(
 	};
 	doctor_results.canvas = await pingServer(`${settings.canvas_endpoint}/ping`);
 	msg.reply(
-			`Latency to discord.com, refreshed every minute: \`${latency}ms\`. \n` +
+		`Latency to discord.com, refreshed every minute: \`${latency}ms\`. \n` +
 			`Commands imported: \`${[...ext.commands.entries()].length}\`\n` +
 			`${formatDiagnosis(doctor_results)}`
 	);
