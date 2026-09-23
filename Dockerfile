@@ -7,7 +7,10 @@ WORKDIR /app
 
 # install python, make, g++ for node-gyp ...
 RUN apt-get update && \
-	apt-get install -y python3 make g++
+	apt-get install -y --no-install-recommends \
+		python3 make g++ iputils-ping curl ca-certificates
+
+RUN update-ca-certificates
 
 # remove package indexes
 RUN rm -rf /var/lib/apt/lists/*
